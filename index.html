@@ -90,6 +90,21 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 .leaflet-bar a:hover { background: rgba(201,168,76,0.12) !important; }
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── BORDER TOGGLES ── */
+#border-controls {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  z-index: 100; display: flex; gap: 8px;
+  animation: fadeUp 1.4s ease forwards;
+}
+.border-btn {
+  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
+  color: var(--parchment2); font-family: 'Cinzel', serif; font-size: 11px;
+  letter-spacing: 0.08em; padding: 7px 14px; border-radius: 20px;
+  cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px);
+}
+.border-btn:hover { border-color: rgba(201,168,76,0.6); color: var(--parchment); }
+.border-btn.active { background: rgba(201,168,76,0.2); border-color: var(--gold); color: var(--gold-light); }
 </style>
 </head>
 <body>
@@ -106,6 +121,11 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   <input type="text" id="search-input" placeholder="Search Quellia..." autocomplete="off"
     oninput="onSearch(this.value)" onblur="setTimeout(closeSearch,180)" onfocus="onSearch(this.value)"/>
   <div id="search-results"></div>
+</div>
+
+<div id="border-controls">
+  <button class="border-btn active" id="btn-country" onclick="toggleBorder('country')">Country Borders</button>
+  <button class="border-btn active" id="btn-province" onclick="toggleBorder('province')">Province Borders</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -202,11 +222,12 @@ const countryBorderStyle  = { color: '#000000', weight: 1, opacity: 0.7, fill: f
 const provinceBorderStyle = { color: '#000000', weight: 0.8, opacity: 0.6, fill: false, dashArray: '4, 4' };
 
 let provinceBorderLayer = null;
+let countryBorderLayer = null;
 
 // Load country borders — always visible
 fetch('country-borders.geojson')
   .then(r => r.ok ? r.json() : null)
-  .then(data => { if (data) L.geoJSON(data, { style: countryBorderStyle }).addTo(map); })
+  .then(data => { if (data) { countryBorderLayer = L.geoJSON(data, { style: countryBorderStyle }); countryBorderLayer.addTo(map); } })
   .catch(() => {});
 
 // Load province borders — only shown at zoom 5 and above
@@ -223,7 +244,19 @@ fetch('province-borders.geojson')
   })
   .catch(() => {});
 
-// ── SEARCH ────────────────────────────────────────────────────────────────────
+// ── BORDER TOGGLES ────────────────────────────────────────────────────────────
+function toggleBorder(type) {
+  const btn = document.getElementById('btn-' + type);
+  const layer = type === 'country' ? countryBorderLayer : provinceBorderLayer;
+  if (!layer) return;
+  if (map.hasLayer(layer)) {
+    map.removeLayer(layer);
+    btn.classList.remove('active');
+  } else {
+    map.addLayer(layer);
+    btn.classList.add('active');
+  }
+}
 function onSearch(val) {
   const box = document.getElementById('search-results'), q = val.trim().toLowerCase();
   if (!q) { box.style.display='none'; return; }
