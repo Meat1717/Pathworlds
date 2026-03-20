@@ -93,8 +93,8 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 /* ── BORDER TOGGLES ── */
 #border-controls {
-  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-  z-index: 100; display: flex; gap: 8px;
+  position: fixed; top: 100px; left: 32px;
+  z-index: 100; display: flex; flex-direction: column; gap: 6px;
   animation: fadeUp 1.4s ease forwards;
 }
 .border-btn {
@@ -102,9 +102,10 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   color: var(--parchment2); font-family: 'Cinzel', serif; font-size: 11px;
   letter-spacing: 0.08em; padding: 7px 14px; border-radius: 20px;
   cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px);
+  text-align: left;
 }
 .border-btn:hover { border-color: rgba(201,168,76,0.6); color: var(--parchment); }
-.border-btn.active { background: rgba(201,168,76,0.2); border-color: var(--gold); color: var(--gold-light); }
+.border-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); }
 </style>
 </head>
 <body>
@@ -238,6 +239,9 @@ fetch('province-borders.geojson')
     provinceBorderLayer = L.geoJSON(data, { style: provinceBorderStyle });
     if (map.getZoom() >= 5) provinceBorderLayer.addTo(map);
     map.on('zoomend', () => {
+      const btn = document.getElementById('btn-province');
+      const isActive = btn && btn.classList.contains('active');
+      if (!isActive) return;
       if (map.getZoom() >= 5) { if (!map.hasLayer(provinceBorderLayer)) provinceBorderLayer.addTo(map); }
       else { if (map.hasLayer(provinceBorderLayer)) map.removeLayer(provinceBorderLayer); }
     });
