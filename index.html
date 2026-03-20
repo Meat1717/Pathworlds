@@ -255,8 +255,14 @@ const measureControl = L.control.measure({
 }).addTo(map);
 
 // Prevent map panning when measure tool is active
-map.on('measurestart', () => { map.options.autoPanPaddingTopLeft = [0,0]; map.options.autoPanPaddingBottomRight = [0,0]; });
-map.on('measurefinish', () => { map.options.autoPanPaddingTopLeft = null; map.options.autoPanPaddingBottomRight = null; });
+const originalPanTo = map.panTo.bind(map);
+let isMeasuring = false;
+map.on('measurestart', () => { isMeasuring = true; });
+map.on('measurefinish', () => { isMeasuring = false; });
+map.panTo = function(latlng, options) {
+  if (isMeasuring) return this;
+  return originalPanTo(latlng, options);
+};
 map.setView([0, 0], 3);
 
 L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
