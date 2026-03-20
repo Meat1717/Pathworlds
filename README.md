@@ -1,1 +1,1 @@
-https://meat1717.github.io/Pathworlds/
+https://meat1717.github.io/Pathworlds/pathworlds.html
