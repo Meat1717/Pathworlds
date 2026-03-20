@@ -475,7 +475,7 @@ function getRealWorldComparison(areaKm2) {
   return closest;
 }
 
-// Hook into measure finish event to show comparison
+// Hook into measure finish event to inject comparison into results popup
 map.on('measurefinish', function(e) {
   if (!e.area) return;
   const areaKm2 = e.area * 0.000001 / 4;
@@ -488,24 +488,21 @@ map.on('measurefinish', function(e) {
     ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than ${match.name}`
     : `About ${ratio}x larger than ${match.name}`;
 
-  let popup = document.getElementById('area-comparison-popup');
-  if (!popup) {
-    popup = document.createElement('div');
-    popup.id = 'area-comparison-popup';
-    popup.style.cssText = `
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-      background: rgba(14,12,9,0.92); border: 1px solid rgba(201,168,76,0.35);
-      color: #e8dfc0; font-family: 'Cinzel', serif; font-size: 12px;
-      letter-spacing: 0.06em; padding: 10px 18px; border-radius: 20px;
-      z-index: 1000; backdrop-filter: blur(8px); pointer-events: none;
-      transition: opacity 0.4s;
-    `;
-    document.body.appendChild(popup);
-  }
-  popup.innerHTML = `<span style="color:#c9a84c;">&#9670;</span> ${msg}`;
-  popup.style.opacity = '1';
-  clearTimeout(popup._timeout);
-  popup._timeout = setTimeout(() => { popup.style.opacity = '0'; }, 6000);
+  // Wait for the popup to render then inject comparison
+  setTimeout(() => {
+    const tables = document.querySelectorAll('.leaflet-control-measure-resultpopup table');
+    tables.forEach(table => {
+      // Check if we already added a comparison row
+      if (table.querySelector('.comparison-row')) return;
+      const row = document.createElement('tr');
+      row.className = 'comparison-row';
+      row.innerHTML = `
+        <td style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.06em;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">Comparable to</td>
+        <td style="color:#e8dfc0;font-family:'Crimson Text',serif;font-size:13px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">${msg.replace(/^About the same size as |^About [\d.]+x (larger|smaller) than /, '')}<br><span style="color:#8a7a5a;font-size:11px;font-style:italic;">${msg.match(/^About/) ? msg.split(' ').slice(0,4).join(' ') : 'Same size'}</span></td>
+      `;
+      table.appendChild(row);
+    });
+  }, 100);
 });
 function toggleBorder(type) {
   const btn = document.getElementById('btn-' + type);
