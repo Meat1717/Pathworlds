@@ -238,7 +238,7 @@ scale._update = function() {
 };
 
 // Measure control — distances and areas divided by 4 for world scale
-L.control.measure({
+const measureControl = L.control.measure({
   position: 'bottomright',
   primaryLengthUnit: 'kilometers',
   secondaryLengthUnit: 'meters',
@@ -253,6 +253,10 @@ L.control.measure({
     sqkilometers: { factor: 0.000001 / 16, display: 'km²', decimals: 2 },
   }
 }).addTo(map);
+
+// Prevent map panning when measure tool is active
+map.on('measurestart', () => { map.options.autoPanPaddingTopLeft = [0,0]; map.options.autoPanPaddingBottomRight = [0,0]; });
+map.on('measurefinish', () => { map.options.autoPanPaddingTopLeft = null; map.options.autoPanPaddingBottomRight = null; });
 map.setView([0, 0], 3);
 
 L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
