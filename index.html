@@ -231,7 +231,7 @@ scale._update = function() {
     if (match) {
       let val = parseFloat(match[1]);
       const unit = match[2];
-      val = Math.round(val / 4 * 10) / 10;
+      val = Math.round(val / 2 * 10) / 10;
       div.innerHTML = val + ' ' + unit;
     }
   }
@@ -248,9 +248,9 @@ const measureControl = L.control.measure({
   captureZIndex: 10000,
   popupOptions: { autoPan: false },
   units: {
-    kilometers: { factor: 0.001 / 4, display: 'km', decimals: 2 },
-    meters: { factor: 1 / 4, display: 'm', decimals: 0 },
-    sqkilometers: { factor: 0.000001 / 16, display: 'km²', decimals: 2 },
+    kilometers: { factor: 0.001 / 2, display: 'km', decimals: 2 },
+    meters: { factor: 1 / 2, display: 'm', decimals: 0 },
+    sqkilometers: { factor: 0.000001 / 4, display: 'km²', decimals: 2 },
   }
 }).addTo(map);
 
