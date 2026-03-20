@@ -367,7 +367,146 @@ fetch('province-borders.geojson')
   })
   .catch(() => {});
 
-// ── BORDER TOGGLES ────────────────────────────────────────────────────────────
+// ── REAL WORLD AREA COMPARISONS ──────────────────────────────────────────────
+const realWorldAreas = [
+  { name: 'Vatican City', area: 0.44 },
+  { name: 'Monaco', area: 2 },
+  { name: 'San Marino', area: 61 },
+  { name: 'Liechtenstein', area: 160 },
+  { name: 'Malta', area: 316 },
+  { name: 'Maldives', area: 298 },
+  { name: 'Bahrain', area: 765 },
+  { name: 'Singapore', area: 728 },
+  { name: 'Andorra', area: 468 },
+  { name: 'Barbados', area: 430 },
+  { name: 'Samoa', area: 2842 },
+  { name: 'Luxembourg', area: 2586 },
+  { name: 'Trinidad and Tobago', area: 5130 },
+  { name: 'Corsica', area: 8680 },
+  { name: 'Cyprus', area: 9251 },
+  { name: 'Lebanon', area: 10452 },
+  { name: 'Jamaica', area: 10990 },
+  { name: 'Kuwait', area: 17818 },
+  { name: 'Timor-Leste', area: 14874 },
+  { name: 'Belize', area: 22966 },
+  { name: 'El Salvador', area: 21041 },
+  { name: 'Israel', area: 20770 },
+  { name: 'Sardinia', area: 24090 },
+  { name: 'Sri Lanka', area: 65610 },
+  { name: 'Ireland', area: 70273 },
+  { name: 'South Korea', area: 100210 },
+  { name: 'Portugal', area: 92212 },
+  { name: 'Hungary', area: 93028 },
+  { name: 'Iceland', area: 103000 },
+  { name: 'Cuba', area: 109884 },
+  { name: 'Bulgaria', area: 110879 },
+  { name: 'Nepal', area: 147181 },
+  { name: 'Greece', area: 131957 },
+  { name: 'England', area: 130279 },
+  { name: 'Bangladesh', area: 147570 },
+  { name: 'Tajikistan', area: 143100 },
+  { name: 'Senegal', area: 196722 },
+  { name: 'Syria', area: 185180 },
+  { name: 'Cambodia', area: 181035 },
+  { name: 'Uruguay', area: 176215 },
+  { name: 'Oman', area: 309500 },
+  { name: 'Italy', area: 301340 },
+  { name: 'Philippines', area: 300000 },
+  { name: 'New Zealand', area: 268021 },
+  { name: 'United Kingdom', area: 243610 },
+  { name: 'Japan', area: 377975 },
+  { name: 'Germany', area: 357114 },
+  { name: 'Zimbabwe', area: 390757 },
+  { name: 'Norway', area: 385207 },
+  { name: 'Iraq', area: 438317 },
+  { name: 'Morocco', area: 446550 },
+  { name: 'Uzbekistan', area: 448978 },
+  { name: 'Sweden', area: 450295 },
+  { name: 'Cameroon', area: 475442 },
+  { name: 'Papua New Guinea', area: 462840 },
+  { name: 'Spain', area: 505990 },
+  { name: 'Thailand', area: 513120 },
+  { name: 'France', area: 551695 },
+  { name: 'Yemen', area: 527968 },
+  { name: 'Turkey', area: 783562 },
+  { name: 'Chile', area: 756102 },
+  { name: 'Zambia', area: 752618 },
+  { name: 'Myanmar', area: 676578 },
+  { name: 'Afghanistan', area: 652230 },
+  { name: 'Mozambique', area: 801590 },
+  { name: 'Pakistan', area: 881913 },
+  { name: 'Egypt', area: 1001450 },
+  { name: 'South Africa', area: 1219090 },
+  { name: 'Bolivia', area: 1098581 },
+  { name: 'Mali', area: 1240192 },
+  { name: 'Angola', area: 1246700 },
+  { name: 'Ethiopia', area: 1104300 },
+  { name: 'Niger', area: 1267000 },
+  { name: 'Mauritania', area: 1030700 },
+  { name: 'Peru', area: 1285216 },
+  { name: 'Chad', area: 1284000 },
+  { name: 'Colombia', area: 1141748 },
+  { name: 'Mexico', area: 1964375 },
+  { name: 'Saudi Arabia', area: 2149690 },
+  { name: 'Indonesia', area: 1904569 },
+  { name: 'Iran', area: 1648195 },
+  { name: 'Mongolia', area: 1564110 },
+  { name: 'Greenland', area: 2166086 },
+  { name: 'Democratic Republic of Congo', area: 2344858 },
+  { name: 'India', area: 3287263 },
+  { name: 'Australia', area: 7692024 },
+  { name: 'Brazil', area: 8515767 },
+  { name: 'China', area: 9596960 },
+  { name: 'United States', area: 9833517 },
+  { name: 'Canada', area: 9984670 },
+  { name: 'Russia', area: 17098242 },
+  { name: 'Africa (continent)', area: 30370000 },
+  { name: 'Asia (continent)', area: 44579000 },
+];
+
+function getRealWorldComparison(areaKm2) {
+  if (areaKm2 <= 0) return null;
+  let closest = realWorldAreas[0];
+  let minDiff = Infinity;
+  for (const place of realWorldAreas) {
+    const diff = Math.abs(Math.log(place.area) - Math.log(areaKm2));
+    if (diff < minDiff) { minDiff = diff; closest = place; }
+  }
+  return closest;
+}
+
+// Hook into measure finish event to show comparison
+map.on('measurefinish', function(e) {
+  if (!e.area) return;
+  const areaKm2 = e.area * 0.000001 / 4;
+  const match = getRealWorldComparison(areaKm2);
+  if (!match) return;
+  const ratio = (areaKm2 / match.area).toFixed(2);
+  const msg = ratio == 1.00
+    ? `About the same size as ${match.name}`
+    : ratio < 1
+    ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than ${match.name}`
+    : `About ${ratio}x larger than ${match.name}`;
+
+  let popup = document.getElementById('area-comparison-popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'area-comparison-popup';
+    popup.style.cssText = `
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(14,12,9,0.92); border: 1px solid rgba(201,168,76,0.35);
+      color: #e8dfc0; font-family: 'Cinzel', serif; font-size: 12px;
+      letter-spacing: 0.06em; padding: 10px 18px; border-radius: 20px;
+      z-index: 1000; backdrop-filter: blur(8px); pointer-events: none;
+      transition: opacity 0.4s;
+    `;
+    document.body.appendChild(popup);
+  }
+  popup.innerHTML = `<span style="color:#c9a84c;">&#9670;</span> ${msg}`;
+  popup.style.opacity = '1';
+  clearTimeout(popup._timeout);
+  popup._timeout = setTimeout(() => { popup.style.opacity = '0'; }, 6000);
+});
 function toggleBorder(type) {
   const btn = document.getElementById('btn-' + type);
   const layer = type === 'country' ? countryBorderLayer : provinceBorderLayer;
