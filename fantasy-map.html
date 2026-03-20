@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quellia — Map of the Known World</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold:       #c9a84c;
+  --gold-light: #e8cc7a;
+  --gold-dim:   #7a6030;
+  --parchment:  #e8dfc0;
+  --parchment2: #c8b98a;
+  --muted:      #8a7a5a;
+  --ink:        #0e0c09;
+  --ink2:       #1a1612;
+}
+
+html, body { height: 100%; overflow: hidden; background: #080706; font-family: 'Crimson Text', serif; }
+
+#map { position: fixed; inset: 0; z-index: 1; }
+.leaflet-container { background: #080706; font-family: 'Crimson Text', serif; }
+
+/* ── TITLE ── */
+#title-overlay {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  padding: 28px 32px; pointer-events: none;
+  animation: fadeUp 1.4s ease forwards;
+}
+#title-overlay h1 {
+  font-family: 'Cinzel Decorative', serif; font-size: 30px; font-weight: 700;
+  color: var(--gold-light); letter-spacing: 0.05em; line-height: 1;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.95), 0 0 50px rgba(0,0,0,0.8);
+}
+#title-overlay p {
+  font-family: 'Crimson Text', serif; font-style: italic; font-size: 14px;
+  color: var(--parchment2); margin-top: 5px; letter-spacing: 0.04em;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.95); opacity: 0.8;
+}
+
+/* ── SEARCH ── */
+#search-wrap {
+  position: fixed; top: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 100; width: 280px;
+}
+#search-input {
+  width: 100%; background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
+  color: var(--parchment); font-family: 'Crimson Text', serif; font-size: 15px;
+  padding: 10px 16px 10px 36px; border-radius: 24px; outline: none;
+  backdrop-filter: blur(8px); transition: border-color 0.2s, box-shadow 0.2s;
+}
+#search-input::placeholder { color: var(--muted); font-style: italic; }
+#search-input:focus { border-color: rgba(201,168,76,0.6); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
+#search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+#search-results {
+  display: none; margin-top: 4px; background: rgba(14,12,9,0.95);
+  border: 1px solid rgba(201,168,76,0.2); border-radius: 8px;
+  overflow: hidden; backdrop-filter: blur(8px);
+}
+.sr { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.1s; display: flex; align-items: center; gap: 10px; }
+.sr:last-child { border-bottom: none; }
+.sr:hover { background: rgba(201,168,76,0.08); }
+.sr-name { font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold-light); }
+.sr-type { font-size: 11px; color: var(--muted); font-style: italic; }
+.sr-empty { padding: 12px 16px; font-size: 13px; color: var(--muted); font-style: italic; text-align: center; }
+
+/* ── POPUPS ── */
+.leaflet-popup-content-wrapper {
+  background: rgba(10,8,6,0.96) !important; border: 1px solid rgba(201,168,76,0.28) !important;
+  border-radius: 6px !important; box-shadow: 0 8px 40px rgba(0,0,0,0.85) !important;
+  color: var(--parchment) !important; font-family: 'Crimson Text', serif !important;
+  backdrop-filter: blur(8px);
+}
+.leaflet-popup-tip { background: rgba(10,8,6,0.96) !important; }
+.leaflet-popup-content { margin: 16px 20px !important; }
+.pu-name { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold-light); margin-bottom: 3px; }
+.pu-type { font-size: 12px; font-style: italic; color: var(--muted); margin-bottom: 8px; text-transform: capitalize; }
+.pu-desc { font-size: 14px; line-height: 1.55; color: var(--parchment2); }
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-bar { border: 1px solid rgba(201,168,76,0.22) !important; background: transparent !important; }
+.leaflet-bar a { background: rgba(14,12,9,0.8) !important; color: var(--parchment2) !important; border-bottom-color: rgba(201,168,76,0.12) !important; backdrop-filter: blur(4px); }
+.leaflet-bar a:hover { background: rgba(201,168,76,0.12) !important; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="title-overlay">
+  <h1>Quellia</h1>
+  <p>Map of Quellia as seen from pathflight — c. 778 A.A.</p>
+</div>
+
+<div id="search-wrap">
+  <span id="search-icon">⌕</span>
+  <input type="text" id="search-input" placeholder="Search Quellia..." autocomplete="off"
+    oninput="onSearch(this.value)" onblur="setTimeout(closeSearch,180)" onfocus="onSearch(this.value)"/>
+  <div id="search-results"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let features = [];
+
+// ── MAP ───────────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  minZoom: 0, maxZoom: 14,
+  zoomControl: false, attributionControl: false,
+  wheelPxPerZoomLevel: 120, zoomSnap: 0.5, zoomDelta: 0.5,
+});
+L.control.zoom({ position: 'bottomleft' }).addTo(map);
+map.setView([0, 0], 3);
+
+// ── AUTO-LOAD TILES ───────────────────────────────────────────────────────────
+L.tileLayer('tiles/{z}/{x}/{y}.png', {
+  minZoom: 0, maxZoom: 14,
+  noWrap: true, tms: false, errorTileUrl: '',
+}).addTo(map);
+
+// ── FEATURE GROUP ─────────────────────────────────────────────────────────────
+const featureGroup = L.featureGroup().addTo(map);
+
+// ── ICONS ─────────────────────────────────────────────────────────────────────
+function getTownIcon(t) {
+  const cfg = {
+    capital: { color:'#e8cc7a', border:'#b8860b', size:16 },
+    city:    { color:'#d4a020', border:'#8b5e0a', size:13 },
+    town:    { color:'#c8904a', border:'#7a5020', size:11 },
+    village: { color:'#c8904a', border:'#7a5020', size:9  },
+    ruin:    { color:'#c84040', border:'#8b1a1a', size:10 },
+  };
+  const c = cfg[t] || cfg.town; const s = c.size;
+  return L.divIcon({ className:'', html:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:${c.color};border:2px solid ${c.border};box-shadow:0 0 8px rgba(0,0,0,0.6);"></div>`, iconSize:[s,s], iconAnchor:[s/2,s/2], popupAnchor:[0,-s/2-2] });
+}
+function getLandmarkIcon() {
+  return L.divIcon({ className:'', html:`<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #c84040;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));"></div>`, iconSize:[14,13], iconAnchor:[7,13], popupAnchor:[0,-15] });
+}
+function getRoadStyle() { return { color:'#8b6535', weight:2, dashArray:'5,4', opacity:0.85 }; }
+function getRegionStyle() { return { color:'#3a6a3a', weight:1.5, fillColor:'#7aab7a', fillOpacity:0.12, opacity:0.6 }; }
+
+// ── RENDERERS ─────────────────────────────────────────────────────────────────
+function makeLabel(latlng, text, mt, fs, italic) {
+  return L.marker(latlng, { icon: L.divIcon({ className:'', html:`<div style="font-family:'Cinzel',serif;font-size:${fs}px;color:#e8dfc0;white-space:nowrap;margin-top:${mt}px;margin-left:-28px;text-shadow:0 1px 5px rgba(0,0,0,0.95),0 0 10px rgba(0,0,0,0.8);pointer-events:none;${italic?'font-style:italic;':''}">${text}</div>`, iconSize:[100,20], iconAnchor:[-10,0] }), interactive:false });
+}
+function addTownMarker(f) {
+  const icon = f.type==='ruin' ? getLandmarkIcon() : getTownIcon(f.type);
+  const marker = L.marker(f.latlng, {icon}).bindPopup(makePopup(f)).addTo(featureGroup);
+  makeLabel(f.latlng, f.name, 10, 11, false).addTo(featureGroup);
+  f._layers = [marker];
+}
+function addLandmarkMarker(f) {
+  const marker = L.marker(f.latlng, {icon:getLandmarkIcon()}).bindPopup(makePopup(f)).addTo(featureGroup);
+  makeLabel(f.latlng, f.name, 15, 10, true).addTo(featureGroup);
+  f._layers = [marker];
+}
+function addRoadLine(f) {
+  f._layers = [L.polyline(f.points, getRoadStyle()).bindPopup(makePopup(f)).addTo(featureGroup)];
+}
+function addRegionPoly(f) {
+  const poly = L.polygon(f.points, getRegionStyle()).bindPopup(makePopup(f)).addTo(featureGroup);
+  const center = poly.getBounds().getCenter();
+  L.marker(center, { icon: L.divIcon({ className:'', html:`<div style="font-family:'Cinzel',serif;font-size:12px;color:#e8dfc0;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,0.95);text-align:center;font-style:italic;transform:translate(-50%,-50%);pointer-events:none;">${f.name}</div>`, iconSize:[120,20], iconAnchor:[0,0] }), interactive:false }).addTo(featureGroup);
+  f._layers = [poly];
+}
+function makePopup(f) {
+  const t = f.type || (f.mode==='road' ? 'Road' : 'Territory');
+  return `<div class="pu-name">${f.name}</div><div class="pu-type">${t}</div>${f.desc?`<div class="pu-desc">${f.desc}</div>`:''}`;
+}
+
+// ── LOAD FEATURES FROM GEOJSON ────────────────────────────────────────────────
+// Place your temmia-features.geojson file next to this HTML file
+// and features will load automatically
+fetch('temmia-features.geojson')
+  .then(r => r.ok ? r.json() : null)
+  .then(data => {
+    if (!data) return;
+    (data.features || []).forEach(f => {
+      const p = f.properties || {};
+      const id = Date.now() + Math.random();
+      const feat = { id, name:p.name||'Unnamed', desc:p.desc||'', mode:p.mode, type:p.type };
+      if (f.geometry.type==='Point') { feat.latlng=[f.geometry.coordinates[1],f.geometry.coordinates[0]]; feat.mode=feat.mode||'town'; feat.mode==='landmark'?addLandmarkMarker(feat):addTownMarker(feat); }
+      else if (f.geometry.type==='LineString') { feat.points=f.geometry.coordinates.map(c=>[c[1],c[0]]); feat.mode='road'; addRoadLine(feat); }
+      else if (f.geometry.type==='Polygon') { feat.points=f.geometry.coordinates[0].map(c=>[c[1],c[0]]); feat.mode='region'; addRegionPoly(feat); }
+      features.push(feat);
+    });
+  })
+  .catch(() => {}); // silently ignore if no features file exists yet
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function onSearch(val) {
+  const box = document.getElementById('search-results'), q = val.trim().toLowerCase();
+  if (!q) { box.style.display='none'; return; }
+  const m = features.filter(f => f.name.toLowerCase().includes(q));
+  box.innerHTML = m.length===0
+    ? `<div class="sr-empty">No places found in Quellia</div>`
+    : m.slice(0,8).map(f => {
+        const icon = f.mode==='road'?'━':f.mode==='region'?'▭':f.type==='capital'?'★':'●';
+        return `<div class="sr" onclick="searchSelect(${f.id})"><div style="color:var(--gold-dim);font-size:11px;width:12px;">${icon}</div><div><div class="sr-name">${f.name}</div><div class="sr-type">${f.type||f.mode}</div></div></div>`;
+      }).join('');
+  box.style.display = 'block';
+}
+function searchSelect(id) {
+  const f = features.find(f => f.id===id); if (!f) return;
+  closeSearch(); document.getElementById('search-input').value = '';
+  if (f.latlng) map.flyTo(f.latlng, 6, {duration:1});
+  else if (f.points) map.flyToBounds(L.latLngBounds(f.points), {padding:[60,60], duration:1});
+  if (f._layers) { const l=f._layers[0]; if(l.openPopup) setTimeout(()=>l.openPopup(), 1050); }
+}
+function closeSearch() { document.getElementById('search-results').style.display='none'; }
+</script>
+</body>
+</html>
