@@ -13,6 +13,6 @@ run this:
 python -m http.server 8000
 
 Then this link: 
-http://localhost:8000/fantasy-map.html
+http://localhost:8000/pathworlds.html
 
 to end server: cntrl + c
