@@ -20,10 +20,10 @@
   --ink2:       #1a1612;
 }
 
-html, body { height: 100%; overflow: hidden; background: #9bd6fc; font-family: 'Crimson Text', serif; }
+html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: 'Crimson Text', serif; }
 
 #map { position: fixed; inset: 0; z-index: 1; }
-.leaflet-container { background: #9bd6fc; font-family: 'Crimson Text', serif; }
+.leaflet-container { background: #aad3df; font-family: 'Crimson Text', serif; }
 .leaflet-tile-pane { will-change: transform; }
 .leaflet-tile { margin-right: -1px; }
 
@@ -125,7 +125,7 @@ const map = L.map('map', {
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
 map.setView([39, 12.6], 5);
 
-L.tileLayer('tiles/{z}/{x}/{y}.png', {
+L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
   minZoom: 0, maxZoom: 14,
   noWrap: false, tms: false, errorTileUrl: '',
 }).addTo(map);
