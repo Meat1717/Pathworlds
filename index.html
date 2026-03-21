@@ -624,15 +624,20 @@ map.on('measurestart', function() {
   hideComparisonPopup();
 });
 
-// Hide comparison popup when measure results panel closes
+// Show/hide comparison popup based on measure result panel visibility
 const measureObserver = new MutationObserver(() => {
-  if (!comparisonPopup || comparisonPopup.style.display === 'none') return;
-  const measureOpen = document.querySelector('.leaflet-control-measure-interaction');
-  if (!measureOpen) {
-    hideComparisonPopup();
+  if (!comparisonPopup || !lastMeasureArea) return;
+  // Look for a visible result row in the measure panel
+  const resultRow = document.querySelector('.leaflet-control-measure-interaction tr.layer-row, .leaflet-control-measure-interaction .result-feature');
+  if (resultRow) {
+    comparisonPopup.style.opacity = '1';
+    comparisonPopup.style.display = 'block';
+  } else {
+    comparisonPopup.style.opacity = '0';
+    setTimeout(() => { if (comparisonPopup) comparisonPopup.style.display = 'none'; }, 400);
   }
 });
-measureObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+measureObserver.observe(document.body, { childList: true, subtree: true });
 
 // ── RANDOM SPLASH QUOTES ──────────────────────────────────────────────────────
 const splashQuotes = [
