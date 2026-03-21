@@ -222,18 +222,6 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 #about-panel .about-stat span:first-child { color: var(--muted); font-style: italic; }
 #about-panel .about-stat span:last-child { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
 
-/* ── TOP RIGHT BUTTONS ── */
-#top-right-controls {
-  position: fixed; top: 28px; right: 28px; z-index: 100;
-  display: flex; gap: 6px; align-items: center;
-}
-#top-right-controls .leaflet-control-measure {
-  position: static !important; margin: 0 !important;
-}
-#top-right-controls .leaflet-control-measure .leaflet-control-measure-toggle {
-  width: 34px !important; height: 34px !important;
-}
-
 /* ── MOBILE ── */
 @media (max-width: 600px) {
   #search-wrap { width: calc(100% - 120px); left: 50%; transform: translateX(-50%); top: 16px; }
@@ -458,7 +446,7 @@ scale._update = function() {
 
 // Measure control — distances and areas divided by 4 for world scale
 const measureControl = L.control.measure({
-  position: 'topright',
+  position: 'bottomright',
   primaryLengthUnit: 'kilometers',
   secondaryLengthUnit: 'meters',
   primaryAreaUnit: 'sqkilometers',
