@@ -240,7 +240,7 @@ canvas#path-canvas {
 
       <!-- Quellia — ACTIVE -->
       <div class="planet-slot">
-        <div class="planet-orb quellia" onclick="enterQuellia()" onmouseenter="showTip(event,'Quellia','Home of the Kingdom of Temmia. Capital: Chinnout. Year: 778 A.A.')" onmouseleave="hideTip()">
+        <div class="planet-orb quellia" onclick="enterQuellia()" onmouseenter="showTip(event,'Quellia','Home of the Kingdom of Temmia &amp; where our story begins.')" onmouseleave="hideTip()">
         </div>
         <div class="planet-label">
           <div class="planet-name" style="color:#e8cc7a;">Quellia</div>
@@ -357,36 +357,50 @@ function drawPath() {
 
   pctx.clearRect(0, 0, pc.width, pc.height);
 
-  // Use actual centre y of each planet for the path
-  const startX = points[0].x;
-  const endX = points[points.length - 1].x;
-
-  // Average y across all planets for a consistent horizontal line
   const avgY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
 
-  // Draw outer glow
+  // Extend path to full screen edges
+  const screenStartX = -wrapRect.left;
+  const screenEndX = window.innerWidth - wrapRect.left;
+  const totalWidth = screenEndX - screenStartX;
+  const fadeWidth = 160;
+
+  // Outer glow — full width
   pctx.beginPath();
-  pctx.moveTo(startX, avgY);
-  pctx.lineTo(endX, avgY);
-  pctx.strokeStyle = 'rgba(201,168,76,0.08)';
+  pctx.moveTo(screenStartX, avgY);
+  pctx.lineTo(screenEndX, avgY);
+  pctx.strokeStyle = 'rgba(201,168,76,0.06)';
   pctx.lineWidth = 18;
   pctx.stroke();
 
-  // Draw main tube
+  // Main tube — full width
   pctx.beginPath();
-  pctx.moveTo(startX, avgY);
-  pctx.lineTo(endX, avgY);
-  pctx.strokeStyle = 'rgba(201,168,76,0.3)';
+  pctx.moveTo(screenStartX, avgY);
+  pctx.lineTo(screenEndX, avgY);
+  pctx.strokeStyle = 'rgba(201,168,76,0.25)';
   pctx.lineWidth = 4;
   pctx.stroke();
 
-  // Draw animated star particles along path
-  const totalWidth = endX - startX;
-  for (let i = 0; i < 50; i++) {
-    const pos = ((i / 50) + pathOffset) % 1;
-    const x = startX + pos * totalWidth;
+  // Fade edges so path dissolves into void
+  const gradLeft = pctx.createLinearGradient(screenStartX, 0, screenStartX + fadeWidth, 0);
+  gradLeft.addColorStop(0, 'rgba(4,3,10,1)');
+  gradLeft.addColorStop(1, 'rgba(4,3,10,0)');
+  pctx.fillStyle = gradLeft;
+  pctx.fillRect(screenStartX, avgY - 14, fadeWidth, 28);
+
+  const gradRight = pctx.createLinearGradient(screenEndX - fadeWidth, 0, screenEndX, 0);
+  gradRight.addColorStop(0, 'rgba(4,3,10,0)');
+  gradRight.addColorStop(1, 'rgba(4,3,10,1)');
+  pctx.fillStyle = gradRight;
+  pctx.fillRect(screenEndX - fadeWidth, avgY - 14, fadeWidth, 28);
+
+  // Animated star particles across full width
+  for (let i = 0; i < 80; i++) {
+    const pos = ((i / 80) + pathOffset) % 1;
+    const x = screenStartX + pos * totalWidth;
+    const edgeFade = Math.min(1, Math.min(x - screenStartX, screenEndX - x) / fadeWidth);
     const size = Math.random() * 1.8 + 0.4;
-    const opacity = 0.2 + 0.8 * Math.sin(pos * Math.PI);
+    const opacity = (0.2 + 0.8 * Math.sin(pos * Math.PI)) * edgeFade;
     pctx.beginPath();
     pctx.arc(x, avgY, size, 0, Math.PI * 2);
     pctx.fillStyle = `rgba(232,204,122,${opacity})`;
