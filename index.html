@@ -570,73 +570,39 @@ function getRealWorldComparison(areaKm2) {
 }
 
 // Hook into measure finish event to show comparison popup
-let lastMeasureArea = null;
-let comparisonPopup = null;
-
-function showComparisonPopup(msg) {
-  if (!comparisonPopup) {
-    comparisonPopup = document.createElement('div');
-    comparisonPopup.id = 'area-comparison-popup';
-    comparisonPopup.style.cssText = `
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-      background: rgba(14,12,9,0.92); border: 1px solid rgba(201,168,76,0.35);
-      color: #e8dfc0; font-family: 'Crimson Text', serif; font-size: 14px;
-      padding: 10px 20px; border-radius: 20px; z-index: 1000;
-      backdrop-filter: blur(8px); pointer-events: none;
-      transition: opacity 0.4s; text-align: center; line-height: 1.5;
-    `;
-    document.body.appendChild(comparisonPopup);
-  }
-  comparisonPopup.innerHTML = `<span style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;display:block;margin-bottom:3px;">COMPARABLE TO</span>${msg}`;
-  comparisonPopup.style.opacity = '1';
-  comparisonPopup.style.display = 'block';
-}
-
-function hideComparisonPopup() {
-  if (!comparisonPopup) return;
-  comparisonPopup.style.opacity = '0';
-  setTimeout(() => { if (comparisonPopup) comparisonPopup.style.display = 'none'; }, 400);
-}
-
-map.on('measurefinish', function(e) {
-  // Try e.area first, then e.areaDisplay, then calculate from points
-  let rawArea = e.area || e.areaDisplay;
-  if (!rawArea && e.latlngs && e.latlngs.length > 2) {
-    // Calculate area from latlngs using Leaflet's geometry
-    const poly = L.polygon(e.latlngs);
-    rawArea = L.GeometryUtil ? L.GeometryUtil.geodesicArea(e.latlngs) : null;
-  }
-  if (!rawArea) { hideComparisonPopup(); return; }
-  lastMeasureArea = rawArea;
-  const areaKm2 = rawArea * 0.000001 / 4;
-  const match = getRealWorldComparison(areaKm2);
-  if (!match) return;
-  const ratio = (areaKm2 / match.area).toFixed(2);
-  const msg = ratio == 1.00
-    ? `Same size as <strong style="color:#c9a84c;">${match.name}</strong>`
-    : ratio < 1
-    ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than <strong style="color:#c9a84c;">${match.name}</strong>`
-    : `About ${ratio}x the size of <strong style="color:#c9a84c;">${match.name}</strong>`;
-  showComparisonPopup(msg);
-});
-
 map.on('measurestart', function() {
-  hideComparisonPopup();
+  lastComparisonMsg = null;
 });
 
-// Show/hide comparison popup based on measure result panel visibility
-const measureObserver = new MutationObserver(() => {
-  if (!comparisonPopup || !lastMeasureArea) return;
-  // Look for a visible result row in the measure panel
-  const resultRow = document.querySelector('.leaflet-control-measure-interaction tr.layer-row, .leaflet-control-measure-interaction .result-feature');
-  if (resultRow) {
-    comparisonPopup.style.opacity = '1';
-    comparisonPopup.style.display = 'block';
-  } else {
-    comparisonPopup.style.opacity = '0';
-    setTimeout(() => { if (comparisonPopup) comparisonPopup.style.display = 'none'; }, 400);
-  }
-});
+// ── AREA COMPARISON ───────────────────────────────────────────────────────────
+let lastComparisonMsg = null;
+
+function injectComparison() {
+  const groups = document.querySelectorAll('.leaflet-control-measure-interaction .group');
+  groups.forEach(group => {
+    const heading = group.querySelector('.heading');
+    if (!heading || !heading.textContent.includes('Area')) return;
+    if (group.querySelector('.comparison-inject')) return;
+    const areaText = group.querySelector('p').textContent;
+    const match = areaText.match(/([\d,]+\.?\d*)\s*km²/);
+    if (!match) return;
+    const areaKm2 = parseFloat(match[1].replace(/,/g, '')) / 4;
+    const comparison = getRealWorldComparison(areaKm2);
+    if (!comparison) return;
+    const ratio = (areaKm2 / comparison.area).toFixed(2);
+    const msg = ratio == 1.00
+      ? `Same size as ${comparison.name}`
+      : ratio < 1
+      ? `~${(comparison.area / areaKm2).toFixed(1)}x smaller than ${comparison.name}`
+      : `~${ratio}x the size of ${comparison.name}`;
+    const div = document.createElement('p');
+    div.className = 'comparison-inject';
+    div.innerHTML = `<span class="heading" style="color:#c9a84c;">Comparable to</span> ${comparison.name}<br><span style="font-size:11px;font-style:italic;color:#8a7a5a;">${msg}</span>`;
+    group.appendChild(div);
+  });
+}
+
+const measureObserver = new MutationObserver(injectComparison);
 measureObserver.observe(document.body, { childList: true, subtree: true });
 
 // ── RANDOM SPLASH QUOTES ──────────────────────────────────────────────────────
