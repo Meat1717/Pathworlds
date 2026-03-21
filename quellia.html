@@ -194,7 +194,17 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   transition: opacity 0.2s;
 }
 
-/* ── ABOUT BUTTON ── */
+/* ── UNIVERSE BUTTON ── */
+#universe-btn {
+  width: 34px; height: 34px;
+  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; backdrop-filter: blur(8px);
+}
+#universe-btn:hover { border-color: rgba(201,168,76,0.6); background: rgba(14,12,9,0.95); }
+#universe-btn svg { opacity: 0.6; transition: opacity 0.2s; }
+#universe-btn:hover svg { opacity: 1; }
 #about-btn {
   width: 34px; height: 34px;
   background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
@@ -368,12 +378,19 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   <p style="margin-bottom:14px;">This map is a living document — updated as the world is explored and discovered.</p>
   <div class="about-stat"><span>World</span><span>Quellia</span></div>
   <div class="about-stat"><span>Scale</span><span>1/2 of Earth</span></div>
-  <div class="about-stat" style="border:none;padding-bottom:12px;"><span>Year</span><span>778 A.A.</span></div>
-  <a href="index.html" style="display:block;text-align:center;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--gold);opacity:0.7;text-decoration:none;padding-top:10px;border-top:1px solid rgba(201,168,76,0.15);">← Return to Universe</a>
+  <div class="about-stat" style="border:none;"><span>Year</span><span>778 A.A.</span></div>
 </div>
 
 <!-- TOP RIGHT CONTROLS -->
 <div id="top-right-controls">
+  <button id="universe-btn" onclick="window.location.href='index.html'" title="Return to Universe">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="#c9a84c" stroke-width="1.3"/>
+      <circle cx="8" cy="8" r="2" fill="#c9a84c"/>
+      <line x1="2" y1="8" x2="14" y2="8" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+      <line x1="8" y1="2" x2="8" y2="14" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
+    </svg>
+  </button>
   <button id="about-btn" onclick="toggleAbout()" title="About Pathworlds">?</button>
   <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
     <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
