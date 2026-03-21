@@ -176,9 +176,73 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 }
 .border-btn:hover { border-color: rgba(201,168,76,0.6); color: var(--parchment); }
 .border-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+/* ── SPLASH SCREEN ── */
+#splash {
+  position: fixed; inset: 0; z-index: 2000;
+  background: #080706;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: opacity 1.2s ease;
+}
+#splash.fade-out { opacity: 0; pointer-events: none; }
+#splash-inner { text-align: center; animation: fadeUp 1.5s ease forwards; }
+#splash h1 {
+  font-family: 'Cinzel Decorative', serif; font-size: 52px; font-weight: 700;
+  color: var(--gold-light); letter-spacing: 0.08em; line-height: 1;
+  text-shadow: 0 0 40px rgba(201,168,76,0.3);
+  margin-bottom: 16px;
+}
+#splash-divider {
+  width: 120px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 20px auto;
+}
+#splash-quote {
+  font-family: 'Crimson Text', serif; font-style: italic;
+  font-size: 17px; color: var(--parchment2);
+  max-width: 480px; line-height: 1.8;
+  opacity: 0.85; margin-bottom: 8px;
+}
+#splash-attribution {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  color: var(--gold-dim); letter-spacing: 0.12em;
+  margin-bottom: 48px;
+}
+#splash-prompt {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  color: var(--muted); letter-spacing: 0.16em;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+/* ── FULLSCREEN BUTTON ── */
+#fullscreen-btn {
+  position: fixed; top: 28px; right: 28px; z-index: 100;
+  width: 34px; height: 34px;
+  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; backdrop-filter: blur(8px);
+}
+#fullscreen-btn:hover { border-color: rgba(201,168,76,0.6); background: rgba(14,12,9,0.95); }
+#fullscreen-btn svg { opacity: 0.6; transition: opacity 0.2s; }
+#fullscreen-btn:hover svg { opacity: 1; }
 </style>
 </head>
 <body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash" onclick="dismissSplash()">
+  <div id="splash-inner">
+    <h1>Quellia</h1>
+    <div id="splash-divider"></div>
+    <p id="splash-quote">"Birds squawked past him, beyond the golden bounds containing the sea of shimmering stars. With a gentle stroke through the cloud-like fluid, he moved higher above the city."</p>
+    <p id="splash-attribution">— Lain, c. 778 A.A.</p>
+    <p id="splash-prompt">CLICK TO EXPLORE</p>
+  </div>
+</div>
 
 <div id="map"></div>
 
@@ -199,9 +263,39 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   <button class="border-btn active" id="btn-province" onclick="toggleBorder('province')">Province Borders</button>
 </div>
 
+<button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
+  <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.js"></script>
 <script>
+// ── SPLASH ────────────────────────────────────────────────────────────────────
+function dismissSplash() {
+  const splash = document.getElementById('splash');
+  splash.classList.add('fade-out');
+  setTimeout(() => { splash.style.display = 'none'; }, 1200);
+}
+
+// ── FULLSCREEN ────────────────────────────────────────────────────────────────
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+document.addEventListener('fullscreenchange', () => {
+  const icon = document.getElementById('fs-icon');
+  if (document.fullscreenElement) {
+    icon.innerHTML = `<path d="M6 2v4H2M10 2v4h4M2 10h4v4M14 10h-4v4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  } else {
+    icon.innerHTML = `<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+});
+
 // ── DATA ──────────────────────────────────────────────────────────────────────
 let features = [];
 
@@ -483,27 +577,68 @@ map.on('measurefinish', function(e) {
   if (!match) return;
   const ratio = (areaKm2 / match.area).toFixed(2);
   const msg = ratio == 1.00
-    ? `About the same size as ${match.name}`
+    ? `Same size as ${match.name}`
     : ratio < 1
     ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than ${match.name}`
     : `About ${ratio}x larger than ${match.name}`;
 
-  // Wait for the popup to render then inject comparison
-  setTimeout(() => {
-    const tables = document.querySelectorAll('.leaflet-control-measure-resultpopup table');
-    tables.forEach(table => {
-      // Check if we already added a comparison row
+  // Try multiple possible selectors and retry a few times
+  let attempts = 0;
+  const tryInject = () => {
+    attempts++;
+    const containers = document.querySelectorAll(
+      '.leaflet-control-measure-resultpopup, .result-feature, .leaflet-measure-resultpopup, [class*="measure"] table, [class*="result"] table'
+    );
+    let injected = false;
+    containers.forEach(el => {
+      const table = el.tagName === 'TABLE' ? el : el.querySelector('table');
+      if (!table) return;
       if (table.querySelector('.comparison-row')) return;
       const row = document.createElement('tr');
       row.className = 'comparison-row';
       row.innerHTML = `
-        <td style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.06em;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">Comparable to</td>
-        <td style="color:#e8dfc0;font-family:'Crimson Text',serif;font-size:13px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">${msg.replace(/^About the same size as |^About [\d.]+x (larger|smaller) than /, '')}<br><span style="color:#8a7a5a;font-size:11px;font-style:italic;">${msg.match(/^About/) ? msg.split(' ').slice(0,4).join(' ') : 'Same size'}</span></td>
+        <td style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.06em;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);white-space:nowrap;">Comparable to</td>
+        <td style="color:#e8dfc0;font-family:'Crimson Text',serif;font-size:13px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">${match.name}<br><span style="color:#8a7a5a;font-size:11px;font-style:italic;">${msg}</span></td>
       `;
       table.appendChild(row);
+      injected = true;
     });
-  }, 100);
+    if (!injected && attempts < 10) setTimeout(tryInject, 200);
+  };
+  setTimeout(tryInject, 200);
 });
+
+// ── RANDOM SPLASH QUOTES ──────────────────────────────────────────────────────
+const splashQuotes = [
+  {
+    text: "Birds squawked past him, beyond the golden bounds containing the sea of shimmering stars. With a gentle stroke through the cloud-like fluid, he moved higher above the city.",
+    attr: "— Lain, c. 778 A.A."
+  },
+  {
+    text: "Below him, the bustle of morning vendors opening their stalls looked like ants bringing crumbs home to their queen.",
+    attr: "— Lain, c. 778 A.A."
+  },
+  {
+    text: "The clear walls of the path began to shake slowly, bouncing around like the jellies his younger sister couldn't keep her hands off of.",
+    attr: "— Lain, c. 778 A.A."
+  },
+  {
+    text: "The pathstone glowed a sparkling yellow more captivating than gold itself. From it came a steady field of twinkling golden stars, spreading in a tube the size of the pathstone far off into space.",
+    attr: "— Lain, c. 778 A.A."
+  },
+  {
+    text: "It was a feeling beyond description, a sensation akin to swimming while dry and in the air.",
+    attr: "— Lain's nanny, c. 778 A.A."
+  },
+  {
+    text: "One day we will set foot in Ruma again, and the realm will be reunited. I dream of seeing that boy-king's head on our walls.",
+    attr: "— King Dalis III, c. 778 A.A."
+  },
+];
+
+const randomQuote = splashQuotes[Math.floor(Math.random() * splashQuotes.length)];
+document.getElementById('splash-quote').textContent = randomQuote.text;
+document.getElementById('splash-attribution').textContent = randomQuote.attr;
 function toggleBorder(type) {
   const btn = document.getElementById('btn-' + type);
   const layer = type === 'country' ? countryBorderLayer : provinceBorderLayer;
