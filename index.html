@@ -628,7 +628,7 @@ map.on('measurestart', function() {
 const measureObserver = new MutationObserver(() => {
   if (!comparisonPopup || comparisonPopup.style.display === 'none') return;
   const measureOpen = document.querySelector('.leaflet-control-measure-interaction');
-  if (!measureOpen || measureOpen.style.display === 'none') {
+  if (!measureOpen) {
     hideComparisonPopup();
   }
 });
