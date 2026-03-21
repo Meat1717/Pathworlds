@@ -180,7 +180,6 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 /* ── ABOUT BUTTON ── */
 #about-btn {
-  position: fixed; top: 28px; right: 72px; z-index: 100;
   width: 34px; height: 34px;
   background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
   border-radius: 4px; cursor: pointer;
@@ -223,24 +222,16 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 #about-panel .about-stat span:first-child { color: var(--muted); font-style: italic; }
 #about-panel .about-stat span:last-child { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
 
-/* ── MINIMAP ── */
-#minimap-wrap {
-  position: fixed; bottom: 36px; right: 28px; z-index: 100;
-  width: 160px; height: 90px;
-  border: 1px solid rgba(201,168,76,0.3); border-radius: 4px;
-  overflow: hidden; backdrop-filter: blur(4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+/* ── TOP RIGHT BUTTONS ── */
+#top-right-controls {
+  position: fixed; top: 28px; right: 28px; z-index: 100;
+  display: flex; gap: 6px; align-items: center;
 }
-#minimap { width: 100%; height: 100%; }
-#minimap-label {
-  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.1em;
-  color: rgba(201,168,76,0.5); pointer-events: none; white-space: nowrap;
+#top-right-controls .leaflet-control-measure {
+  position: static !important; margin: 0 !important;
 }
-#minimap-viewport {
-  position: absolute; border: 1px solid var(--gold);
-  background: rgba(201,168,76,0.1); pointer-events: none;
-  transition: all 0.1s;
+#top-right-controls .leaflet-control-measure .leaflet-control-measure-toggle {
+  width: 34px !important; height: 34px !important;
 }
 
 /* ── MOBILE ── */
@@ -250,9 +241,7 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   #title-overlay h1 { font-size: 22px; }
   #title-overlay p { font-size: 12px; }
   #border-controls { top: auto; bottom: 120px; left: 16px; }
-  #about-btn { top: 16px; right: 60px; }
-  #fullscreen-btn { top: 16px; right: 16px; }
-  #minimap-wrap { width: 120px; height: 68px; bottom: 44px; right: 16px; }
+  #about-btn { top: 16px; right: 16px; }
   #coords { font-size: 9px; bottom: 8px; }
   .border-btn { font-size: 10px; padding: 6px 10px; }
   #splash h1 { font-size: 36px; }
@@ -315,7 +304,6 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 /* ── FULLSCREEN BUTTON ── */
 #fullscreen-btn {
-  position: fixed; top: 28px; right: 28px; z-index: 100;
   width: 34px; height: 34px;
   background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
   border-radius: 4px; cursor: pointer;
@@ -376,18 +364,15 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   <div class="about-stat" style="border:none;"><span>Year</span><span>778 A.A.</span></div>
 </div>
 
-<!-- MINIMAP -->
-<div id="minimap-wrap">
-  <div id="minimap"></div>
-  <div id="minimap-label">QUELLIA</div>
-  <div id="minimap-viewport"></div>
+<!-- TOP RIGHT CONTROLS -->
+<div id="top-right-controls">
+  <button id="about-btn" onclick="toggleAbout()" title="About Pathworlds">?</button>
+  <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
+    <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
-
-<button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
-  <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-</button>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.js"></script>
@@ -448,42 +433,6 @@ map.on('mousemove', function(e) {
   const latStr = Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'N' : 'S');
   const lngStr = Math.abs(lng).toFixed(4) + '° ' + (lng >= 0 ? 'E' : 'W');
   document.getElementById('coords').textContent = latStr + ',  ' + lngStr;
-});
-
-// ── MINIMAP ───────────────────────────────────────────────────────────────────
-const minimap = L.map('minimap', {
-  zoomControl: false, attributionControl: false,
-  dragging: false, scrollWheelZoom: false,
-  doubleClickZoom: false, boxZoom: false, keyboard: false,
-  tap: false, touchZoom: false,
-});
-minimap.setView([0, 0], 0);
-L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
-  minZoom: 0, maxZoom: 0, noWrap: false, tms: false, errorTileUrl: '',
-}).addTo(minimap);
-
-function updateMinimap() {
-  const bounds = map.getBounds();
-  const nw = minimap.latLngToContainerPoint(bounds.getNorthWest());
-  const se = minimap.latLngToContainerPoint(bounds.getSouthEast());
-  const wrap = document.getElementById('minimap-wrap');
-  const vp = document.getElementById('minimap-viewport');
-  const left = Math.max(0, nw.x);
-  const top = Math.max(0, nw.y);
-  const width = Math.min(wrap.offsetWidth, se.x) - left;
-  const height = Math.min(wrap.offsetHeight, se.y) - top;
-  vp.style.left = left + 'px';
-  vp.style.top = top + 'px';
-  vp.style.width = Math.max(4, width) + 'px';
-  vp.style.height = Math.max(4, height) + 'px';
-}
-map.on('move zoom moveend', updateMinimap);
-setTimeout(updateMinimap, 500);
-
-document.getElementById('minimap-wrap').addEventListener('click', function(e) {
-  const rect = this.getBoundingClientRect();
-  const latlng = minimap.containerPointToLatLng([e.clientX - rect.left, e.clientY - rect.top]);
-  map.flyTo(latlng, map.getZoom(), { duration: 0.8 });
 });
 
 // Scale control — world is 1/4 size of Earth so we divide by 4
