@@ -222,6 +222,12 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 #about-panel .about-stat span:first-child { color: var(--muted); font-style: italic; }
 #about-panel .about-stat span:last-child { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
 
+/* ── TOP RIGHT BUTTONS ── */
+#top-right-controls {
+  position: fixed; top: 28px; right: 28px; z-index: 100;
+  display: flex; gap: 6px; align-items: center;
+}
+
 /* ── MOBILE ── */
 @media (max-width: 600px) {
   #search-wrap { width: calc(100% - 120px); left: 50%; transform: translateX(-50%); top: 16px; }
@@ -337,9 +343,6 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 <!-- COORDINATES -->
 <div id="coords">0.0000° N, 0.0000° E</div>
-
-<!-- ABOUT BUTTON -->
-<button id="about-btn" onclick="toggleAbout()" title="About Pathworlds">?</button>
 
 <!-- ABOUT PANEL -->
 <div id="about-panel">
