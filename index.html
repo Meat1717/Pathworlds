@@ -225,7 +225,7 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 /* ── MINIMAP ── */
 #minimap-wrap {
-  position: fixed; bottom: 36px; right: 220px; z-index: 100;
+  position: fixed; bottom: 36px; right: 28px; z-index: 100;
   width: 160px; height: 90px;
   border: 1px solid rgba(201,168,76,0.3); border-radius: 4px;
   overflow: hidden; backdrop-filter: blur(4px);
@@ -252,7 +252,7 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   #border-controls { top: auto; bottom: 120px; left: 16px; }
   #about-btn { top: 16px; right: 60px; }
   #fullscreen-btn { top: 16px; right: 16px; }
-  #minimap-wrap { width: 120px; height: 68px; bottom: 44px; right: 170px; }
+  #minimap-wrap { width: 120px; height: 68px; bottom: 44px; right: 16px; }
   #coords { font-size: 9px; bottom: 8px; }
   .border-btn { font-size: 10px; padding: 6px 10px; }
   #splash h1 { font-size: 36px; }
@@ -457,9 +457,9 @@ const minimap = L.map('minimap', {
   doubleClickZoom: false, boxZoom: false, keyboard: false,
   tap: false, touchZoom: false,
 });
-minimap.setView([0, 0], 1);
+minimap.setView([0, 0], 0);
 L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
-  minZoom: 0, maxZoom: 3, noWrap: false, tms: false, errorTileUrl: '',
+  minZoom: 0, maxZoom: 0, noWrap: false, tms: false, errorTileUrl: '',
 }).addTo(minimap);
 
 function updateMinimap() {
@@ -509,7 +509,7 @@ scale._update = function() {
 
 // Measure control — distances and areas divided by 4 for world scale
 const measureControl = L.control.measure({
-  position: 'bottomright',
+  position: 'topright',
   primaryLengthUnit: 'kilometers',
   secondaryLengthUnit: 'meters',
   primaryAreaUnit: 'sqkilometers',
