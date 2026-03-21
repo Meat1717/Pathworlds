@@ -120,6 +120,12 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   font-family: 'Cinzel', serif !important;
   font-size: 11px !important;
   letter-spacing: 0.06em !important;
+  width: 34px !important; height: 34px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2 11L11 2l3 3-9 9H2v-3z' stroke='%23c9a84c' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M9 4l1.5 1.5M6.5 6.5L8 8' stroke='%23c9a84c' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  text-indent: -9999px !important;
 }
 .leaflet-control-measure .leaflet-control-measure-toggle:hover {
   background: rgba(201,168,76,0.15) !important;
@@ -161,7 +167,97 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
 
-/* ── BORDER TOGGLES ── */
+/* ── COORDINATES DISPLAY ── */
+#coords {
+  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 100; background: rgba(14,12,9,0.8);
+  border: 1px solid rgba(201,168,76,0.2); border-radius: 20px;
+  padding: 4px 14px; font-family: 'Cinzel', serif; font-size: 10px;
+  letter-spacing: 0.08em; color: var(--muted);
+  backdrop-filter: blur(8px); pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* ── ABOUT BUTTON ── */
+#about-btn {
+  position: fixed; top: 28px; right: 72px; z-index: 100;
+  width: 34px; height: 34px;
+  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; backdrop-filter: blur(8px);
+  font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold);
+  font-weight: 600;
+}
+#about-btn:hover { border-color: rgba(201,168,76,0.6); background: rgba(14,12,9,0.95); }
+
+/* ── ABOUT PANEL ── */
+#about-panel {
+  position: fixed; top: 72px; right: 28px; z-index: 200;
+  width: 280px; background: rgba(14,12,9,0.96);
+  border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
+  backdrop-filter: blur(12px); padding: 20px;
+  display: none; animation: fadeUp 0.2s ease forwards;
+}
+#about-panel.open { display: block; }
+#about-panel h2 {
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600;
+  color: var(--gold-light); letter-spacing: 0.1em; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+#about-panel p {
+  font-family: 'Crimson Text', serif; font-size: 14px;
+  color: var(--parchment2); line-height: 1.65; margin-bottom: 10px;
+}
+#about-panel .about-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; transition: color 0.15s;
+}
+#about-panel .about-close:hover { color: var(--parchment); }
+#about-panel .about-stat {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid rgba(201,168,76,0.08);
+  font-size: 13px;
+}
+#about-panel .about-stat span:first-child { color: var(--muted); font-style: italic; }
+#about-panel .about-stat span:last-child { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
+
+/* ── MINIMAP ── */
+#minimap-wrap {
+  position: fixed; bottom: 36px; right: 28px; z-index: 100;
+  width: 160px; height: 90px;
+  border: 1px solid rgba(201,168,76,0.3); border-radius: 4px;
+  overflow: hidden; backdrop-filter: blur(4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#minimap { width: 100%; height: 100%; }
+#minimap-label {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.1em;
+  color: rgba(201,168,76,0.5); pointer-events: none; white-space: nowrap;
+}
+#minimap-viewport {
+  position: absolute; border: 1px solid var(--gold);
+  background: rgba(201,168,76,0.1); pointer-events: none;
+  transition: all 0.1s;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 600px) {
+  #search-wrap { width: calc(100% - 120px); left: 50%; transform: translateX(-50%); top: 16px; }
+  #title-overlay { padding: 16px 16px; }
+  #title-overlay h1 { font-size: 22px; }
+  #title-overlay p { font-size: 12px; }
+  #border-controls { top: auto; bottom: 120px; left: 16px; }
+  #about-btn { top: 16px; right: 60px; }
+  #fullscreen-btn { top: 16px; right: 16px; }
+  #minimap-wrap { width: 120px; height: 68px; bottom: 44px; right: 16px; }
+  #coords { font-size: 9px; bottom: 8px; }
+  .border-btn { font-size: 10px; padding: 6px 10px; }
+  #splash h1 { font-size: 36px; }
+  #splash-quote { font-size: 15px; padding: 0 20px; }
+}
 #border-controls {
   position: fixed; top: 100px; left: 32px;
   z-index: 100; display: flex; flex-direction: column; gap: 6px;
@@ -263,6 +359,32 @@ html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: '
   <button class="border-btn active" id="btn-province" onclick="toggleBorder('province')">Province Borders</button>
 </div>
 
+<!-- COORDINATES -->
+<div id="coords">0.0000° N, 0.0000° E</div>
+
+<!-- ABOUT BUTTON -->
+<button id="about-btn" onclick="toggleAbout()" title="About Pathworlds">?</button>
+
+<!-- ABOUT PANEL -->
+<div id="about-panel">
+  <button class="about-close" onclick="toggleAbout()">✕</button>
+  <h2>About Pathworlds</h2>
+  <p>An interactive atlas of <em>Quellia</em>, a fictional planet in a universe of worlds connected by magical star-filled paths.</p>
+  <p style="margin-bottom:14px;">This map is a living document — updated as the world is explored and discovered.</p>
+  <div class="about-stat"><span>World</span><span>Quellia</span></div>
+  <div class="about-stat"><span>Scale</span><span>1/2 of Earth</span></div>
+  <div class="about-stat"><span>Year</span><span>778 A.A.</span></div>
+  <div class="about-stat"><span>Capital</span><span>Chinnout, Temmia</span></div>
+  <div class="about-stat" style="border:none;"><span>Created by</span><span>Pathworlds</span></div>
+</div>
+
+<!-- MINIMAP -->
+<div id="minimap-wrap">
+  <div id="minimap"></div>
+  <div id="minimap-label">QUELLIA</div>
+  <div id="minimap-viewport"></div>
+</div>
+
 <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
   <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -296,6 +418,17 @@ document.addEventListener('fullscreenchange', () => {
   }
 });
 
+// ── ABOUT PANEL ───────────────────────────────────────────────────────────────
+function toggleAbout() {
+  document.getElementById('about-panel').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('about-panel');
+  const btn = document.getElementById('about-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('open');
+  }
+});
 // ── DATA ──────────────────────────────────────────────────────────────────────
 let features = [];
 
@@ -309,6 +442,51 @@ const map = L.map('map', {
   worldCopyJump: true,
 });
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+// ── COORDINATES DISPLAY ───────────────────────────────────────────────────────
+map.on('mousemove', function(e) {
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+  const latStr = Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'N' : 'S');
+  const lngStr = Math.abs(lng).toFixed(4) + '° ' + (lng >= 0 ? 'E' : 'W');
+  document.getElementById('coords').textContent = latStr + ',  ' + lngStr;
+});
+
+// ── MINIMAP ───────────────────────────────────────────────────────────────────
+const minimap = L.map('minimap', {
+  zoomControl: false, attributionControl: false,
+  dragging: false, scrollWheelZoom: false,
+  doubleClickZoom: false, boxZoom: false, keyboard: false,
+  tap: false, touchZoom: false,
+});
+minimap.setView([0, 0], 0);
+L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
+  minZoom: 0, maxZoom: 3, noWrap: false, tms: false, errorTileUrl: '',
+}).addTo(minimap);
+
+function updateMinimap() {
+  const bounds = map.getBounds();
+  const nw = minimap.latLngToContainerPoint(bounds.getNorthWest());
+  const se = minimap.latLngToContainerPoint(bounds.getSouthEast());
+  const wrap = document.getElementById('minimap-wrap');
+  const vp = document.getElementById('minimap-viewport');
+  const left = Math.max(0, nw.x);
+  const top = Math.max(0, nw.y);
+  const width = Math.min(wrap.offsetWidth, se.x) - left;
+  const height = Math.min(wrap.offsetHeight, se.y) - top;
+  vp.style.left = left + 'px';
+  vp.style.top = top + 'px';
+  vp.style.width = Math.max(4, width) + 'px';
+  vp.style.height = Math.max(4, height) + 'px';
+}
+map.on('move zoom moveend', updateMinimap);
+setTimeout(updateMinimap, 500);
+
+document.getElementById('minimap-wrap').addEventListener('click', function(e) {
+  const rect = this.getBoundingClientRect();
+  const latlng = minimap.containerPointToLatLng([e.clientX - rect.left, e.clientY - rect.top]);
+  map.flyTo(latlng, map.getZoom(), { duration: 0.8 });
+});
 
 // Scale control — world is 1/4 size of Earth so we divide by 4
 const scale = L.control.scale({ position: 'bottomright', imperial: false, maxWidth: 200 });
