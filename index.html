@@ -3,803 +3,459 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pathworlds Viewer</title>
-
-<!-- SEO -->
-<meta name="description" content="Explore Quellia, a fictional planet in a universe of worlds connected by magical star-filled paths. An interactive atlas updated as the world is discovered.">
-<meta name="keywords" content="Pathworlds, Quellia, fantasy map, interactive atlas, worldbuilding, fictional world">
-<meta name="author" content="Pathworlds">
-
-<!-- Open Graph (controls how link looks when shared on social media) -->
-<meta property="og:title" content="Pathworlds — Interactive Atlas of Quellia">
-<meta property="og:description" content="Explore Quellia, a fictional planet in a universe of worlds connected by magical star-filled paths.">
-<meta property="og:url" content="https://pathworlds.ca">
-<meta property="og:type" content="website">
-
-<!-- Twitter/X card -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Pathworlds — Interactive Atlas of Quellia">
-<meta name="twitter:description" content="Explore Quellia, a fictional planet in a universe of worlds connected by magical star-filled paths.">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<title>Pathworlds — The Universe</title>
+<meta name="description" content="Choose a world to explore. An interactive atlas of the Pathworlds universe.">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.css"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --gold:       #c9a84c;
-  --gold-light: #e8cc7a;
-  --gold-dim:   #7a6030;
-  --parchment:  #e8dfc0;
-  --parchment2: #c8b98a;
-  --muted:      #8a7a5a;
-  --ink:        #0e0c09;
-  --ink2:       #1a1612;
+html, body {
+  height: 100%; overflow: hidden;
+  background: #04030a;
+  font-family: 'Crimson Text', serif;
+  cursor: default;
 }
 
-html, body { height: 100%; overflow: hidden; background: #aad3df; font-family: 'Crimson Text', serif; }
-
-#map { position: fixed; inset: 0; z-index: 1; }
-.leaflet-container { background: #aad3df; font-family: 'Crimson Text', serif; }
-.leaflet-tile-pane { will-change: transform; }
-.leaflet-tile { margin-right: -1px; }
-
-/* ── TITLE ── */
-#title-overlay {
-  position: fixed; top: 0; left: 0; z-index: 100;
-  padding: 28px 32px; pointer-events: none;
-  animation: fadeUp 1.4s ease forwards;
-}
-#title-overlay h1 {
-  font-family: 'Cinzel Decorative', serif; font-size: 30px; font-weight: 700;
-  color: var(--gold-light); letter-spacing: 0.05em; line-height: 1;
-  text-shadow: 0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
-}
-#title-overlay p {
-  font-family: 'Crimson Text', serif; font-style: italic; font-size: 14px;
-  color: var(--parchment); margin-top: 6px; letter-spacing: 0.04em;
-  text-shadow: 0 0 6px rgba(0,0,0,1), 0 0 12px rgba(0,0,0,1), 0 0 24px rgba(0,0,0,1), 0 0 48px rgba(0,0,0,1);
-  display: inline-block;
+/* ── STARS ── */
+#starfield {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
 }
 
-/* ── SEARCH ── */
-#search-wrap {
-  position: fixed; top: 28px; left: 50%; transform: translateX(-50%);
-  z-index: 100; width: 280px;
-}
-#search-input {
-  width: 100%; background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
-  color: var(--parchment); font-family: 'Crimson Text', serif; font-size: 15px;
-  padding: 10px 16px 10px 36px; border-radius: 24px; outline: none;
-  backdrop-filter: blur(8px); transition: border-color 0.2s, box-shadow 0.2s;
-}
-#search-input::placeholder { color: var(--muted); font-style: italic; }
-#search-input:focus { border-color: rgba(201,168,76,0.6); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
-#search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
-#search-results {
-  display: none; margin-top: 4px; background: rgba(14,12,9,0.95);
-  border: 1px solid rgba(201,168,76,0.2); border-radius: 8px;
-  overflow: hidden; backdrop-filter: blur(8px);
-}
-.sr { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(201,168,76,0.08); transition: background 0.1s; display: flex; align-items: center; gap: 10px; }
-.sr:last-child { border-bottom: none; }
-.sr:hover { background: rgba(201,168,76,0.08); }
-.sr-name { font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold-light); }
-.sr-type { font-size: 11px; color: var(--muted); font-style: italic; }
-.sr-empty { padding: 12px 16px; font-size: 13px; color: var(--muted); font-style: italic; text-align: center; }
-
-/* ── POPUPS ── */
-.leaflet-popup-content-wrapper {
-  background: rgba(10,8,6,0.96) !important; border: 1px solid rgba(201,168,76,0.28) !important;
-  border-radius: 6px !important; box-shadow: 0 8px 40px rgba(0,0,0,0.85) !important;
-  color: var(--parchment) !important; font-family: 'Crimson Text', serif !important;
-  backdrop-filter: blur(8px);
-}
-.leaflet-popup-tip { background: rgba(10,8,6,0.96) !important; }
-.leaflet-popup-content { margin: 16px 20px !important; }
-.pu-name { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold-light); margin-bottom: 3px; }
-.pu-type { font-size: 12px; font-style: italic; color: var(--muted); margin-bottom: 8px; text-transform: capitalize; }
-.pu-desc { font-size: 14px; line-height: 1.55; color: var(--parchment2); }
-
-/* ── LEAFLET OVERRIDES ── */
-.leaflet-bar { border: 1px solid rgba(201,168,76,0.22) !important; background: transparent !important; }
-.leaflet-bar a { background: rgba(14,12,9,0.8) !important; color: var(--parchment2) !important; border-bottom-color: rgba(201,168,76,0.12) !important; backdrop-filter: blur(4px); }
-.leaflet-bar a:hover { background: rgba(201,168,76,0.12) !important; }
-
-/* ── SCALE ── */
-.leaflet-control-scale-line {
-  background: rgba(14,12,9,0.8) !important;
-  border: 1px solid rgba(201,168,76,0.3) !important;
-  border-top: none !important;
-  color: var(--parchment2) !important;
-  font-family: 'Cinzel', serif !important;
-  font-size: 10px !important;
-  letter-spacing: 0.06em !important;
-  padding: 2px 6px !important;
-  backdrop-filter: blur(8px);
-}
-
-/* ── MEASURE TOOL ── */
-.leaflet-control-measure {
-  background: rgba(14,12,9,0.9) !important;
-  border: 1px solid rgba(201,168,76,0.3) !important;
-  border-radius: 4px !important;
-  color: var(--parchment2) !important;
-  font-family: 'Crimson Text', serif !important;
-  backdrop-filter: blur(8px);
-}
-.leaflet-control-measure .leaflet-control-measure-toggle {
-  background: rgba(14,12,9,0.9) !important;
-  color: var(--gold) !important;
-  border: 1px solid rgba(201,168,76,0.3) !important;
-  border-radius: 4px !important;
-  font-family: 'Cinzel', serif !important;
-  font-size: 11px !important;
-  letter-spacing: 0.06em !important;
-  width: 34px !important; height: 34px !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M2 11L11 2l3 3-9 9H2v-3z' stroke='%23c9a84c' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M9 4l1.5 1.5M6.5 6.5L8 8' stroke='%23c9a84c' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  text-indent: -9999px !important;
-}
-.leaflet-control-measure .leaflet-control-measure-toggle:hover {
-  background: rgba(201,168,76,0.15) !important;
-}
-.leaflet-control-measure-interaction { 
-  background: rgba(14,12,9,0.92) !important;
-  border: 1px solid rgba(201,168,76,0.3) !important;
-  border-radius: 4px !important;
-  color: var(--parchment) !important;
-  font-family: 'Crimson Text', serif !important;
-  padding: 10px !important;
-}
-.leaflet-control-measure-interaction h3 {
-  color: var(--gold-light) !important;
-  font-family: 'Cinzel', serif !important;
-  font-size: 12px !important;
-  letter-spacing: 0.08em !important;
-  border-bottom: 1px solid rgba(201,168,76,0.2) !important;
-  padding-bottom: 6px !important;
-  margin-bottom: 8px !important;
-}
-.leaflet-control-measure-interaction p,
-.leaflet-control-measure-interaction td,
-.leaflet-control-measure-interaction th {
-  color: var(--parchment2) !important;
-  font-family: 'Crimson Text', serif !important;
-  font-size: 13px !important;
-}
-.leaflet-control-measure-interaction .start-prompt {
-  color: var(--parchment2) !important;
-  font-style: italic !important;
-}
-.leaflet-control-measure-interaction a {
-  color: var(--gold) !important;
-}
-.leaflet-control-measure-interaction a:hover {
-  color: var(--gold-light) !important;
-}
-
-@keyframes fadeUp { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-
-/* ── COORDINATES DISPLAY ── */
-#coords {
-  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
-  z-index: 100; background: rgba(14,12,9,0.8);
-  border: 1px solid rgba(201,168,76,0.2); border-radius: 20px;
-  padding: 4px 14px; font-family: 'Cinzel', serif; font-size: 10px;
-  letter-spacing: 0.08em; color: var(--muted);
-  backdrop-filter: blur(8px); pointer-events: none;
-  transition: opacity 0.2s;
-}
-
-/* ── ABOUT BUTTON ── */
-#about-btn {
-  width: 34px; height: 34px;
-  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 4px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; backdrop-filter: blur(8px);
-  font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold);
-  font-weight: 600;
-}
-#about-btn:hover { border-color: rgba(201,168,76,0.6); background: rgba(14,12,9,0.95); }
-
-/* ── ABOUT PANEL ── */
-#about-panel {
-  position: fixed; top: 72px; right: 28px; z-index: 200;
-  width: 280px; background: rgba(14,12,9,0.96);
-  border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
-  backdrop-filter: blur(12px); padding: 20px;
-  display: none; animation: fadeUp 0.2s ease forwards;
-}
-#about-panel.open { display: block; }
-#about-panel h2 {
-  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600;
-  color: var(--gold-light); letter-spacing: 0.1em; margin-bottom: 12px;
-  padding-bottom: 8px; border-bottom: 1px solid rgba(201,168,76,0.2);
-}
-#about-panel p {
-  font-family: 'Crimson Text', serif; font-size: 14px;
-  color: var(--parchment2); line-height: 1.65; margin-bottom: 10px;
-}
-#about-panel .about-close {
-  position: absolute; top: 12px; right: 14px;
-  background: none; border: none; color: var(--muted);
-  font-size: 16px; cursor: pointer; transition: color 0.15s;
-}
-#about-panel .about-close:hover { color: var(--parchment); }
-#about-panel .about-stat {
-  display: flex; justify-content: space-between;
-  padding: 6px 0; border-bottom: 1px solid rgba(201,168,76,0.08);
-  font-size: 13px;
-}
-#about-panel .about-stat span:first-child { color: var(--muted); font-style: italic; }
-#about-panel .about-stat span:last-child { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
-
-/* ── TOP RIGHT BUTTONS ── */
-#top-right-controls {
-  position: fixed; top: 28px; right: 28px; z-index: 100;
-  display: flex; gap: 6px; align-items: center;
-}
-
-/* ── MOBILE ── */
-@media (max-width: 600px) {
-  #search-wrap { width: calc(100% - 120px); left: 50%; transform: translateX(-50%); top: 16px; }
-  #title-overlay { padding: 16px 16px; }
-  #title-overlay h1 { font-size: 22px; }
-  #title-overlay p { font-size: 12px; }
-  #border-controls { top: auto; bottom: 120px; left: 16px; }
-  #about-btn { top: 16px; right: 16px; }
-  #coords { font-size: 9px; bottom: 8px; }
-  .border-btn { font-size: 10px; padding: 6px 10px; }
-  #splash h1 { font-size: 36px; }
-  #splash-quote { font-size: 15px; padding: 0 20px; }
-}
-#border-controls {
-  position: fixed; top: 100px; left: 32px;
-  z-index: 100; display: flex; flex-direction: column; gap: 6px;
-  animation: fadeUp 1.4s ease forwards;
-}
-.border-btn {
-  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
-  color: var(--parchment2); font-family: 'Cinzel', serif; font-size: 11px;
-  letter-spacing: 0.08em; padding: 7px 14px; border-radius: 20px;
-  cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px);
-  text-align: left;
-}
-.border-btn:hover { border-color: rgba(201,168,76,0.6); color: var(--parchment); }
-.border-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); }
-
-/* ── SPLASH SCREEN ── */
-#splash {
-  position: fixed; inset: 0; z-index: 2000;
-  background: #080706;
+/* ── MAIN LAYOUT ── */
+#universe {
+  position: fixed; inset: 0; z-index: 10;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: opacity 1.2s ease;
 }
-#splash.fade-out { opacity: 0; pointer-events: none; }
-#splash-inner { text-align: center; animation: fadeUp 1.5s ease forwards; }
-#splash h1 {
-  font-family: 'Cinzel Decorative', serif; font-size: 52px; font-weight: 700;
-  color: var(--gold-light); letter-spacing: 0.08em; line-height: 1;
-  text-shadow: 0 0 40px rgba(201,168,76,0.3);
-  margin-bottom: 16px;
-}
-#splash-divider {
-  width: 120px; height: 1px;
-  background: linear-gradient(to right, transparent, var(--gold), transparent);
-  margin: 20px auto;
-}
-#splash-quote {
-  font-family: 'Crimson Text', serif; font-style: italic;
-  font-size: 17px; color: var(--parchment2);
-  max-width: 480px; line-height: 1.8;
-  opacity: 0.85; margin-bottom: 8px;
-}
-#splash-attribution {
-  font-family: 'Cinzel', serif; font-size: 11px;
-  color: var(--gold-dim); letter-spacing: 0.12em;
-  margin-bottom: 48px;
-}
-#splash-prompt {
-  font-family: 'Cinzel', serif; font-size: 11px;
-  color: var(--muted); letter-spacing: 0.16em;
-  animation: pulse 2.5s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
 
-/* ── FULLSCREEN BUTTON ── */
-#fullscreen-btn {
-  width: 34px; height: 34px;
-  background: rgba(14,12,9,0.8); border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 4px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; backdrop-filter: blur(8px);
+/* ── HEADER ── */
+#header {
+  text-align: center; margin-bottom: 60px;
+  animation: fadeUp 1.4s ease forwards;
 }
-#fullscreen-btn:hover { border-color: rgba(201,168,76,0.6); background: rgba(14,12,9,0.95); }
-#fullscreen-btn svg { opacity: 0.6; transition: opacity 0.2s; }
-#fullscreen-btn:hover svg { opacity: 1; }
+#header h1 {
+  font-family: 'Cinzel Decorative', serif; font-size: 38px; font-weight: 700;
+  color: #e8cc7a; letter-spacing: 0.08em;
+  text-shadow: 0 0 40px rgba(201,168,76,0.3);
+}
+#header p {
+  font-family: 'Crimson Text', serif; font-style: italic; font-size: 15px;
+  color: #c8b98a; margin-top: 8px; letter-spacing: 0.04em; opacity: 0.8;
+}
+#header-divider {
+  width: 100px; height: 1px; margin: 14px auto 0;
+  background: linear-gradient(to right, transparent, #c9a84c, transparent);
+}
+
+/* ── PATH LINE ── */
+#path-wrap {
+  position: relative; width: 100%; max-width: 900px;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeUp 1.6s ease forwards;
+}
+
+canvas#path-canvas {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+}
+
+/* ── PLANETS ROW ── */
+#planets {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; width: 100%; position: relative; z-index: 2;
+  padding: 40px 0;
+}
+
+.planet-slot {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; max-width: 160px; gap: 16px;
+}
+
+.planet-orb {
+  border-radius: 50%; position: relative;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  cursor: pointer;
+}
+.planet-orb:hover { transform: scale(1.08); }
+
+/* Quellia — active, glowing gold */
+.planet-orb.quellia {
+  width: 90px; height: 90px;
+  background: radial-gradient(circle at 35% 35%, #f0d890, #c9a84c 50%, #8a6820);
+  box-shadow: 0 0 30px rgba(201,168,76,0.6), 0 0 60px rgba(201,168,76,0.25);
+  animation: pulse-quellia 3s ease-in-out infinite;
+}
+@keyframes pulse-quellia {
+  0%,100% { box-shadow: 0 0 30px rgba(201,168,76,0.6), 0 0 60px rgba(201,168,76,0.25); }
+  50% { box-shadow: 0 0 50px rgba(201,168,76,0.9), 0 0 90px rgba(201,168,76,0.4); }
+}
+
+/* Locked planets — dim gold */
+.planet-orb.locked {
+  cursor: not-allowed;
+  filter: grayscale(0.2) brightness(0.4);
+}
+.planet-orb.locked:hover { transform: scale(1.03); filter: grayscale(0.1) brightness(0.55); }
+
+.planet-orb.aplosia {
+  width: 70px; height: 70px;
+  background: radial-gradient(circle at 35% 35%, #e8d080, #c9a84c 50%, #8a6820);
+  box-shadow: 0 0 20px rgba(201,168,76,0.2);
+}
+.planet-orb.fruth {
+  width: 75px; height: 75px;
+  background: radial-gradient(circle at 35% 35%, #f0d890, #c9a84c 50%, #7a5810);
+  box-shadow: 0 0 20px rgba(201,168,76,0.2);
+}
+.planet-orb.unknown1 {
+  width: 55px; height: 55px;
+  background: radial-gradient(circle at 35% 35%, #d8c070, #a88030 50%, #604810);
+  box-shadow: 0 0 15px rgba(201,168,76,0.15);
+}
+.planet-orb.unknown2 {
+  width: 65px; height: 65px;
+  background: radial-gradient(circle at 35% 35%, #e8d080, #b89040 50%, #705820);
+  box-shadow: 0 0 18px rgba(201,168,76,0.15);
+}
+.planet-orb.unknown3 {
+  width: 50px; height: 50px;
+  background: radial-gradient(circle at 35% 35%, #d0b860, #987828 50%, #584010);
+  box-shadow: 0 0 14px rgba(201,168,76,0.15);
+}
+
+/* Ring for Fruth */
+.planet-orb.fruth::after {
+  content: ''; position: absolute;
+  width: 110%; height: 30%;
+  border: 2px solid rgba(220,190,100,0.35);
+  border-radius: 50%;
+  top: 35%; left: -5%;
+  transform: rotateX(70deg);
+}
+
+/* Lock icon */
+.lock-icon {
+  position: absolute; bottom: -4px; right: -4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(10,8,6,0.9); border: 1px solid rgba(201,168,76,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+
+/* Planet labels */
+.planet-label {
+  text-align: center;
+}
+.planet-name {
+  font-family: 'Cinzel', serif; font-size: 13px;
+  color: #e8dfc0; letter-spacing: 0.08em;
+}
+.planet-name.locked-text { color: #4a3a2a; }
+.planet-sub {
+  font-family: 'Crimson Text', serif; font-style: italic;
+  font-size: 11px; color: #6a5a3a; margin-top: 3px;
+}
+
+/* ── TOOLTIP ── */
+#tooltip {
+  position: fixed; z-index: 200;
+  background: rgba(10,8,6,0.95); border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 6px; padding: 12px 16px;
+  font-family: 'Crimson Text', serif; font-size: 14px; color: #c8b98a;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  max-width: 220px; line-height: 1.5; backdrop-filter: blur(8px);
+}
+#tooltip.visible { opacity: 1; }
+#tooltip strong { font-family: 'Cinzel', serif; font-size: 12px; color: #e8cc7a; display: block; margin-bottom: 4px; letter-spacing: 0.06em; }
+
+/* ── ENTER OVERLAY ── */
+#enter-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: #04030a; opacity: 0; pointer-events: none;
+  transition: opacity 1s ease;
+}
+#enter-overlay.fade-in { opacity: 1; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* ── FOOTER ── */
+#footer {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.14em;
+  color: rgba(201,168,76,0.25); white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  #header h1 { font-size: 26px; }
+  #path-wrap { max-width: 100%; padding: 0 10px; }
+  .planet-orb.quellia { width: 70px; height: 70px; }
+  .planet-orb.aplosia { width: 54px; height: 54px; }
+  .planet-orb.fruth { width: 58px; height: 58px; }
+  .planet-orb.unknown1 { width: 42px; height: 42px; }
+  .planet-orb.unknown2 { width: 50px; height: 50px; }
+  .planet-orb.unknown3 { width: 38px; height: 38px; }
+  .planet-name { font-size: 11px; }
+}
 </style>
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
-<div id="splash" onclick="dismissSplash()">
-  <div id="splash-inner">
-    <h1>Quellia</h1>
-    <div id="splash-divider"></div>
-    <p id="splash-quote">"Birds squawked past him, beyond the golden bounds containing the sea of shimmering stars. With a gentle stroke through the cloud-like fluid, he moved higher above the city."</p>
-    <p id="splash-attribution">— Lain, c. 778 A.A.</p>
-    <p id="splash-prompt">CLICK TO EXPLORE</p>
+<canvas id="starfield"></canvas>
+<div id="enter-overlay"></div>
+
+<div id="universe">
+  <div id="header">
+    <h1>Pathworlds</h1>
+    <div id="header-divider"></div>
+    <p>Choose a world to explore</p>
+  </div>
+
+  <div id="path-wrap">
+    <canvas id="path-canvas"></canvas>
+    <div id="planets">
+
+      <!-- Unknown 1 -->
+      <div class="planet-slot">
+        <div class="planet-orb unknown1 locked" onclick="lockedClick(this)" onmouseenter="showTip(event,'Unknown World','This world has not yet been discovered by pathflight.')" onmouseleave="hideTip()">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="planet-label">
+          <div class="planet-name locked-text">???</div>
+          <div class="planet-sub">Undiscovered</div>
+        </div>
+      </div>
+
+      <!-- Fruth -->
+      <div class="planet-slot">
+        <div class="planet-orb fruth locked" onclick="lockedClick(this)" onmouseenter="showTip(event,'Fruth','The sister planet of Quellia. Its path has been closed for over one hundred years.')" onmouseleave="hideTip()">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="planet-label">
+          <div class="planet-name locked-text">Fruth</div>
+          <div class="planet-sub">Path closed</div>
+        </div>
+      </div>
+
+      <!-- Quellia — ACTIVE -->
+      <div class="planet-slot">
+        <div class="planet-orb quellia" onclick="enterQuellia()" onmouseenter="showTip(event,'Quellia','Home of the Kingdom of Temmia. Capital: Chinnout. Year: 778 A.A.')" onmouseleave="hideTip()">
+        </div>
+        <div class="planet-label">
+          <div class="planet-name" style="color:#e8cc7a;">Quellia</div>
+          <div class="planet-sub" style="color:#8a7a5a;">Click to explore</div>
+        </div>
+      </div>
+
+      <!-- Aplosia -->
+      <div class="planet-slot">
+        <div class="planet-orb aplosia locked" onclick="lockedClick(this)" onmouseenter="showTip(event,'Aplosia','A neighbouring world, home of the Kingdom of Ca\'agath. Its path to Quellia has been closed for twenty-nine years.')" onmouseleave="hideTip()">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="planet-label">
+          <div class="planet-name locked-text">Aplosia</div>
+          <div class="planet-sub">Path closed</div>
+        </div>
+      </div>
+
+      <!-- Unknown 2 -->
+      <div class="planet-slot">
+        <div class="planet-orb unknown2 locked" onclick="lockedClick(this)" onmouseenter="showTip(event,'Unknown World','This world has not yet been discovered by pathflight.')" onmouseleave="hideTip()">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="planet-label">
+          <div class="planet-name locked-text">???</div>
+          <div class="planet-sub">Undiscovered</div>
+        </div>
+      </div>
+
+      <!-- Unknown 3 -->
+      <div class="planet-slot">
+        <div class="planet-orb unknown3 locked" onclick="lockedClick(this)" onmouseenter="showTip(event,'Unknown World','This world lies beyond the reach of the known paths.')" onmouseleave="hideTip()">
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="planet-label">
+          <div class="planet-name locked-text">???</div>
+          <div class="planet-sub">Undiscovered</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
-<div id="map"></div>
+<div id="tooltip"><strong id="tip-name"></strong><span id="tip-desc"></span></div>
+<div id="footer">THE PATHWORLDS UNIVERSE — c. 778 A.A.</div>
 
-<div id="title-overlay">
-  <h1>Quellia</h1>
-  <p>Map of Quellia as seen from pathflight — c. 778 A.A.</p>
-</div>
-
-<div id="search-wrap">
-  <span id="search-icon">⌕</span>
-  <input type="text" id="search-input" placeholder="Search Quellia..." autocomplete="off"
-    oninput="onSearch(this.value)" onblur="setTimeout(closeSearch,180)" onfocus="onSearch(this.value)"/>
-  <div id="search-results"></div>
-</div>
-
-<div id="border-controls">
-  <button class="border-btn active" id="btn-country" onclick="toggleBorder('country')">Country Borders</button>
-  <button class="border-btn active" id="btn-province" onclick="toggleBorder('province')">Province Borders</button>
-</div>
-
-<!-- COORDINATES -->
-<div id="coords">0.0000° N, 0.0000° E</div>
-
-<!-- ABOUT PANEL -->
-<div id="about-panel">
-  <button class="about-close" onclick="toggleAbout()">✕</button>
-  <h2>About Pathworlds</h2>
-  <p>An interactive atlas of <em>Quellia</em>, a fictional planet in a universe of worlds connected by magical star-filled paths.</p>
-  <p style="margin-bottom:14px;">This map is a living document — updated as the world is explored and discovered.</p>
-  <div class="about-stat"><span>World</span><span>Quellia</span></div>
-  <div class="about-stat"><span>Scale</span><span>1/2 of Earth</span></div>
-  <div class="about-stat" style="border:none;"><span>Year</span><span>778 A.A.</span></div>
-</div>
-
-<!-- TOP RIGHT CONTROLS -->
-<div id="top-right-controls">
-  <button id="about-btn" onclick="toggleAbout()" title="About Pathworlds">?</button>
-  <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">
-    <svg id="fs-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.js"></script>
 <script>
-// ── SPLASH ────────────────────────────────────────────────────────────────────
-function dismissSplash() {
-  const splash = document.getElementById('splash');
-  splash.classList.add('fade-out');
-  setTimeout(() => { splash.style.display = 'none'; }, 1200);
+// ── STARFIELD ─────────────────────────────────────────────────────────────────
+const sf = document.getElementById('starfield');
+const sctx = sf.getContext('2d');
+let stars = [];
+
+function resizeStarfield() {
+  sf.width = window.innerWidth;
+  sf.height = window.innerHeight;
 }
 
-// ── FULLSCREEN ────────────────────────────────────────────────────────────────
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-}
-document.addEventListener('fullscreenchange', () => {
-  const icon = document.getElementById('fs-icon');
-  if (document.fullscreenElement) {
-    icon.innerHTML = `<path d="M6 2v4H2M10 2v4h4M2 10h4v4M14 10h-4v4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>`;
-  } else {
-    icon.innerHTML = `<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" stroke="#c9a84c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>`;
-  }
-});
-
-// ── ABOUT PANEL ───────────────────────────────────────────────────────────────
-function toggleAbout() {
-  document.getElementById('about-panel').classList.toggle('open');
-}
-document.addEventListener('click', function(e) {
-  const panel = document.getElementById('about-panel');
-  const btn = document.getElementById('about-btn');
-  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
-    panel.classList.remove('open');
-  }
-});
-// ── DATA ──────────────────────────────────────────────────────────────────────
-let features = [];
-
-// ── MAP ───────────────────────────────────────────────────────────────────────
-const map = L.map('map', {
-  minZoom: 3, maxZoom: 14,
-  zoomControl: false, attributionControl: false,
-  wheelPxPerZoomLevel: 120, zoomSnap: 0.5, zoomDelta: 0.5,
-  maxBounds: [[-85.05, -Infinity], [85.05, Infinity]],
-  maxBoundsViscosity: 1.0,
-  worldCopyJump: true,
-});
-L.control.zoom({ position: 'bottomleft' }).addTo(map);
-
-// ── COORDINATES DISPLAY ───────────────────────────────────────────────────────
-map.on('mousemove', function(e) {
-  const lat = e.latlng.lat;
-  const lng = e.latlng.lng;
-  const latStr = Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'N' : 'S');
-  const lngStr = Math.abs(lng).toFixed(4) + '° ' + (lng >= 0 ? 'E' : 'W');
-  document.getElementById('coords').textContent = latStr + ',  ' + lngStr;
-});
-
-// Scale control — world is 1/4 size of Earth so we divide by 4
-const scale = L.control.scale({ position: 'bottomright', imperial: false, maxWidth: 200 });
-scale.addTo(map);
-
-// Override scale calculation for 1/4 scale world
-const origUpdate = scale._update.bind(scale);
-scale._update = function() {
-  origUpdate();
-  const div = this._mScale;
-  if (div) {
-    const text = div.innerHTML;
-    const match = text.match(/([\d.]+)\s*(km|m)/);
-    if (match) {
-      let val = parseFloat(match[1]);
-      const unit = match[2];
-      val = Math.round(val / 2 * 10) / 10;
-      div.innerHTML = val + ' ' + unit;
-    }
-  }
-};
-
-// Measure control — distances and areas divided by 4 for world scale
-const measureControl = L.control.measure({
-  position: 'bottomright',
-  primaryLengthUnit: 'kilometers',
-  secondaryLengthUnit: 'meters',
-  primaryAreaUnit: 'sqkilometers',
-  activeColor: '#c9a84c',
-  completedColor: '#e8cc7a',
-  captureZIndex: 10000,
-  popupOptions: { autoPan: false },
-  units: {
-    kilometers: { factor: 0.001 / 2, display: 'km', decimals: 2 },
-    meters: { factor: 1 / 2, display: 'm', decimals: 0 },
-    sqkilometers: { factor: 0.000001 / 4, display: 'km²', decimals: 2 },
-  }
-}).addTo(map);
-
-// Prevent map panning when measure tool is active
-const originalPanTo = map.panTo.bind(map);
-let isMeasuring = false;
-map.on('measurestart', () => { isMeasuring = true; });
-map.on('measurefinish', () => { isMeasuring = false; });
-map.panTo = function(latlng, options) {
-  if (isMeasuring) return this;
-  return originalPanTo(latlng, options);
-};
-map.setView([0, 0], 3);
-
-L.tileLayer('tiles/QGIS Map of World 1/{z}/{x}/{y}.png', {
-  minZoom: 0, maxZoom: 14,
-  noWrap: false, tms: false, errorTileUrl: '',
-}).addTo(map);
-
-// ── FEATURE GROUP ─────────────────────────────────────────────────────────────
-const featureGroup = L.featureGroup().addTo(map);
-
-// ── ICONS ─────────────────────────────────────────────────────────────────────
-function getTownIcon(t) {
-  const cfg = {
-    capital: { color:'#e8cc7a', border:'#b8860b', size:16 },
-    city:    { color:'#d4a020', border:'#8b5e0a', size:13 },
-    town:    { color:'#c8904a', border:'#7a5020', size:11 },
-    village: { color:'#c8904a', border:'#7a5020', size:9  },
-    ruin:    { color:'#c84040', border:'#8b1a1a', size:10 },
-  };
-  const c = cfg[t] || cfg.town; const s = c.size;
-  return L.divIcon({ className:'', html:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:${c.color};border:2px solid ${c.border};box-shadow:0 0 8px rgba(0,0,0,0.6);"></div>`, iconSize:[s,s], iconAnchor:[s/2,s/2], popupAnchor:[0,-s/2-2] });
-}
-function getLandmarkIcon() {
-  return L.divIcon({ className:'', html:`<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #c84040;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.7));"></div>`, iconSize:[14,13], iconAnchor:[7,13], popupAnchor:[0,-15] });
-}
-function getRoadStyle() { return { color:'#8b6535', weight:2, dashArray:'5,4', opacity:0.85 }; }
-function getRegionStyle() { return { color:'#3a6a3a', weight:1.5, fillColor:'#7aab7a', fillOpacity:0.12, opacity:0.6 }; }
-
-// ── RENDERERS ─────────────────────────────────────────────────────────────────
-function makeLabel(latlng, text, mt, fs, italic) {
-  return L.marker(latlng, { icon: L.divIcon({ className:'', html:`<div style="font-family:'Cinzel',serif;font-size:${fs}px;color:#e8dfc0;white-space:nowrap;margin-top:${mt}px;margin-left:-28px;text-shadow:0 1px 5px rgba(0,0,0,0.95),0 0 10px rgba(0,0,0,0.8);pointer-events:none;${italic?'font-style:italic;':''}">${text}</div>`, iconSize:[100,20], iconAnchor:[-10,0] }), interactive:false });
-}
-function addTownMarker(f) {
-  const icon = f.type==='ruin' ? getLandmarkIcon() : getTownIcon(f.type);
-  const marker = L.marker(f.latlng, {icon}).bindPopup(makePopup(f)).addTo(featureGroup);
-  makeLabel(f.latlng, f.name, 10, 11, false).addTo(featureGroup);
-  f._layers = [marker];
-}
-function addLandmarkMarker(f) {
-  const marker = L.marker(f.latlng, {icon:getLandmarkIcon()}).bindPopup(makePopup(f)).addTo(featureGroup);
-  makeLabel(f.latlng, f.name, 15, 10, true).addTo(featureGroup);
-  f._layers = [marker];
-}
-function addRoadLine(f) {
-  f._layers = [L.polyline(f.points, getRoadStyle()).bindPopup(makePopup(f)).addTo(featureGroup)];
-}
-function addRegionPoly(f) {
-  const poly = L.polygon(f.points, getRegionStyle()).bindPopup(makePopup(f)).addTo(featureGroup);
-  const center = poly.getBounds().getCenter();
-  L.marker(center, { icon: L.divIcon({ className:'', html:`<div style="font-family:'Cinzel',serif;font-size:12px;color:#e8dfc0;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,0.95);text-align:center;font-style:italic;transform:translate(-50%,-50%);pointer-events:none;">${f.name}</div>`, iconSize:[120,20], iconAnchor:[0,0] }), interactive:false }).addTo(featureGroup);
-  f._layers = [poly];
-}
-function makePopup(f) {
-  const t = f.type || (f.mode==='road' ? 'Road' : 'Territory');
-  return `<div class="pu-name">${f.name}</div><div class="pu-type">${t}</div>${f.desc?`<div class="pu-desc">${f.desc}</div>`:''}`;
-}
-
-// ── LOAD FEATURES FROM GEOJSON ────────────────────────────────────────────────
-fetch('temmia-features.geojson')
-  .then(r => r.ok ? r.json() : null)
-  .then(data => {
-    if (!data) return;
-    (data.features || []).forEach(f => {
-      const p = f.properties || {};
-      const id = Date.now() + Math.random();
-      const feat = { id, name:p.name||'Unnamed', desc:p.desc||'', mode:p.mode, type:p.type };
-      if (f.geometry.type==='Point') { feat.latlng=[f.geometry.coordinates[1],f.geometry.coordinates[0]]; feat.mode=feat.mode||'town'; feat.mode==='landmark'?addLandmarkMarker(feat):addTownMarker(feat); }
-      else if (f.geometry.type==='LineString') { feat.points=f.geometry.coordinates.map(c=>[c[1],c[0]]); feat.mode='road'; addRoadLine(feat); }
-      else if (f.geometry.type==='Polygon') { feat.points=f.geometry.coordinates[0].map(c=>[c[1],c[0]]); feat.mode='region'; addRegionPoly(feat); }
-      features.push(feat);
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 280; i++) {
+    stars.push({
+      x: Math.random() * sf.width,
+      y: Math.random() * sf.height,
+      r: Math.random() * 1.2 + 0.2,
+      o: Math.random(),
+      speed: Math.random() * 0.005 + 0.002,
+      phase: Math.random() * Math.PI * 2,
     });
-  })
-  .catch(() => {});
-
-// ── BORDERS ───────────────────────────────────────────────────────────────────
-const countryBorderStyle  = { color: '#000000', weight: 1, opacity: 0.7, fill: false };
-const provinceBorderStyle = { color: '#000000', weight: 0.8, opacity: 0.6, fill: false, dashArray: '4, 4' };
-
-let provinceBorderLayer = null;
-let countryBorderLayer = null;
-
-// Load country borders — always visible
-fetch('country-borders.geojson')
-  .then(r => r.ok ? r.json() : null)
-  .then(data => { if (data) { countryBorderLayer = L.geoJSON(data, { style: countryBorderStyle }); countryBorderLayer.addTo(map); } })
-  .catch(() => {});
-
-// Load province borders — only shown at zoom 5 and above
-fetch('province-borders.geojson')
-  .then(r => r.ok ? r.json() : null)
-  .then(data => {
-    if (!data) return;
-    provinceBorderLayer = L.geoJSON(data, { style: provinceBorderStyle });
-    if (map.getZoom() >= 5) provinceBorderLayer.addTo(map);
-    map.on('zoomend', () => {
-      const btn = document.getElementById('btn-province');
-      const isActive = btn && btn.classList.contains('active');
-      if (!isActive) return;
-      if (map.getZoom() >= 5) { if (!map.hasLayer(provinceBorderLayer)) provinceBorderLayer.addTo(map); }
-      else { if (map.hasLayer(provinceBorderLayer)) map.removeLayer(provinceBorderLayer); }
-    });
-  })
-  .catch(() => {});
-
-// ── REAL WORLD AREA COMPARISONS ──────────────────────────────────────────────
-const realWorldAreas = [
-  { name: 'Vatican City', area: 0.44 },
-  { name: 'Monaco', area: 2 },
-  { name: 'San Marino', area: 61 },
-  { name: 'Liechtenstein', area: 160 },
-  { name: 'Malta', area: 316 },
-  { name: 'Maldives', area: 298 },
-  { name: 'Bahrain', area: 765 },
-  { name: 'Singapore', area: 728 },
-  { name: 'Andorra', area: 468 },
-  { name: 'Barbados', area: 430 },
-  { name: 'Samoa', area: 2842 },
-  { name: 'Luxembourg', area: 2586 },
-  { name: 'Trinidad and Tobago', area: 5130 },
-  { name: 'Corsica', area: 8680 },
-  { name: 'Cyprus', area: 9251 },
-  { name: 'Lebanon', area: 10452 },
-  { name: 'Jamaica', area: 10990 },
-  { name: 'Kuwait', area: 17818 },
-  { name: 'Timor-Leste', area: 14874 },
-  { name: 'Belize', area: 22966 },
-  { name: 'El Salvador', area: 21041 },
-  { name: 'Israel', area: 20770 },
-  { name: 'Sardinia', area: 24090 },
-  { name: 'Sri Lanka', area: 65610 },
-  { name: 'Ireland', area: 70273 },
-  { name: 'South Korea', area: 100210 },
-  { name: 'Portugal', area: 92212 },
-  { name: 'Hungary', area: 93028 },
-  { name: 'Iceland', area: 103000 },
-  { name: 'Cuba', area: 109884 },
-  { name: 'Bulgaria', area: 110879 },
-  { name: 'Nepal', area: 147181 },
-  { name: 'Greece', area: 131957 },
-  { name: 'England', area: 130279 },
-  { name: 'Bangladesh', area: 147570 },
-  { name: 'Tajikistan', area: 143100 },
-  { name: 'Senegal', area: 196722 },
-  { name: 'Syria', area: 185180 },
-  { name: 'Cambodia', area: 181035 },
-  { name: 'Uruguay', area: 176215 },
-  { name: 'Oman', area: 309500 },
-  { name: 'Italy', area: 301340 },
-  { name: 'Philippines', area: 300000 },
-  { name: 'New Zealand', area: 268021 },
-  { name: 'United Kingdom', area: 243610 },
-  { name: 'Japan', area: 377975 },
-  { name: 'Germany', area: 357114 },
-  { name: 'Zimbabwe', area: 390757 },
-  { name: 'Norway', area: 385207 },
-  { name: 'Iraq', area: 438317 },
-  { name: 'Morocco', area: 446550 },
-  { name: 'Uzbekistan', area: 448978 },
-  { name: 'Sweden', area: 450295 },
-  { name: 'Cameroon', area: 475442 },
-  { name: 'Papua New Guinea', area: 462840 },
-  { name: 'Spain', area: 505990 },
-  { name: 'Thailand', area: 513120 },
-  { name: 'France', area: 551695 },
-  { name: 'Yemen', area: 527968 },
-  { name: 'Turkey', area: 783562 },
-  { name: 'Chile', area: 756102 },
-  { name: 'Zambia', area: 752618 },
-  { name: 'Myanmar', area: 676578 },
-  { name: 'Afghanistan', area: 652230 },
-  { name: 'Mozambique', area: 801590 },
-  { name: 'Pakistan', area: 881913 },
-  { name: 'Egypt', area: 1001450 },
-  { name: 'South Africa', area: 1219090 },
-  { name: 'Bolivia', area: 1098581 },
-  { name: 'Mali', area: 1240192 },
-  { name: 'Angola', area: 1246700 },
-  { name: 'Ethiopia', area: 1104300 },
-  { name: 'Niger', area: 1267000 },
-  { name: 'Mauritania', area: 1030700 },
-  { name: 'Peru', area: 1285216 },
-  { name: 'Chad', area: 1284000 },
-  { name: 'Colombia', area: 1141748 },
-  { name: 'Mexico', area: 1964375 },
-  { name: 'Saudi Arabia', area: 2149690 },
-  { name: 'Indonesia', area: 1904569 },
-  { name: 'Iran', area: 1648195 },
-  { name: 'Mongolia', area: 1564110 },
-  { name: 'Greenland', area: 2166086 },
-  { name: 'Democratic Republic of Congo', area: 2344858 },
-  { name: 'India', area: 3287263 },
-  { name: 'Australia', area: 7692024 },
-  { name: 'Brazil', area: 8515767 },
-  { name: 'China', area: 9596960 },
-  { name: 'United States', area: 9833517 },
-  { name: 'Canada', area: 9984670 },
-  { name: 'Russia', area: 17098242 },
-  { name: 'Africa (continent)', area: 30370000 },
-  { name: 'Asia (continent)', area: 44579000 },
-];
-
-function getRealWorldComparison(areaKm2) {
-  if (areaKm2 <= 0) return null;
-  let closest = realWorldAreas[0];
-  let minDiff = Infinity;
-  for (const place of realWorldAreas) {
-    const diff = Math.abs(Math.log(place.area) - Math.log(areaKm2));
-    if (diff < minDiff) { minDiff = diff; closest = place; }
   }
-  return closest;
 }
 
-// Hook into measure finish event to show comparison popup
-map.on('measurestart', function() {
-  lastComparisonMsg = null;
-});
-
-// ── AREA COMPARISON ───────────────────────────────────────────────────────────
-let lastComparisonMsg = null;
-
-function injectComparison() {
-  const groups = document.querySelectorAll('.leaflet-control-measure-interaction .group');
-  groups.forEach(group => {
-    const heading = group.querySelector('.heading');
-    if (!heading || !heading.textContent.includes('Area')) return;
-    if (group.querySelector('.comparison-inject')) return;
-    const areaText = group.querySelector('p').textContent;
-    const match = areaText.match(/([\d,]+\.?\d*)\s*km²/);
-    if (!match) return;
-    const areaKm2 = parseFloat(match[1].replace(/,/g, '')) / 4;
-    const comparison = getRealWorldComparison(areaKm2);
-    if (!comparison) return;
-    const ratio = (areaKm2 / comparison.area).toFixed(2);
-    const msg = ratio == 1.00
-      ? `Same size as ${comparison.name}`
-      : ratio < 1
-      ? `~${(comparison.area / areaKm2).toFixed(1)}x smaller than ${comparison.name}`
-      : `~${ratio}x the size of ${comparison.name}`;
-    const div = document.createElement('p');
-    div.className = 'comparison-inject';
-    div.innerHTML = `<span class="heading" style="color:#c9a84c;">Comparable to</span> ${comparison.name}<br><span style="font-size:11px;font-style:italic;color:#8a7a5a;">${msg}</span>`;
-    group.appendChild(div);
+function drawStars() {
+  sctx.clearRect(0, 0, sf.width, sf.height);
+  const t = Date.now() * 0.001;
+  stars.forEach(s => {
+    const opacity = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed * 10 + s.phase));
+    sctx.beginPath();
+    sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    sctx.fillStyle = `rgba(255,248,220,${opacity})`;
+    sctx.fill();
   });
+  requestAnimationFrame(drawStars);
 }
 
-const measureObserver = new MutationObserver(injectComparison);
-measureObserver.observe(document.body, { childList: true, subtree: true });
+resizeStarfield();
+initStars();
+drawStars();
+window.addEventListener('resize', () => { resizeStarfield(); initStars(); drawPath(); });
 
-// ── RANDOM SPLASH QUOTES ──────────────────────────────────────────────────────
-const splashQuotes = [
-  {
-    text: "Birds squawked past him, beyond the golden bounds containing the sea of shimmering stars. With a gentle stroke through the cloud-like fluid, he moved higher above the city.",
-    attr: "— Lain, c. 778 A.A."
-  },
-  {
-    text: "Below him, the bustle of morning vendors opening their stalls looked like ants bringing crumbs home to their queen.",
-    attr: "— Lain, c. 778 A.A."
-  },
-  {
-    text: "The clear walls of the path began to shake slowly, bouncing around like the jellies his younger sister couldn't keep her hands off of.",
-    attr: "— Lain, c. 778 A.A."
-  },
-  {
-    text: "The pathstone glowed a sparkling yellow more captivating than gold itself. From it came a steady field of twinkling golden stars, spreading in a tube the size of the pathstone far off into space.",
-    attr: "— Lain, c. 778 A.A."
-  },
-  {
-    text: "It was a feeling beyond description, a sensation akin to swimming while dry and in the air.",
-    attr: "— Lain's nanny, c. 778 A.A."
-  },
-  {
-    text: "One day we will set foot in Ruma again, and the realm will be reunited. I dream of seeing that boy-king's head on our walls.",
-    attr: "— King Dalis III, c. 778 A.A."
-  },
-];
+// ── GOLDEN PATH ───────────────────────────────────────────────────────────────
+const pc = document.getElementById('path-canvas');
+const pctx = pc.getContext('2d');
+let pathOffset = 0;
 
-const randomQuote = splashQuotes[Math.floor(Math.random() * splashQuotes.length)];
-document.getElementById('splash-quote').textContent = randomQuote.text;
-document.getElementById('splash-attribution').textContent = randomQuote.attr;
-function toggleBorder(type) {
-  const btn = document.getElementById('btn-' + type);
-  const layer = type === 'country' ? countryBorderLayer : provinceBorderLayer;
-  if (!layer) return;
-  if (map.hasLayer(layer)) {
-    map.removeLayer(layer);
-    btn.classList.remove('active');
-  } else {
-    map.addLayer(layer);
-    btn.classList.add('active');
+function drawPath() {
+  const wrap = document.getElementById('path-wrap');
+  pc.width = wrap.offsetWidth;
+  pc.height = wrap.offsetHeight;
+
+  const planets = document.querySelectorAll('.planet-orb');
+  if (planets.length === 0) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  const points = [];
+
+  planets.forEach(p => {
+    const r = p.getBoundingClientRect();
+    points.push({
+      x: r.left - wrapRect.left + r.width / 2,
+      y: r.top - wrapRect.top + r.height / 2,
+    });
+  });
+
+  pctx.clearRect(0, 0, pc.width, pc.height);
+
+  // Use actual centre y of each planet for the path
+  const startX = points[0].x;
+  const endX = points[points.length - 1].x;
+
+  // Average y across all planets for a consistent horizontal line
+  const avgY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+  // Draw outer glow
+  pctx.beginPath();
+  pctx.moveTo(startX, avgY);
+  pctx.lineTo(endX, avgY);
+  pctx.strokeStyle = 'rgba(201,168,76,0.08)';
+  pctx.lineWidth = 18;
+  pctx.stroke();
+
+  // Draw main tube
+  pctx.beginPath();
+  pctx.moveTo(startX, avgY);
+  pctx.lineTo(endX, avgY);
+  pctx.strokeStyle = 'rgba(201,168,76,0.3)';
+  pctx.lineWidth = 4;
+  pctx.stroke();
+
+  // Draw animated star particles along path
+  const totalWidth = endX - startX;
+  for (let i = 0; i < 50; i++) {
+    const pos = ((i / 50) + pathOffset) % 1;
+    const x = startX + pos * totalWidth;
+    const size = Math.random() * 1.8 + 0.4;
+    const opacity = 0.2 + 0.8 * Math.sin(pos * Math.PI);
+    pctx.beginPath();
+    pctx.arc(x, avgY, size, 0, Math.PI * 2);
+    pctx.fillStyle = `rgba(232,204,122,${opacity})`;
+    pctx.fill();
   }
 }
-function onSearch(val) {
-  const box = document.getElementById('search-results'), q = val.trim().toLowerCase();
-  if (!q) { box.style.display='none'; return; }
-  const m = features.filter(f => f.name.toLowerCase().includes(q));
-  box.innerHTML = m.length===0
-    ? `<div class="sr-empty">No places found in Quellia</div>`
-    : m.slice(0,8).map(f => {
-        const icon = f.mode==='road'?'━':f.mode==='region'?'▭':f.type==='capital'?'★':'●';
-        return `<div class="sr" onclick="searchSelect(${f.id})"><div style="color:var(--gold-dim);font-size:11px;width:12px;">${icon}</div><div><div class="sr-name">${f.name}</div><div class="sr-type">${f.type||f.mode}</div></div></div>`;
-      }).join('');
-  box.style.display = 'block';
+
+function animatePath() {
+  pathOffset = (pathOffset + 0.0004) % 1;
+  drawPath();
+  requestAnimationFrame(animatePath);
 }
-function searchSelect(id) {
-  const f = features.find(f => f.id===id); if (!f) return;
-  closeSearch(); document.getElementById('search-input').value = '';
-  if (f.latlng) map.flyTo(f.latlng, 6, {duration:1});
-  else if (f.points) map.flyToBounds(L.latLngBounds(f.points), {padding:[60,60], duration:1});
-  if (f._layers) { const l=f._layers[0]; if(l.openPopup) setTimeout(()=>l.openPopup(), 1050); }
+
+// Wait for layout then start
+setTimeout(() => { drawPath(); animatePath(); }, 100);
+window.addEventListener('resize', drawPath);
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+function showTip(e, name, desc) {
+  const tip = document.getElementById('tooltip');
+  document.getElementById('tip-name').textContent = name;
+  document.getElementById('tip-desc').textContent = desc;
+  tip.classList.add('visible');
+  moveTip(e);
 }
-function closeSearch() { document.getElementById('search-results').style.display='none'; }
+function moveTip(e) {
+  const tip = document.getElementById('tooltip');
+  const x = Math.min(e.clientX + 14, window.innerWidth - 240);
+  const y = Math.min(e.clientY + 14, window.innerHeight - 100);
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+function hideTip() {
+  document.getElementById('tooltip').classList.remove('visible');
+}
+document.addEventListener('mousemove', e => {
+  if (document.getElementById('tooltip').classList.contains('visible')) moveTip(e);
+});
+
+// ── LOCKED CLICK ──────────────────────────────────────────────────────────────
+function lockedClick(el) {
+  el.style.animation = 'shake 0.4s ease';
+  setTimeout(() => el.style.animation = '', 400);
+}
+
+// Add shake keyframe
+const style = document.createElement('style');
+style.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }`;
+document.head.appendChild(style);
+
+// ── ENTER QUELLIA ─────────────────────────────────────────────────────────────
+function enterQuellia() {
+  const orb = document.querySelector('.planet-orb.quellia');
+  const overlay = document.getElementById('enter-overlay');
+
+  // Zoom in effect on planet
+  orb.style.transition = 'transform 0.8s ease, filter 0.8s ease';
+  orb.style.transform = 'scale(4)';
+  orb.style.filter = 'brightness(2)';
+
+  // Fade to black then navigate
+  setTimeout(() => {
+    overlay.classList.add('fade-in');
+  }, 600);
+
+  setTimeout(() => {
+    window.location.href = 'quellia.html';
+  }, 1600);
+}
 </script>
 </body>
 </html>
