@@ -570,43 +570,43 @@ function getRealWorldComparison(areaKm2) {
 }
 
 // Hook into measure finish event to inject comparison into results popup
+let lastMeasureArea = null;
+
 map.on('measurefinish', function(e) {
   if (!e.area) return;
-  const areaKm2 = e.area * 0.000001 / 4;
-  const match = getRealWorldComparison(areaKm2);
-  if (!match) return;
-  const ratio = (areaKm2 / match.area).toFixed(2);
-  const msg = ratio == 1.00
-    ? `Same size as ${match.name}`
-    : ratio < 1
-    ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than ${match.name}`
-    : `About ${ratio}x larger than ${match.name}`;
-
-  // Try multiple possible selectors and retry a few times
-  let attempts = 0;
-  const tryInject = () => {
-    attempts++;
-    const containers = document.querySelectorAll(
-      '.leaflet-control-measure-resultpopup, .result-feature, .leaflet-measure-resultpopup, [class*="measure"] table, [class*="result"] table'
-    );
-    let injected = false;
-    containers.forEach(el => {
-      const table = el.tagName === 'TABLE' ? el : el.querySelector('table');
-      if (!table) return;
-      if (table.querySelector('.comparison-row')) return;
-      const row = document.createElement('tr');
-      row.className = 'comparison-row';
-      row.innerHTML = `
-        <td style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.06em;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);white-space:nowrap;">Comparable to</td>
-        <td style="color:#e8dfc0;font-family:'Crimson Text',serif;font-size:13px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">${match.name}<br><span style="color:#8a7a5a;font-size:11px;font-style:italic;">${msg}</span></td>
-      `;
-      table.appendChild(row);
-      injected = true;
-    });
-    if (!injected && attempts < 10) setTimeout(tryInject, 200);
-  };
-  setTimeout(tryInject, 200);
+  lastMeasureArea = e.area;
 });
+
+// MutationObserver watches for any new tables added to the page by the measure plugin
+const observer = new MutationObserver((mutations) => {
+  if (!lastMeasureArea) return;
+  for (const mutation of mutations) {
+    for (const node of mutation.addedNodes) {
+      if (node.nodeType !== 1) continue;
+      const tables = node.tagName === 'TABLE' ? [node] : [...node.querySelectorAll('table')];
+      tables.forEach(table => {
+        if (table.querySelector('.comparison-row')) return;
+        const areaKm2 = lastMeasureArea * 0.000001 / 4;
+        const match = getRealWorldComparison(areaKm2);
+        if (!match) return;
+        const ratio = (areaKm2 / match.area).toFixed(2);
+        const msg = ratio == 1.00
+          ? `Same size as ${match.name}`
+          : ratio < 1
+          ? `About ${(match.area / areaKm2).toFixed(1)}x smaller than ${match.name}`
+          : `About ${ratio}x the size of ${match.name}`;
+        const row = document.createElement('tr');
+        row.className = 'comparison-row';
+        row.innerHTML = `
+          <td style="color:#c9a84c;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.06em;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);white-space:nowrap;">Comparable to</td>
+          <td style="color:#e8dfc0;font-family:'Crimson Text',serif;font-size:13px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2);">${match.name}<br><span style="color:#8a7a5a;font-size:11px;font-style:italic;">${msg}</span></td>
+        `;
+        table.appendChild(row);
+      });
+    }
+  }
+});
+observer.observe(document.body, { childList: true, subtree: true });
 
 // ── RANDOM SPLASH QUOTES ──────────────────────────────────────────────────────
 const splashQuotes = [
