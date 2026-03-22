@@ -16,3 +16,8 @@ Then this link:
 http://localhost:8000/pathworlds.html
 
 to end server: cntrl + c
+
+
+
+Tile merger:
+python merge_tiles.py
