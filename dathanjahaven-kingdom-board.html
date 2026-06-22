@@ -378,6 +378,48 @@ body{margin:0;}
   text-align:center; font-size:12px; color:var(--ink-soft); font-style:italic;
   padding:14px 28px 22px;
 }
+
+/* LIGHTBOX */
+.lightbox-btn{
+  font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.5px;
+  padding:6px 12px; border-radius:3px; border:1px solid var(--teal-deep);
+  background:rgba(55,102,107,0.12); color:var(--teal-deep); cursor:pointer;
+  margin-left:12px;
+}
+.lightbox-btn:hover{ background:rgba(55,102,107,0.22); }
+.lightbox-overlay{
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(15,12,8,0.88);
+  align-items:center; justify-content:center; flex-direction:column; gap:12px;
+}
+.lightbox-overlay.open{ display:flex; }
+.lightbox-inner{
+  position:relative; max-width:92vw; max-height:88vh;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.lightbox-imgs{
+  display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+  max-height:80vh; overflow-y:auto;
+}
+.lightbox-imgs img{
+  max-width:min(580px, 90vw); max-height:75vh;
+  border-radius:4px; border:2px solid var(--parchment-darker);
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  cursor:zoom-in; transition:transform 0.2s;
+  object-fit:contain;
+}
+.lightbox-imgs img.zoomed{ transform:scale(1.6); cursor:zoom-out; z-index:2; position:relative; }
+.lightbox-label{
+  font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.8px;
+  color:var(--parchment); text-align:center; opacity:0.7;
+}
+.lightbox-close{
+  position:absolute; top:-36px; right:0;
+  font-family:'Cinzel', serif; font-size:12px; letter-spacing:0.5px;
+  color:var(--parchment); background:none; border:1px solid rgba(255,255,255,0.25);
+  border-radius:3px; padding:4px 12px; cursor:pointer; opacity:0.8;
+}
+.lightbox-close:hover{ opacity:1; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -392,6 +434,7 @@ body{margin:0;}
       </div>
       <div class="header-right">
         <div class="day-field">Day <input type="number" id="dayInput" min="1" value="1"></div>
+        <button class="lightbox-btn" id="mapBtn">🗺 View City Map</button>
         <div class="era-pill" id="eraPill">Era 0 — Landfall</div>
       </div>
     </div>
@@ -444,6 +487,22 @@ body{margin:0;}
     <div class="footer-note" id="storageNote">Shared council board — everyone who opens this sees the same ledger.</div>
     <div class="footer-note" style="padding-top:0;margin-top:-8px;">
       <span id="resetTrigger" style="cursor:pointer;opacity:0.18;font-size:11px;user-select:none;" title="">&#9881;</span>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" id="lightboxClose">✕ Close</button>
+    <div class="lightbox-imgs">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <img src="https://raw.githubusercontent.com/Meat1717/Pathworlds/main/assets/City%20Map.png" alt="City Map" id="lbImg1">
+        <span class="lightbox-label">City Map</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <img src="https://raw.githubusercontent.com/Meat1717/Pathworlds/main/assets/City%20District%20Map.png" alt="City District Map" id="lbImg2">
+        <span class="lightbox-label">District Map</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1491,6 +1550,27 @@ document.getElementById("resetTrigger").addEventListener("click", () => {
     activeTab = "hearthlands";
     renderAll();
   }
+});
+
+// Lightbox
+document.getElementById("mapBtn").addEventListener("click", () => {
+  document.getElementById("lightboxOverlay").classList.add("open");
+});
+document.getElementById("lightboxClose").addEventListener("click", () => {
+  document.getElementById("lightboxOverlay").classList.remove("open");
+});
+document.getElementById("lightboxOverlay").addEventListener("click", e => {
+  if(e.target === document.getElementById("lightboxOverlay"))
+    document.getElementById("lightboxOverlay").classList.remove("open");
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape") document.getElementById("lightboxOverlay").classList.remove("open");
+});
+["lbImg1","lbImg2"].forEach(id => {
+  document.getElementById(id).addEventListener("click", e => {
+    e.stopPropagation();
+    e.target.classList.toggle("zoomed");
+  });
 });
 
 attachBoardListener();
