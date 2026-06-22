@@ -113,37 +113,6 @@ body{margin:0;}
   text-align:center;
 }
 
-/* ROSTER STRIP */
-.roster-strip{
-  padding:12px 32px;
-  border-bottom:1px solid var(--parchment-darker);
-  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-}
-.roster-label{
-  font-family:'Cinzel', serif; font-size:11px; letter-spacing:1px;
-  color:var(--ink-soft); text-transform:uppercase; margin-right:4px;
-}
-.chip{
-  display:flex; align-items:center; gap:6px;
-  background:rgba(255,255,255,0.4);
-  border:1px solid var(--parchment-darker);
-  border-radius:14px;
-  padding:4px 6px 4px 12px;
-  font-size:13.5px;
-}
-.chip .role{ color:var(--ink-soft); font-style:italic; font-size:12px; }
-.chip button{
-  border:none; background:none; cursor:pointer; color:var(--oxblood);
-  font-size:14px; line-height:1; padding:2px 6px; border-radius:50%;
-}
-.chip button:hover{ background:rgba(124,45,45,0.12); }
-.add-roster{ display:flex; gap:6px; align-items:center; }
-.add-roster input, .add-roster select{
-  font-family:'EB Garamond', serif; font-size:13.5px;
-  padding:5px 8px; border:1px solid var(--parchment-darker); border-radius:3px;
-  background:rgba(255,255,255,0.5); color:var(--ink);
-}
-.add-roster input{ width:120px; }
 .btn-small{
   font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.5px;
   padding:6px 12px; border-radius:3px; border:1px solid var(--brass);
@@ -154,7 +123,7 @@ body{margin:0;}
 /* MAIN GRID */
 .spread{
   display:grid;
-  grid-template-columns: 1fr 2px 1.25fr;
+  grid-template-columns: 340px 2px 1fr;
   align-items:stretch;
 }
 .spine{
@@ -249,31 +218,6 @@ body{margin:0;}
 .advance-btn:not(:disabled):hover{ filter:brightness(1.08); }
 .future-note{ font-size:13px; color:var(--ink-soft); font-style:italic; }
 
-/* RESOURCE LEDGER */
-.resource-row{
-  display:grid; grid-template-columns: 90px 1fr auto; align-items:center; gap:10px;
-  padding:7px 0; border-bottom:1px dashed var(--parchment-darker);
-}
-.resource-row:last-child{ border-bottom:none; }
-.resource-name{ font-size:14px; font-weight:600; color:var(--ink); }
-.resource-bar-track{
-  height:8px; border-radius:4px; background:rgba(35,30,15,0.08); overflow:hidden; position:relative;
-}
-.resource-bar-fill{ height:100%; border-radius:4px; transition:width 0.3s; }
-.resource-thresh-mark{
-  position:absolute; top:-2px; bottom:-2px; width:2px; background:rgba(35,30,15,0.4);
-}
-.resource-controls{ display:flex; align-items:center; gap:5px; }
-.resource-controls button{
-  width:22px; height:22px; border-radius:3px; border:1px solid var(--parchment-darker);
-  background:rgba(255,255,255,0.5); cursor:pointer; font-size:13px; color:var(--ink);
-  display:flex; align-items:center; justify-content:center; line-height:1;
-}
-.resource-controls button:hover{ background:rgba(255,255,255,0.85); }
-.resource-controls input{
-  width:48px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:13px;
-  padding:3px 2px; border:1px solid var(--parchment-darker); border-radius:3px; background:rgba(255,255,255,0.5);
-}
 
 /* DISTRICT TABS */
 .tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
@@ -324,7 +268,7 @@ body{margin:0;}
 .scroll-tag{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--teal); display:block; margin-bottom:4px; font-style:normal; }
 
 /* CHRONICLE */
-.chronicle{ max-height:280px; overflow-y:auto; padding-right:4px; }
+.chronicle{ max-height:420px; overflow-y:auto; padding-right:4px; }
 .chron-entry{
   display:flex; gap:8px; padding:7px 0; border-bottom:1px solid rgba(35,30,15,0.07); font-size:13.5px;
 }
@@ -455,32 +399,11 @@ body{margin:0;}
         <div class="era-pill" id="eraPill">Era 0 — Landfall</div>
       </div>
     </div>
-
-    <div class="roster-strip" id="rosterStrip">
-      <span class="roster-label">Council</span>
-      <div id="rosterChips"></div>
-      <div class="add-roster">
-        <input type="text" id="rosterName" placeholder="Player name" maxlength="20">
-        <select id="rosterRole">
-          <option>Architect</option>
-          <option>Steward</option>
-          <option>Harbor Master</option>
-          <option>Forgemaster</option>
-          <option>Diplomat/Merchant</option>
-          <option>Freehand</option>
-        </select>
-        <button class="btn-small" id="addRosterBtn">+ Add</button>
-      </div>
-    </div>
-
     <div class="spread">
       <div class="page page-left">
         <div class="section-title">Eras of the Haven</div>
         <div class="era-track" id="eraTrack"></div>
         <div id="goalCard"></div>
-
-        <div class="section-title spaced">Resource Ledger</div>
-        <div id="resourceLedger"></div>
       </div>
 
       <div class="spine"></div>
@@ -1018,14 +941,6 @@ const DISTRICTS = [
 ];
 
 
-const RESOURCES = [
-  {key:"wheat", name:"Wheat", color:"var(--field)", threshold:64, questDistrict:"hearthlands", questText:"Build a bakery — wheat is overflowing"},
-  {key:"stone", name:"Stone", color:"var(--slate)", threshold:128, questDistrict:"bulwark", questText:"Begin the wall foundation — stone is stockpiled"},
-  {key:"iron", name:"Iron", color:"var(--brass)", threshold:64, questDistrict:"hearthlands", questText:"Upgrade the forge — iron surplus on hand"},
-  {key:"fish", name:"Fish", color:"var(--teal)", threshold:64, questDistrict:"wharf", questText:"Build a fish market & smokehouse"},
-  {key:"wood", name:"Wood", color:"var(--umber)", threshold:128, questDistrict:"wharf", questText:"Raise a shipwright's yard — timber is plentiful"},
-  {key:"gold", name:"Gold", color:"var(--oxblood)", threshold:32, questDistrict:"hearthlands", questText:"A trade caravan arrives — build a merchant's hall"}
-];
 
 const CRIER_QUESTS = [
   // BOON
@@ -1122,11 +1037,9 @@ function defaultState(){
   });
   const eraGoals = {};
   ERAS.forEach((e,i) => { eraGoals[i] = {arch:false, survival:false}; });
-  const resources = {};
-  RESOURCES.forEach(r => resources[r.key] = 0);
   return {
-    day:1, era:0, eraGoals, resources,
-    triggered:[], districts, roster:[], chronicle:[],
+    day:1, era:0, eraGoals,
+    districts, chronicle:[],
     questSeq: 0, crierSeen: [], crierBoard: []
   };
 }
@@ -1156,10 +1069,6 @@ function attachBoardListener(){
     const val = snapshot.val();
     if(val){
       state = Object.assign(defaultState(), val);
-      // Migration guard: older saved boards stored each district as a flat
-      // array of quests. The new format groups quests by era. If we detect
-      // the old shape, rebuild fresh quest lists (era/resources/roster/chronicle
-      // are kept either way) rather than rendering broken data.
       const freshDistricts = defaultState().districts;
       DISTRICTS.forEach(d => {
         if(Array.isArray(state.districts[d.id])){
@@ -1199,21 +1108,6 @@ function showSeal(text){
 function addChronicle(type, text){
   state.chronicle.unshift({day:state.day, era:state.era, type, text});
   if(state.chronicle.length > 80) state.chronicle.pop();
-}
-
-function checkResourceTriggers(key){
-  const r = RESOURCES.find(x => x.key === key);
-  if(!r) return;
-  const flagKey = key + "-" + r.threshold;
-  if(state.resources[key] >= r.threshold && !state.triggered.includes(flagKey)){
-    state.triggered.push(flagKey);
-    const tier = state.era;
-    const qid = r.questDistrict + "-auto-" + state.questSeq++;
-    if(!state.districts[r.questDistrict][tier]) state.districts[r.questDistrict][tier] = [];
-    state.districts[r.questDistrict][tier].push({id:qid, text:r.questText, done:false});
-    addChronicle("trigger", r.questText + " (" + DISTRICTS.find(d=>d.id===r.questDistrict).name + ")");
-    showSeal("Surplus: " + r.name);
-  }
 }
 
 function countIncompleteQuests(upToEra){
@@ -1290,27 +1184,7 @@ function summonCrier(){
   saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
 }
 
-function changeResource(key, delta){
-  state.resources[key] = Math.max(0, state.resources[key] + delta);
-  checkResourceTriggers(key);
-  saveState(); renderAll();
-}
-function setResource(key, value){
-  const v = Math.max(0, parseInt(value)||0);
-  state.resources[key] = v;
-  checkResourceTriggers(key);
-  saveState(); renderAll();
-}
 
-function addRoster(name, role){
-  if(!name.trim()) return;
-  state.roster.push({name:name.trim(), role});
-  saveState(); renderRoster();
-}
-function removeRoster(idx){
-  state.roster.splice(idx,1);
-  saveState(); renderRoster();
-}
 
 /* ---------- RENDER ---------- */
 
@@ -1319,10 +1193,8 @@ function renderAll(){
   document.getElementById("eraPill").textContent = "Era " + state.era + " — " + ERAS[state.era].name;
   renderEraTrack();
   renderGoalCard();
-  renderResources();
   renderTabs();
   renderDistrictPanel();
-  renderRoster();
   renderChronicle();
 }
 
@@ -1395,32 +1267,6 @@ function renderGoalCard(){
   if(btn) btn.addEventListener("click", advanceEra);
 }
 
-function renderResources(){
-  const el = document.getElementById("resourceLedger");
-  el.innerHTML = RESOURCES.map(r => {
-    const val = state.resources[r.key];
-    const pct = Math.min(100, (val / r.threshold) * 100);
-    const triggered = state.triggered.includes(r.key+"-"+r.threshold);
-    return `<div class="resource-row">
-      <div class="resource-name">${r.name}</div>
-      <div class="resource-bar-track">
-        <div class="resource-bar-fill" style="width:${pct}%; background:${r.color};"></div>
-        <div class="resource-thresh-mark" style="left:calc(${Math.min(100,(r.threshold/Math.max(val,r.threshold,1))*0+100)}% - 2px); display:none;"></div>
-      </div>
-      <div class="resource-controls">
-        <button data-key="${r.key}" data-d="-10">−</button>
-        <input type="number" data-key="${r.key}" value="${val}">
-        <button data-key="${r.key}" data-d="10">+</button>
-      </div>
-    </div>`;
-  }).join("");
-  el.querySelectorAll("button[data-d]").forEach(b => {
-    b.addEventListener("click", () => changeResource(b.dataset.key, parseInt(b.dataset.d)));
-  });
-  el.querySelectorAll("input[type=number]").forEach(inp => {
-    inp.addEventListener("change", () => setResource(inp.dataset.key, inp.value));
-  });
-}
 
 function renderCrierBoard(el){
   if(!state.crierBoard) state.crierBoard = [];
@@ -1565,17 +1411,6 @@ function renderDistrictPanel(){
   });
 }
 
-function renderRoster(){
-  const el = document.getElementById("rosterChips");
-  if(state.roster.length === 0){
-    el.innerHTML = `<span class="empty-state" style="padding:0;">No one's signed the charter yet.</span>`;
-  } else {
-    el.innerHTML = state.roster.map((p,i) => `<div class="chip" style="display:inline-flex;margin:2px 4px 2px 0;">
-      ${p.name} <span class="role">${p.role}</span> <button data-idx="${i}">×</button>
-    </div>`).join("");
-    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => removeRoster(parseInt(b.dataset.idx))));
-  }
-}
 
 function renderChronicle(){
   const el = document.getElementById("chronicle");
@@ -1615,18 +1450,6 @@ document.getElementById("clearChronicleBtn").addEventListener("click", () => {
   }
 });
 
-document.getElementById("addRosterBtn").addEventListener("click", () => {
-  const nameInp = document.getElementById("rosterName");
-  const roleSel = document.getElementById("rosterRole");
-  addRoster(nameInp.value, roleSel.value);
-  nameInp.value = "";
-});
-document.getElementById("rosterName").addEventListener("keydown", e => {
-  if(e.key === "Enter"){
-    addRoster(e.target.value, document.getElementById("rosterRole").value);
-    e.target.value = "";
-  }
-});
 
 document.getElementById("resetTrigger").addEventListener("click", () => {
   const pw = prompt("Enter the reset passphrase:");
