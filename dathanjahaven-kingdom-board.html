@@ -1384,15 +1384,13 @@ function refuseCrierQuest(id){
 }
 
 function districtProgress(d){
-  // Returns {done, total} for all unlocked eras in a district
-  let done = 0, total = 0;
+  // Returns {done, total} for the current era only in a district
   if(state.era < d.unlockEra) return {done:0, total:0};
   const tiers = state.districts[d.id];
-  Object.keys(tiers).forEach(era => {
-    if(Number(era) > state.era) return;
-    tiers[era].forEach(q => { total++; if(q.done) done++; });
-  });
-  return {done, total};
+  const tier = tiers[state.era];
+  if(!tier || tier.length === 0) return {done:0, total:0};
+  const done = tier.filter(q => q.done).length;
+  return {done, total: tier.length};
 }
 
 function renderTabs(){
