@@ -359,11 +359,13 @@ body{margin:0;}
   100%{ opacity:0; transform:translate(-50%,-50%) scale(1) rotate(-8deg); }
 }
 .seal-circle{
-  width:96px; height:96px; border-radius:50%;
+  width:120px; height:120px; border-radius:50%;
   background:radial-gradient(circle at 35% 30%, var(--oxblood) 0%, var(--oxblood-deep) 70%);
   border:3px solid #3e1414;
   display:flex; align-items:center; justify-content:center;
-  font-family:'Cinzel', serif; font-weight:700; color:#f1e6c8; font-size:30px;
+  font-family:'Cinzel', serif; font-weight:700; color:#f1e6c8; font-size:11px;
+  text-align:center; padding:12px;
+  line-height:1.3; letter-spacing:0.5px;
   box-shadow:0 6px 18px rgba(0,0,0,0.4);
 }
 .seal-text{
@@ -447,7 +449,7 @@ body{margin:0;}
 </div>
 
 <div class="seal-overlay" id="sealOverlay">
-  <div class="seal-circle">D</div>
+  <div class="seal-circle" id="sealCircle">I</div>
   <div class="seal-text" id="sealText"></div>
 </div>
 
@@ -455,337 +457,486 @@ body{margin:0;}
 (function(){
 
 const ERAS = [
-  {name:"Landfall", subtitle:"The Age of Survival", arch:"Raise a temporary camp or shelter near the bay.", survival:"Every player has basic tools and a food buffer.", unlock:"Unlocks the Outer Fields."},
-  {name:"First Stones", subtitle:"The Age of Tools", arch:"Lay the first permanent stone-and-wood houses in the Hearthlands.", survival:"Iron tools smelted and distributed to every player.", unlock:"Unlocks the Long Road."},
-  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", arch:"Raise a town square and trading post; connect the Long Road with proper paths.", survival:"House at least 10 villagers across the settlement.", unlock:"Unlocks the Wharf District."},
-  {name:"Tide and Timber", subtitle:"The Age of the Harbor", arch:"Build docks, a pier, and at least one ship.", survival:"Establish a steady fish or sea-trade income.", unlock:"Unlocks the Bulwark."},
-  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", arch:"Wall the Hearthlands and raise a keep or town hall.", survival:"Survive a raid event without losing a district.", unlock:"Unlocks the Gilded Haven."},
-  {name:"The Gilded Haven", subtitle:"The Mythological Age", arch:"Raise one wonder — a cathedral, beacon-lighthouse, or legendary hall.", survival:"Complete a true end-game feat.", unlock:"The story is yours from here."}
+  {name:"Landfall", subtitle:"The Age of Survival", arch:"Raise the council lodge and a palisade wall in the Old Core.", survival:"Every player has a shelter, tools, and a food supply.", unlock:"Unlocks the Old Core and The Outer Fields."},
+  {name:"First Stones", subtitle:"The Age of Tools", arch:"Lay the first permanent stone buildings in the Old Core and open the harbor.", survival:"Iron tools smelted; first stone wall segment raised.", unlock:"Unlocks the North End and The Wharf District."},
+  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", arch:"Raise Downtown's civic square and a trading post; connect all open districts by road.", survival:"House at least 10 villagers across the settlement.", unlock:"Unlocks Downtown and The New Core."},
+  {name:"Tide and Timber", subtitle:"The Age of the Harbor", arch:"Build a full pier, a lighthouse, and launch the first ship from the Wharf.", survival:"Establish a steady harbor income and a curtain wall around the Old Core.", unlock:"Unlocks The Sprawl."},
+  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", arch:"Raise the keep in the Old Core and wall the city's settled core.", survival:"Survive a raid event without losing a district.", unlock:"Unlocks The New Core's grand expansion."},
+  {name:"The Gilded Haven", subtitle:"The Mythological Age", arch:"Raise one wonder in any district — a cathedral, lighthouse, palace, or legendary hall.", survival:"Complete a true end-game feat.", unlock:"The story is yours from here."}
 ];
 
 const DISTRICTS = [
-  {id:"hearthlands", name:"The Hearthlands", color:"var(--oxblood)", unlockEra:0, quests:{
+  {id:"oldcore", name:"The Old Core", color:"var(--oxblood)", unlockEra:0, quests:{
     0:[
-      "Raise a one-room council lodge from raw timber",
-      "Build a perimeter fence marking the town's founding boundary",
+      "Raise a one-room council lodge from timber at the settlement's heart",
+      "Dig and line a root cellar beneath the lodge for food and supply storage",
       "Construct a covered firepit with stone surround in the town center",
+      "Build a wooden palisade wall along the settlement's western edge",
+      "Raise a timber gatehouse spanning the palisade's main entrance",
       "Build a storage shack with a door and roof for communal supplies",
-      "Dig and line a root cellar beneath the lodge floor",
-      "Raise a wooden watchtower at the settlement's highest point",
-      "Build a small animal pen of fenced posts for early livestock",
-      "Construct a covered workbench shelter — roof and walls, open front",
-      "Build a second sleeping lodge to house overflow settlers",
-      "Raise a wooden palisade gate at the settlement's main entrance"
+      "Construct a covered workbench shelter — roof, walls, open front",
+      "Raise a wooden watchtower at the settlement's highest internal point",
+      "Build a stone-lined well at the center of the settlement",
+      "Terrace a flat plaza area in front of the council lodge",
+      "Construct a small animal pen of fenced posts beside the lodge",
+      "Raise a carved boundary stone marker at each corner of the palisade"
     ],
     1:[
       "Lay the foundation and walls of the first permanent stone house",
-      "Build a communal stone well with a roof structure over it",
+      "Build a standalone forge building with a chimney stack",
+      "Construct a stone well-house — a roofed stone structure over the well",
       "Pave a stone path connecting the lodge to the main gate",
-      "Construct a standalone forge building with chimney",
-      "Build a second permanent stone dwelling for a second player",
-      "Raise a small stone chapel — four walls, a door, and a cross or symbol",
-      "Build a covered market stall in the town center",
-      "Construct a stone-lined rubbish pit away from the dwellings",
-      "Build a stone-walled tool shed beside the forge",
-      "Raise a wooden bell tower at the settlement's entrance"
+      "Replace the palisade's weakest timber section with a stone wall segment",
+      "Raise a stone chapel — four walls, a carved doorway, and an altar inside",
+      "Build a covered market stall row along the main internal path",
+      "Construct a stone-walled tool shed beside the forge",
+      "Raise a second permanent stone dwelling for a second player",
+      "Build a stone-lined rubbish pit and waste yard away from the dwellings",
+      "Construct a bell tower at the palisade gate — timber, at least 8 blocks tall",
+      "Raise a stone perimeter wall segment on the settlement's eastern side"
     ],
     2:[
-      "Build the market square — paved, with stall frames on each side",
-      "Raise the first guildhall — a large hall with a high roof",
-      "Construct a row of villager houses along the main road",
-      "Build a permanent trading post with counter, shelves, and storage",
-      "Construct a town fountain as a decorative centerpiece",
-      "Build a dedicated enchanting room within the guildhall",
-      "Raise a stone smithy with a blast furnace and anvil alcove",
-      "Construct a permanent storage hall with a labelled chest wall",
-      "Build a public notice board post with a covered roof",
-      "Raise a stone archway marking the entrance to the market quarter"
+      "Build the town square — paved stone, with stall frames on each side",
+      "Raise the first guildhall — a large hall with a high timber roof",
+      "Construct a row of villager houses lining the main internal road",
+      "Build a permanent smithy with blast furnace, anvil alcove, and chimney",
+      "Replace the timber gatehouse with a stone gatehouse and iron doors",
+      "Construct a dedicated enchanting room within the guildhall",
+      "Raise a town fountain as a decorative centerpiece in the square",
+      "Build a permanent storage hall with a labelled chest wall",
+      "Construct a stone wall segment closing the northern palisade gap",
+      "Raise a second stone wall tower at the gatehouse's eastern flank",
+      "Build a dedicated cartographer's room with map frames on every wall",
+      "Construct a stone archway marking the entrance to the market quarter"
     ],
     3:[
-      "Build a counting house with a vault room and iron door",
-      "Construct a stone road connecting the Hearthlands to the Wharf",
-      "Raise a proper inn with at least four guest rooms and a common room",
+      "Raise a town hall — large, stone, with a central hall and side offices",
+      "Build a counting house with a vault room behind an iron door",
+      "Construct a proper inn with at least four guest rooms and a common room",
+      "Raise the keep foundation — a wide stone base within the Old Core",
       "Build a dedicated potion brewery with shelving and brewing stands",
-      "Construct a public library room — bookshelves lining every wall",
-      "Build a town crier's post — a raised stone platform with a roof",
-      "Raise an alehouse beside the market square",
-      "Construct a stone gatehouse at the Hearthlands' main road entry",
-      "Build a dedicated cartographer's room with map frames on the walls",
-      "Raise a memorial plaza with paved ground and a central monument"
+      "Construct a stone curtain wall connecting all existing wall segments",
+      "Raise a third wall tower at the southern corner of the curtain wall",
+      "Build a public library room — bookshelves lining every wall",
+      "Construct a stone alehouse beside the market square",
+      "Raise a dedicated armoury building beside the forge",
+      "Build a gatehouse tunnel — a covered passage through the curtain wall",
+      "Construct a stone road connecting the Old Core to Downtown"
     ],
     4:[
-      "Raise a town hall — large, stone, with a central hall and offices",
-      "Build a courthouse with a raised judge's platform and gallery",
-      "Construct a watch barracks with bunk rooms and a weapon rack",
-      "Build a prison cell beneath the courthouse with iron bar walls",
-      "Raise a bell tower onto the town hall roof",
-      "Construct a dedicated armoury building beside the barracks",
-      "Build a messenger's relay office on the road to the Long Road",
-      "Raise a stone monument plaza with named pillars outside the town hall",
-      "Construct a stable block inside the Hearthlands walls",
-      "Build an underground treasury vault with a hidden entrance"
+      "Raise the keep — a multi-storey stone tower above the Era 3 foundation",
+      "Build a courthouse with a raised judge's platform and viewing gallery",
+      "Construct a watch barracks with bunk rooms and a weapon rack wall",
+      "Raise battlements along the full curtain wall — merlons and crenellations",
+      "Build a wall walk — a 2-block-wide path running the full wall top",
+      "Construct a fourth wall tower completing the perimeter's corner coverage",
+      "Raise a prison beneath the courthouse — stone cells, iron bar doors",
+      "Build a bell tower onto the town hall roof",
+      "Construct a dedicated stable block inside the Old Core walls",
+      "Raise a monument plaza with paved ground outside the town hall",
+      "Build a postern gate — a secondary hidden exit through the curtain wall",
+      "Construct a war room inside the keep with a map table and racks"
     ],
     5:[
-      "Raise a grand cathedral — vaulted ceiling, stained glass, bell towers",
-      "Build a hall of records — floor to ceiling shelving, stone vault door",
-      "Construct a monument to the founding council in the town square",
-      "Build a grand library in a vaulted hall separate from the guildhall",
-      "Raise a memorial garden with stone paths, graves, and named markers",
-      "Construct a royal treasury with multiple vault rooms",
-      "Build a throne room worthy of the final era",
-      "Raise a clock tower visible from the harbor",
-      "Construct a grand triumphal arch at the Hearthlands' main entry",
-      "Build a crypt beneath the cathedral for the settlement's honored dead"
-    ]
-  }},
-  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:2, quests:{
-    2:[
-      "Build a stone quay along the waterfront — flat, edged, accessible",
-      "Construct a harbormaster's shack overlooking the bay",
-      "Raise a simple wooden dock extending into the water",
-      "Build a fish market stall with a counter and overhead cover",
-      "Construct a rope-maker's shed with rope coils and storage",
-      "Build a salt house — a stone room for preserving the catch",
-      "Raise a small boathouse with water access and a double door",
-      "Build a covered net-drying rack on the waterfront",
-      "Construct a ferry landing — a flat stone platform at the water's edge",
-      "Build a beacon post at the bay's edge — a tall pole with a lantern frame"
-    ],
-    3:[
-      "Build a full pier extending at least 20 blocks into the water",
-      "Construct a shipwright's yard — covered dry dock with tool racks",
-      "Raise a lighthouse tower at least 15 blocks tall with a lantern room",
-      "Build a chandler's shop — shelved walls, counter, and storage",
-      "Construct a harbor warehouse for imported goods",
-      "Build crew quarters above the shipwright's yard",
-      "Raise a dry dock pit where ships can be lowered for repair",
-      "Construct a sea wall breakwater protecting the harbor mouth",
-      "Build a watchtower on the pier's end",
-      "Raise a harbor office with a chart room and meeting table"
-    ],
-    4:[
-      "Build stone harbor walls flanking the harbor mouth",
-      "Raise a customs house with inspection rooms and a holding cell",
-      "Construct a harbor guard post at the pier entrance",
-      "Build a signal tower for coordinating ship arrivals",
-      "Raise a second lighthouse on the far side of the harbor mouth",
-      "Construct a fish-processing building with smoker stacks",
-      "Build a smuggler's tunnel — a hidden passage beneath the wharf",
-      "Raise a memorial to sailors lost at sea — a stone marker on the pier",
-      "Construct an iron sea-gate between the harbor walls",
-      "Build a captain's quarters above the customs house"
-    ],
-    5:[
-      "Raise a grand lighthouse wonder — the tallest structure on the coast",
-      "Build a naval museum displaying trophies in a dedicated hall",
-      "Construct a sea-gate arch wonder over the harbor mouth",
-      "Raise a kraken-warding monolith on the breakwater",
-      "Build a captain's mansion on the cliff overlooking the harbor",
-      "Construct a grand fleet warehouse spanning the full wharf length",
-      "Build a lighthouse keeper's cottage with a secret basement room",
-      "Raise a harbor cathedral — a sea-facing shrine with a beacon spire",
-      "Construct a fortified naval command tower at the harbor center",
-      "Build a sunken memorial garden beneath the pier — glass floor over water"
-    ]
-  }},
-  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:1, quests:{
-    1:[
-      "Build a waystation shack with a door and fireplace halfway up the road",
-      "Construct a roadside well with a stone surround and roof",
-      "Raise a small stable with stalls, hay bales, and a fence enclosure",
-      "Build a hunter's outpost at the road's forest edge — walls and a rack",
-      "Construct a lantern post row — a lit post every 20 blocks along the road",
-      "Build a roadside shrine in a stone alcove beside the path",
-      "Raise a covered rest stop with a roof, bench, and fire",
-      "Construct a toll booth — a small gatehouse spanning the road",
-      "Build a woodcutter's camp with a chopping block and log storage shed",
-      "Raise a carved milestone post at the road's first junction",
-      "Construct a second waystation further north than the first",
-      "Build a small chapel beside the road for travelers seeking blessing",
-      "Raise a signpost tower at the settlement's northern road exit"
-    ],
-    2:[
-      "Build a proper inn with common room, kitchen, and at least four rooms",
-      "Construct a grain mill with a working wheel structure beside the road",
-      "Raise a roadside market hall with permanent covered stalls",
-      "Build a messenger relay post — a small tower with a flagpole",
-      "Construct a dedicated horse stable larger than the Era 1 version",
-      "Build a drainage ditch running alongside the muddiest road stretch",
-      "Raise a stone bridge over any stream or ravine crossing the road",
-      "Construct a woodcutter's lodge — upgrade the Era 1 camp to a building",
-      "Build a roadside smithy for repairing traveler gear",
-      "Raise a watchtower mid-road — stone, at least 8 blocks tall",
-      "Construct a second inn or waystation lodge further north",
-      "Build a small chapel beside the road for travelers seeking blessing"
-    ],
-    3:[
-      "Pave the entire road in stone slabs from town gate to northern end",
-      "Build a road garrison bunkhouse beside the watchtower",
-      "Construct a road patrol checkpoint with iron gates across the road",
-      "Raise a stone trading post at the road's northern terminus",
-      "Build a signal fire pit tower at both the watchtower and town gate",
-      "Construct a bridge at the northern end of the road",
-      "Raise a carved stone arch over the road at the town's exit",
-      "Build a bandit camp ruin — a cleared and marked site of a past threat",
-      "Construct a dedicated horse breeding pen beside the main stable",
-      "Raise a stone memorial for those lost defending the road",
-      "Build a second road garrison further north than the first",
-      "Construct a covered market pavilion replacing any open stalls"
-    ],
-    4:[
-      "Raise a fortified garrison post — stone walls, arrow slits, iron door",
-      "Build a gatehouse at the northern road boundary — full arch and portcullis",
-      "Construct a stone barracks inside the garrison for road guards",
-      "Raise an upgraded watchtower — stone fort replacing the timber version",
-      "Build a second gatehouse at the settlement's southern road entry",
-      "Construct a vault room beneath the toll booth for road-tax storage",
-      "Raise a courier station building with a sorting room and named chests",
-      "Build a prison annex attached to the garrison for captured brigands",
-      "Construct a stone shrine road memorial dedicated to fallen defenders",
-      "Raise a fortified bridge at the northern gatehouse crossing",
-      "Build a road commander's quarters above the northern garrison",
-      "Construct an observation platform overlooking the full road length"
-    ],
-    5:[
-      "Raise a monument at the road's northern end — stone, named, permanent",
-      "Build a grand courier guild hall with offices, vault, and a public counter",
-      "Construct a triumphal arch at the settlement's northern entrance",
-      "Raise a legendary waystation — inn, market, forge, and chapel combined",
-      "Build a final watchtower at the road's farthest reach",
-      "Construct a grand gate wonder at the road's end marking the kingdom's edge",
-      "Raise a hall of travelers — a museum wing displaying road relics",
-      "Build a postal headquarters connected by road to the Hearthlands",
-      "Construct a stone carriage depot at the road's northern end",
-      "Raise a road's-end lighthouse — a beacon visible from the settlement",
-      "Build a secret vault room beneath the northern monument",
-      "Construct a colonnaded road — stone pillars lining the final stretch"
+      "Raise a grand cathedral — vaulted ceiling, stained glass windows, twin bell towers",
+      "Build a great hall inside the keep — vaulted ceiling, long tables, fireplaces",
+      "Construct a royal treasury vault — multiple iron-doored chambers beneath the keep",
+      "Raise a throne room worthy of the final era inside the keep",
+      "Build a hall of records — floor-to-ceiling shelving behind a stone vault door",
+      "Construct a grand triumphal arch at the Old Core's main gatehouse",
+      "Raise a clock tower visible from the harbor and the fields",
+      "Build a crypt beneath the cathedral for the settlement's honored dead",
+      "Construct a memorial garden inside the walls with stone paths and grave markers",
+      "Raise a second curtain wall — an outer ring beyond the first",
+      "Build a legendary keep tower rising above every other structure in the city",
+      "Construct a grand library in a vaulted hall separate from the guildhall"
     ]
   }},
   {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, quests:{
     0:[
-      "Terraform and fence the first wheat field — level ground, fence perimeter",
+      "Terraform and fence the first wheat field — level ground, full fence perimeter",
       "Clear and fence a livestock pasture separate from the crop field",
-      "Terrace a hillside for an orchard row — flat planted rows with paths",
+      "Terrace a hillside for an orchard row — flat planted tiers with paths between",
       "Build a lean-to field shelter at the crop edge — roof and one open wall",
       "Construct a scarecrow on a raised platform in the center of the field",
       "Dig an irrigation channel from a water source to the wheat field",
       "Build a field storage chest shed — small, roofed, lockable with a door",
-      "Fence and mark a second plot separate from the first field",
+      "Raise a simple watchtower post at the field's far corner",
       "Construct a stone-ringed fire pit at the field workers' camp",
-      "Raise a simple watchtower post at the field's far corner"
+      "Fence and mark a second field plot separate from the first"
     ],
     1:[
-      "Build a granary — a large roofed structure with an elevated floor",
-      "Construct a farmhouse with a kitchen, sleeping area, and storage room",
-      "Dig a stepped irrigation system — multiple channels across the fields",
-      "Build a hay barn with hay bale walls and a high thatched roof structure",
+      "Build a granary — a large roofed structure with an elevated timber floor",
+      "Construct a farmhouse with a kitchen area, sleeping room, and storage",
+      "Dig a stepped irrigation system — multiple channels branching across the fields",
+      "Build a hay barn with hay bale walls and a high roof structure",
       "Raise a beekeeper's shed with hive frames and a windbreak fence",
       "Construct a compost yard — walled enclosure with composter blocks",
       "Build a small stone chapel at the field's edge for harvest offerings",
-      "Raise a second crop field plot separate from the first",
+      "Raise a second distinct crop field plot on fresh ground",
       "Construct a covered drying rack for herbs and crops beside the farmhouse",
       "Build a stone-walled animal pen with separate sections for each species"
     ],
     2:[
-      "Build a dedicated livestock barn for cows — stalls and a hay loft",
+      "Build a dedicated livestock barn for cattle — stalls and a hay loft above",
       "Construct a grain mill building with a wheel mechanism beside a stream",
-      "Terrace and build a second large crop field with irrigation",
-      "Build a pig pen with a mud pit, shelter, and feeding trough",
-      "Construct a fish pond — a dug water enclosure beside the fields",
-      "Build a pumpkin and melon farm with raised beds and paths between rows",
-      "Raise a cider house — a stone building with brewing stands and barrel storage",
-      "Build a root cellar beneath the farmhouse with stone-lined walls",
-      "Construct a wool-dyeing shed with vat stations and drying lines",
-      "Raise a field watchtower taller than the Era 0 post — stone, roofed"
+      "Build a pig pen with a mud pit, shelter, and feeding trough structure",
+      "Construct a fish pond — a dug and lined water enclosure beside the fields",
+      "Raise a pumpkin and melon farm with raised beds and paths between rows",
+      "Build a cider house — a stone building with brewing stands and barrel storage",
+      "Construct a root cellar beneath the farmhouse with stone-lined walls",
+      "Raise a wool-dyeing shed with vat stations and overhead drying lines",
+      "Build a dedicated field watchtower — stone, roofed, taller than the Era 0 post",
+      "Construct a second farmhouse for a field overseer on the far side of the fields"
     ],
     3:[
       "Build a smokehouse with chimney stacks for curing surplus meat",
-      "Raise a large barn for overflow storage — bigger than the Era 1 version",
-      "Construct a sugar cane plantation terrace along the irrigation channel",
+      "Raise a large overflow barn — distinct from and larger than the Era 1 version",
+      "Construct a sugar cane plantation terrace along the main irrigation channel",
       "Build an underground mushroom farm — a sealed dark cellar with grow beds",
       "Raise a leather tannery beside the livestock pen — vats and drying racks",
-      "Construct a nether wart garden shed with a dedicated growing area",
-      "Build a second farmhouse for a field overseer — separate from the first",
+      "Construct a nether wart garden shed with a dedicated sealed growing area",
+      "Build a second dedicated farmhouse further from the city than the first two",
       "Raise a field shrine on a stone plinth in the center of the oldest field",
-      "Construct a seed vault — a small stone room with locked iron door",
+      "Construct a seed vault — a small stone room with an iron door",
       "Build a dye garden with raised beds for every plant-based dye colour"
     ],
     4:[
-      "Build a fortified farmstead — stone walls enclosing house, barn, and pen",
-      "Raise a stone watch post on a hill overlooking all the fields",
-      "Construct a stone perimeter wall around the entire Outer Fields boundary",
-      "Build a siege-proof grain vault — iron doors, stone walls, hidden entrance",
-      "Raise a field barracks for the harvest guard — bunk room and weapon rack",
-      "Construct a fortified gatehouse at the main field road entrance",
-      "Build a dedicated horse stable for field workers and patrol riders",
-      "Raise a signal fire tower at the field's farthest corner",
+      "Build a fortified farmstead — stone walls enclosing house, barn, and pen together",
+      "Raise a stone watch post on a hill with sightlines across all the fields",
+      "Construct a stone perimeter boundary wall along the fields' outer edge",
+      "Build a siege-proof grain vault — iron doors, stone walls, concealed entrance",
+      "Raise a field barracks for a harvest guard — bunk room and weapon rack",
+      "Construct a fortified gatehouse at the main road entrance to the fields",
+      "Raise a signal fire tower at the field's farthest corner from the city",
       "Construct a stone bridge over the main irrigation channel",
-      "Build a second fortified watch post on the opposite field boundary"
+      "Build a second fortified watch post on the opposite field boundary",
+      "Raise a dedicated horse stable for field workers and patrol riders"
     ],
     5:[
       "Raise a grand granary wonder — the largest storage structure in the settlement",
-      "Build a harvest festival ground — stage, seating terraces, fire pits",
-      "Construct a vast greenhouse spanning at least 20x20 in glass and iron",
+      "Build a harvest festival ground — stage, terraced seating, and fire pit ring",
+      "Construct a vast greenhouse spanning at least 20x20 in glass and iron framing",
       "Raise a nature shrine wonder — moss, azalea, ancient oak canopy over a stone altar",
-      "Build an underground mushroom kingdom — a massive vaulted cavern farm",
-      "Construct a legendary orchard — terraced, with paths and a central pavilion",
-      "Raise a field beacon tower visible from the harbor",
-      "Build a harvest hall for feasts — long stone hall with fireplaces and high ceiling",
+      "Build a legendary orchard — terraced with stone paths and a central pavilion",
       "Construct a final perimeter watchtower as the tallest point in the Outer Fields",
-      "Build a buried excavation site — a dug ruin marking the oldest part of the field"
+      "Raise a harvest hall for feasts — long stone hall with fireplaces and a high ceiling",
+      "Build a buried excavation site marking the oldest farmed ground in the settlement",
+      "Construct a field beacon tower visible from the harbor",
+      "Raise an underground mushroom kingdom — a massive vaulted cavern farm"
     ]
   }},
-  {id:"bulwark", name:"The Bulwark", color:"var(--slate)", unlockEra:3, quests:{
+  {id:"northend", name:"The North End", color:"var(--brass)", unlockEra:1, quests:{
+    1:[
+      "Raise a row of three timber residential houses along the northern road",
+      "Build a covered public well serving the North End's new residents",
+      "Construct a neighbourhood shrine — a stone alcove with a carved symbol",
+      "Raise a timber palisade along the North End's exposed northern boundary",
+      "Build a carpenter's workshop with a work bench and timber storage yard",
+      "Construct a neighbourhood storage house with communal chest access",
+      "Raise a lantern post row lighting the main North End road",
+      "Build a small stable for residents' horses — stalls and a fenced yard",
+      "Construct a stone-paved footpath connecting North End to the Old Core gate",
+      "Raise a watchtower at the North End's northern boundary",
+      "Build a bakery — an oven building with a chimney and counter front",
+      "Construct a fenced burial ground at the district's quiet northern edge"
+    ],
+    2:[
+      "Raise a second row of stone residential houses replacing the first timber ones",
+      "Build a neighbourhood market hall with permanent covered stalls",
+      "Construct a dedicated brewery building separate from any residence",
+      "Raise a stone wall segment along the district's northern boundary",
+      "Build a public bathhouse — a stone building with water channels and benches",
+      "Construct a weaver's workshop with loom frames and dye storage",
+      "Raise a cobbled stone road replacing the footpath to the Old Core",
+      "Build a neighbourhood inn with a common room and at least three guest rooms",
+      "Construct a stone gatehouse at the northern road entry to the district",
+      "Raise a candlemaker's workshop with wax vats and a drying rack",
+      "Build a stone-walled garden courtyard between two residential blocks",
+      "Construct a neighbourhood chapel larger than the Era 1 shrine"
+    ],
     3:[
-      "Dig the full foundation trench along the planned wall perimeter",
-      "Raise the first corner tower as a standalone structure",
-      "Build a quarry site with a dedicated stone extraction area",
-      "Construct a wall-worker's camp with sleeping and tool storage",
-      "Raise a temporary wooden palisade closing the gap before stone walls are done",
-      "Build a mortar shed beside the trench as a construction base",
-      "Construct a signal fire platform at the planned gatehouse location",
-      "Raise a dedication monument — a named stone marker set into the trench",
-      "Build an observation scaffold — a timber viewing platform over the trench",
-      "Construct a stone drainage channel running beneath the wall foundation",
-      "Raise a stone storage vault for wall-building materials",
-      "Build a covered tool rack station at each corner of the perimeter",
-      "Construct a second corner tower on the opposite side from the first",
-      "Raise a stone road from the Hearthlands to the Bulwark construction site",
-      "Build a foreman's office — a small stone hut overlooking the full trench"
+      "Raise a large townhouse — a multi-storey stone residence for a wealthy family",
+      "Build a dedicated tailor's workshop with a counter and display shelving",
+      "Construct a stone-paved square at the North End's center",
+      "Raise a second stone wall tower on the northern boundary",
+      "Build a neighbourhood guildhall for local tradespeople",
+      "Construct a stone bridge connecting the North End to the Northern Sprawl",
+      "Raise a dedicated herbalist's shop with a garden annex",
+      "Build a public notice board post at the district square",
+      "Construct a stone drainage channel running beneath the main road",
+      "Raise a covered market pavilion replacing any open stalls",
+      "Build a second neighbourhood inn on the far side of the district",
+      "Construct a stone monument at the district square's center"
     ],
     4:[
-      "Raise the full outer wall to at least 5 blocks high around the perimeter",
-      "Build a main gatehouse with an arch, portcullis frame, and guard rooms",
-      "Construct a wall walk — a 2-block-wide path running the full wall top",
-      "Raise the first full watchtower — stone, crenellated, with interior stairs",
-      "Build a keep — a multi-storey stone tower inside the Bulwark",
-      "Construct a second watchtower on the opposite wall corner from the first",
-      "Build battlements — merlons and crenellations along the full wall top",
-      "Raise an inner barracks against the wall interior — bunk rooms and armoury",
-      "Construct a murder hole above the gatehouse — stone ceiling with trapdoors",
-      "Build arrow slit windows into every wall tower",
-      "Raise a dungeon beneath the keep — stone cells and an iron bar gate",
-      "Construct a stable inside the Bulwark for mounted defenders",
-      "Build a secondary postern gate on the wall's far side — hidden, iron door",
-      "Raise the keep's banner tower — a flagpole platform above the keep roof",
-      "Construct a covered wall armory alcove at each tower base"
+      "Raise a grand townhouse complex — courtyard, main house, and servant quarters",
+      "Build a dedicated physician's hall with examination rooms and herb storage",
+      "Construct a stone perimeter wall enclosing the North End's full boundary",
+      "Raise a neighbourhood watchtower replacing the Era 1 timber post",
+      "Build a covered arcade — a colonnaded walkway along the main road",
+      "Construct a dedicated scribe's office with shelving and a counter",
+      "Raise a second stone gatehouse at the district's eastern entry",
+      "Build a stone fountain at the district square replacing the old well",
+      "Construct a neighbourhood armoury for local militia storage",
+      "Raise a clock post at the district square",
+      "Build a dedicated jeweller's workshop with a vault room behind it",
+      "Construct a formal garden with stone paths, hedgerow walls, and a central feature"
     ],
     5:[
-      "Raise a grand keep wonder — the tallest fortified structure in the settlement",
-      "Build a great hall inside the keep — vaulted ceiling, long tables, fireplaces",
-      "Construct an outer curtain wall beyond the first — a second defensive ring",
-      "Raise a throne room inside the grand keep with a dais and banners",
-      "Build a war room with a map table and tactical display",
-      "Construct a chapel inside the Bulwark walls — a sanctified inner space",
-      "Raise a hero's monument in the keep courtyard on a stone plinth",
-      "Build a treasury vault inside the keep — multiple iron-doored chambers",
-      "Construct a legendary tower keep rising above all other structures",
-      "Raise a grand gatehouse wonder — a fortified twin-tower entrance arch",
-      "Build a secret underground passage connecting the keep to the postern gate",
-      "Construct a siege weapon platform on the wall — catapult or ballista mount",
-      "Raise a garrison hall separate from the barracks — ceremonial and functional",
-      "Build a crypt beneath the keep for the settlement's honored defenders",
-      "Construct a final watchtower at each remaining wall corner"
+      "Raise a grand manor house — the finest residence in the North End",
+      "Build a public hall for neighbourhood assemblies — stone, vaulted, with a raised platform",
+      "Construct a monument district — a paved plaza with named pillars and statues",
+      "Raise a neighbourhood cathedral annex — a chapel tower added to the Era 2 chapel",
+      "Build a grand covered market — a permanent stone hall replacing all prior stalls",
+      "Construct a second formal garden on the district's quieter eastern edge",
+      "Raise a glass-roofed atrium building — the North End's most decorative structure",
+      "Build a neighbourhood crypt beneath the burial ground",
+      "Construct a grand stone stairway connecting the North End to the Old Core walls",
+      "Raise a final watchtower as a beacon at the district's northernmost point",
+      "Build a dedicated music hall — a performance space with tiered seating",
+      "Construct a colonnaded plaza entrance marking the district's southern boundary"
+    ]
+  }},
+  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:1, quests:{
+    1:[
+      "Build a stone quay along the waterfront — flat, edged, and accessible from land",
+      "Construct a harbormaster's shack overlooking the bay entrance",
+      "Raise a simple wooden dock extending at least 10 blocks into the water",
+      "Build a fish market stall with a counter and overhead cover",
+      "Construct a rope-maker's shed with rope coils and wall storage",
+      "Build a salt house — a stone room for preserving the catch",
+      "Raise a small boathouse with water access and a double door",
+      "Construct a covered net-drying rack on the waterfront",
+      "Build a ferry landing — a flat stone platform at the water's edge",
+      "Raise a beacon post at the bay's edge — a tall pole with a lantern frame",
+      "Construct a chandler's shop — shelved walls, counter, and storage",
+      "Build a waterfront tavern with a ground-floor common room and harbor view"
+    ],
+    2:[
+      "Build a full pier extending at least 20 blocks into the water",
+      "Construct a shipwright's yard — covered dry dock with tool racks and storage",
+      "Raise a lighthouse tower at least 15 blocks tall with a lantern room at the top",
+      "Build a harbor warehouse for imported goods behind the quay",
+      "Construct a sea wall breakwater protecting the harbor mouth",
+      "Raise a dry dock pit where ships can be lowered for repair",
+      "Build crew quarters above the shipwright's yard",
+      "Construct a harbor office with a chart room and meeting table",
+      "Raise a watchtower on the pier's far end",
+      "Build a dedicated fish-processing building with smoker stacks",
+      "Construct a second dock extending from the quay's opposite end",
+      "Raise a stone seawall along the waterfront's most exposed stretch"
+    ],
+    3:[
+      "Build stone harbor walls flanking the harbor mouth on both sides",
+      "Raise a customs house with inspection rooms and a holding cell",
+      "Construct a harbor guard post at the pier entrance with iron doors",
+      "Build a signal tower for coordinating ship arrivals with flag poles",
+      "Raise a second lighthouse on the far side of the harbor mouth",
+      "Construct an iron sea-gate between the harbor walls",
+      "Build a captain's quarters above the customs house",
+      "Raise a memorial to sailors lost at sea — a stone marker on the main pier",
+      "Construct a dedicated rope and sail storage warehouse",
+      "Build a harbourside inn with rooms overlooking the water",
+      "Raise a fortified lighthouse with a watch platform at its base",
+      "Construct a stone stairway from the harbor up to the Old Core walls"
+    ],
+    4:[
+      "Raise a grand customs hall — replacing the Era 3 customs house with a larger structure",
+      "Build a naval command tower at the harbor's center with a roof platform",
+      "Construct a second harbor warehouse on the far side of the pier",
+      "Raise a fortified sea-gate tower on each side of the harbor mouth",
+      "Build a shipwright's guild hall beside the dry dock",
+      "Construct a dedicated chart room and navigator's office separate from the harbor office",
+      "Raise a stone breakwater extending beyond the Era 2 version",
+      "Build a harbor market hall — a permanent covered trading floor on the quay",
+      "Construct a smuggler's tunnel — a hidden passage beneath the wharf",
+      "Raise a dedicated vessel repair cradle — a stone-framed dry dock extension",
+      "Build a harbourmaster's mansion overlooking the full harbor",
+      "Construct a bell tower at the harbor entrance audible across the water"
+    ],
+    5:[
+      "Raise a grand lighthouse wonder — the tallest structure on the coastline",
+      "Build a naval museum in a dedicated stone hall displaying expedition trophies",
+      "Construct a sea-gate arch wonder spanning the full harbor mouth",
+      "Raise a captain's mansion on the cliff face overlooking the harbor",
+      "Build a grand fleet warehouse spanning the full wharf length",
+      "Construct a lighthouse keeper's cottage with a sealed secret basement room",
+      "Raise a harbor cathedral — a sea-facing shrine with a beacon spire",
+      "Build a sunken memorial garden beneath the pier — glass floor over water",
+      "Construct a fortified harbor citadel at the water's edge",
+      "Raise a kraken-warding monolith on the outer breakwater",
+      "Build a grand colonnaded promenade along the full waterfront",
+      "Construct a subterranean vault beneath the quay for harbor treasury storage"
+    ]
+  }},
+  {id:"downtown", name:"Downtown", color:"var(--slate)", unlockEra:2, quests:{
+    2:[
+      "Build the civic square — wide, paved, with a central fountain structure",
+      "Raise a dedicated trading post building with a counter hall and storage vaults",
+      "Construct a row of permanent merchant townhouses lining the main road",
+      "Build a large guildhall separate from the Old Core's — Downtown's own",
+      "Raise a dedicated banking house with a vault room and iron-doored chambers",
+      "Construct a covered market arcade — colonnaded walkway with stall alcoves",
+      "Build a public bathhouse — a stone building with water channels and benches",
+      "Raise a civic notice board tower at the square's edge",
+      "Construct a dedicated mapmaker's office with display frames on every wall",
+      "Build a stone road connecting Downtown to the North End",
+      "Raise a stone road connecting Downtown to the Wharf District",
+      "Construct a stone gatehouse at Downtown's main northern entry",
+      "Build a covered meeting hall for merchant assemblies",
+      "Raise a decorative stone arch marking Downtown's civic center",
+      "Construct a public garden with stone paths and planted beds"
+    ],
+    3:[
+      "Raise a grand town hall — the largest civic building in the settlement",
+      "Build a courthouse with judge's platform, gallery seating, and a holding cell",
+      "Construct a dedicated post office with sorting rooms and a public counter",
+      "Raise a stone road connecting Downtown to The Sprawl",
+      "Build a dedicated jewellers' quarter — a row of workshop buildings with vault rooms",
+      "Construct a covered amphitheatre for public gatherings — stone tiered seating",
+      "Raise a second guildhall for a different trade than the Era 2 version",
+      "Build a stone clock tower at the civic square's edge",
+      "Construct a dedicated physician's hall with examination rooms",
+      "Raise a monument plaza with named pillars outside the town hall",
+      "Build a stone fountain replacing the Era 2 civic square fountain",
+      "Construct a dedicated scribe's district — a row of offices behind a walled courtyard",
+      "Raise a formal garden behind the town hall",
+      "Build a dedicated treasury annex beside the banking house",
+      "Construct a stone colonnade connecting the town hall to the courthouse"
+    ],
+    4:[
+      "Raise a grand market hall — a permanent vaulted stone trading floor",
+      "Build a dedicated legal archive — a stone vault building beside the courthouse",
+      "Construct a grand civic fountain as a wonder of the square",
+      "Raise a second covered amphitheatre larger than the Era 3 version",
+      "Build a dedicated printing house with a press room and distribution counter",
+      "Construct a stone perimeter wall enclosing Downtown's civic core",
+      "Raise a grand gatehouse at Downtown's main entry — twin towers and portcullis",
+      "Build a dedicated music hall with tiered seating and a raised stage",
+      "Construct a second banking house on the opposite side of the civic square",
+      "Raise a colonnaded plaza replacing the Era 2 covered arcade",
+      "Build a dedicated school building with a lecture hall and library room",
+      "Construct a grand stairway connecting Downtown to the Old Core walls",
+      "Raise a second clock tower at Downtown's southern boundary",
+      "Build a civic garden wonder — terraced, fountained, and fully enclosed in stone",
+      "Construct a dedicated herald's tower at the civic square's center"
+    ],
+    5:[
+      "Raise a palace or grand civic hall — the most impressive non-religious building in the city",
+      "Build a grand cathedral — Downtown's own, rivalling the Old Core's",
+      "Construct a triumphal arch at Downtown's main entry road",
+      "Raise a hall of records — floor-to-ceiling shelving behind a stone vault door",
+      "Build a grand colonnaded boulevard replacing the main Downtown road",
+      "Construct a monument garden — a walled park with statues on stone plinths",
+      "Raise a dedicated observatory tower with an open roof platform",
+      "Build a crypt beneath the Downtown cathedral",
+      "Construct a grand banking citadel — a fortified financial complex",
+      "Raise a covered royal market — a glass and iron vaulted trading floor",
+      "Build a second palace annex — audience chambers and a formal reception hall",
+      "Construct a final civic monument at the center of the grand civic square",
+      "Raise a dedicated diplomatic quarter — a row of guest houses behind a walled courtyard",
+      "Build a grand library wonder — the largest in the settlement",
+      "Construct a ceremonial road connecting Downtown to the Old Core's main gate"
+    ]
+  }},
+  {id:"newcore", name:"The New Core", color:"var(--umber)", unlockEra:2, quests:{
+    2:[
+      "Raise a row of planned stone townhouses on a newly surveyed street",
+      "Build a dedicated merchant's warehouse with loading doors and storage vaults",
+      "Construct a stone road grid — two intersecting paved roads as the New Core's spine",
+      "Raise a neighbourhood well with a stone surround and roofed cover",
+      "Build a small covered market with two permanent stalls facing the road",
+      "Construct a stone boundary wall marking the New Core's planned perimeter"
+    ],
+    3:[
+      "Raise a second row of townhouses on the New Core's second planned street",
+      "Build a dedicated craftsmen's quarter — a row of workshop buildings",
+      "Construct a neighbourhood square with a paved center and stone benches",
+      "Raise a stone gatehouse at the New Core's main road entry",
+      "Build a neighbourhood inn with a common room and at least four guest rooms",
+      "Construct a stone drainage channel running beneath the main road grid"
+    ],
+    4:[
+      "Raise a grand mansion complex — the New Core's first wealthy residence",
+      "Build a dedicated banking house with vault chambers and a public counter",
+      "Construct a covered market hall replacing the Era 2 stalls",
+      "Raise a formal garden enclosed in stone walls with paved internal paths",
+      "Build a dedicated jeweller's workshop with a vault room behind it",
+      "Construct a neighbourhood watchtower at the district's outer boundary",
+      "Raise a second grand mansion on the opposite side of the central square",
+      "Build a stone colonnade lining the New Core's main road",
+      "Construct a dedicated scribe's office and archive building",
+      "Raise a stone fountain at the neighbourhood square's center",
+      "Build a dedicated physician's hall with herb garden annex",
+      "Construct a grand gatehouse replacing the Era 3 entry structure"
+    ],
+    5:[
+      "Raise a palace district — the New Core's grandest residential complex",
+      "Build a grand covered arcade — a vaulted glass and stone shopping colonnade",
+      "Construct a monument plaza with named pillars and a central statue",
+      "Raise a dedicated music hall and performance space",
+      "Build a grand library annex connecting to the Downtown library by road",
+      "Construct a walled diplomatic quarter with formal guest houses",
+      "Raise a clock tower at the New Core's central square",
+      "Build a grand fountain wonder as the centerpiece of the district",
+      "Construct a ceremonial boulevard connecting the New Core to Downtown",
+      "Raise a rooftop garden complex on the grandest mansion block",
+      "Build a dedicated treasury vault complex beneath the banking house",
+      "Construct a final grand arch at the New Core's main entry road"
+    ]
+  }},
+  {id:"sprawl", name:"The Sprawl", color:"var(--ink-soft)", unlockEra:3, quests:{
+    3:[
+      "Raise a cluster of three rough timber dwellings on the Sprawl's first settled street",
+      "Build a makeshift tavern — a large single-room structure with a fireplace and counter",
+      "Construct a dirt-floored market clearing with timber stall frames",
+      "Raise a timber palisade along the Sprawl's most exposed outer edge",
+      "Build a rough-cut stone well serving the first cluster of dwellings",
+      "Construct a tanner's yard — open air, with drying racks and a vat enclosure",
+      "Raise a timber watchtower at the Sprawl's outer boundary",
+      "Build a rope bridge or timber footbridge over any natural obstacle in the district",
+      "Construct a woodcutter's camp with a chopping yard and log storage shed",
+      "Raise a neighbourhood shrine — a rough stone alcove with a carved symbol",
+      "Build a communal fire pit enclosure at the first settled street's end",
+      "Construct a storage yard — a fenced open area with covered chest sheds",
+      "Raise a second cluster of dwellings on a new street separate from the first",
+      "Build a rough timber gatehouse at the road connecting Sprawl to Downtown",
+      "Construct a covered rest stop on the main Sprawl thoroughfare"
+    ],
+    4:[
+      "Raise a stone-and-timber tavern replacing the Era 3 makeshift version",
+      "Build a permanent market square with stone-paved ground and fixed stall structures",
+      "Construct a neighbourhood chapel — rough stone, simple interior, no frills",
+      "Raise a stone wall segment along the Sprawl's most vulnerable boundary",
+      "Build a dedicated smithy for the Sprawl's tradespeople",
+      "Construct a row of stone-faced houses replacing the first timber cluster",
+      "Raise a stone bridge replacing any timber crossing from Era 3",
+      "Build a neighbourhood bathhouse — basic stone, functional rather than grand",
+      "Construct a covered market hall replacing the Era 3 clearing",
+      "Raise a stone gatehouse replacing the timber entry structure",
+      "Build a neighbourhood storage warehouse with iron-doored vault rooms",
+      "Construct a stone-paved road connecting the Sprawl's two settled clusters",
+      "Raise a second stone wall segment on the opposite boundary",
+      "Build a dedicated carpenter's workshop replacing the woodcutter's camp",
+      "Construct a neighbourhood square with a central well and stone benches"
+    ],
+    5:[
+      "Raise a grand tavern complex — the Sprawl's social heart, with rooms and a courtyard",
+      "Build a stone perimeter wall enclosing the Sprawl's settled core",
+      "Construct a grand market hall — vaulted stone, permanent, the largest in the Sprawl",
+      "Raise a neighbourhood watchtower replacing the Era 3 timber post",
+      "Build a dedicated tannery building replacing the Era 3 tanner's yard",
+      "Construct a stone road connecting the Sprawl to the Outer Fields boundary",
+      "Raise a neighbourhood monument at the market square's center",
+      "Build a dedicated brewery building in the Sprawl's trade quarter",
+      "Construct a stone gatehouse wonder at the Sprawl's main road entry",
+      "Raise a second neighbourhood chapel on the Sprawl's southern side",
+      "Build a grand stone bridge replacing any remaining timber crossings",
+      "Construct a neighbourhood crypt beneath the Era 5 chapel",
+      "Raise a covered arcade along the main Sprawl thoroughfare",
+      "Build a dedicated physician's hall for the Sprawl's growing population",
+      "Construct a final watchtower at the Sprawl's outermost boundary point"
     ]
   }}
 ];
@@ -906,7 +1057,7 @@ function defaultState(){
 
 let state = defaultState();
 let selectedEraView = 0;
-let activeTab = "hearthlands";
+let activeTab = "oldcore";
 
 function attachBoardListener(){
   if(!firebaseConfigured()){
@@ -940,7 +1091,7 @@ function attachBoardListener(){
         }
       });
       selectedEraView = state.era;
-      activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "hearthlands";
+      activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "oldcore";
     }
     document.getElementById("storageNote").textContent = "Shared council board — everyone who opens this sees the same ledger, live.";
     renderAll();
@@ -959,8 +1110,10 @@ function saveState(){
 }
 
 
+const ROMAN = ["I","II","III","IV","V","VI"];
 function showSeal(text){
   const overlay = document.getElementById("sealOverlay");
+  document.getElementById("sealCircle").textContent = ERAS[state.era] ? ERAS[state.era].name : ROMAN[state.era] || "I";
   document.getElementById("sealText").textContent = text;
   overlay.classList.remove("stamp");
   void overlay.offsetWidth;
