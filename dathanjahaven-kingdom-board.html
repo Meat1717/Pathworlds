@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dathanjahaven — Steward's Ledger</title>
+<title>Kingdom Board — Steward's Ledger</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -354,8 +354,8 @@ body{margin:0;}
   <div class="ledger">
     <div class="header">
       <div class="title-block">
-        <h1>Dathanjahaven</h1>
-        <p class="sub">The Steward's Ledger of the Haven</p>
+        <h1>Kingdom Board</h1>
+        <p class="sub">Steward's Ledger of the Settlement</p>
       </div>
       <div class="header-right">
         <div class="day-field">Day <input type="number" id="dayInput" min="1" value="1"></div>
@@ -474,7 +474,7 @@ const FIREBASE_CONFIG = {
   projectId: "YOUR_PROJECT_ID"
 };
 
-const BOARD_PATH = "dathanjahaven-board";
+const BOARD_PATH = "kingdom-board";
 let storageOK = false;
 let boardRef = null;
 let suppressNextSnapshot = false;
