@@ -341,6 +341,23 @@ body{margin:0;}
 .chron-entry:hover .chron-del{ opacity:0.6; }
 .chron-del:hover{ opacity:1 !important; color:var(--oxblood); background:rgba(124,45,45,0.1); }
 
+/* CRIER'S BOARD */
+.crier-tab{ border-color:var(--teal-deep) !important; }
+.crier-tab.active{ color:var(--teal-deep) !important; }
+.tab-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--oxblood); color:#f1e6c8;
+  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600;
+  width:16px; height:16px; border-radius:50%; margin-left:5px; vertical-align:middle;
+}
+.crier-refuse{
+  flex-shrink:0; border:none; background:none; cursor:pointer;
+  color:var(--ink-soft); font-size:13px; line-height:1; padding:2px 6px;
+  border-radius:3px; opacity:0; transition:opacity 0.15s; margin-left:4px;
+}
+.crier-quest-item:hover .crier-refuse{ opacity:0.6; }
+.crier-refuse:hover{ opacity:1 !important; color:var(--oxblood); background:rgba(124,45,45,0.1); }
+
 /* WAX SEAL STAMP OVERLAY */
 .seal-overlay{
   position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.4) rotate(-8deg);
@@ -1110,7 +1127,7 @@ function defaultState(){
   return {
     day:1, era:0, eraGoals, resources,
     triggered:[], districts, roster:[], chronicle:[],
-    questSeq: 0, crierSeen: []
+    questSeq: 0, crierSeen: [], crierBoard: []
   };
 }
 
@@ -1250,23 +1267,27 @@ function addCustomQuest(districtId, text){
 }
 
 function summonCrier(){
-  // Build pool of unseen quests; reset if all exhausted
-  let unseen = CRIER_QUESTS.filter((_,i) => !state.crierSeen.includes(i));
-  if(unseen.length === 0){
+  if(!state.crierBoard) state.crierBoard = [];
+  // Reset pool if exhausted
+  let available = CRIER_QUESTS.map((q,i)=>({q,i})).filter(x=>!state.crierSeen.includes(x.i));
+  if(available.length === 0){
     state.crierSeen = [];
-    unseen = CRIER_QUESTS.slice();
+    available = CRIER_QUESTS.map((q,i)=>({q,i}));
   }
-  // Pick a random unseen quest
-  const available = CRIER_QUESTS.map((q,i)=>({q,i})).filter(x=>!state.crierSeen.includes(x.i));
   const pick = available[Math.floor(Math.random()*available.length)];
   state.crierSeen.push(pick.i);
   const ev = pick.q;
+  // Add to crier board
+  const entry = {id:"crier-"+state.questSeq++, text:ev.text, cat:ev.cat, done:false, questIdx:pick.i};
+  state.crierBoard.unshift(entry);
+  // Show scroll reveal
   const scroll = document.getElementById("scroll");
   const inner = document.getElementById("scrollInner");
-  inner.innerHTML = '<span class="scroll-tag">'+ev.cat+'</span>' + ev.text;
+  inner.innerHTML = '<span class="scroll-tag">'+ev.cat+'</span>' + ev.text
+    + '<div style="margin-top:8px;font-size:12px;font-family:'Cinzel',serif;color:var(--teal);letter-spacing:0.5px;">Added to the Crier's Board ↓</div>';
   scroll.classList.add("open");
   addChronicle("event", "[Crier] " + ev.text);
-  saveState(); renderChronicle();
+  saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
 }
 
 function changeResource(key, delta){
@@ -1401,15 +1422,88 @@ function renderResources(){
   });
 }
 
+function renderCrierBoard(el){
+  if(!state.crierBoard) state.crierBoard = [];
+  const board = state.crierBoard;
+  const catColors = {boon:"var(--field-deep)", trial:"var(--oxblood)", twist:"var(--teal-deep)", dark:"var(--slate-deep)"};
+  const catLabels = {boon:"Boon", trial:"Trial", twist:"Twist", dark:"Dark Omen"};
+  let html = `<div class="district-accent" style="background:var(--teal)"></div>`;
+  if(board.length === 0){
+    html += `<div class="empty-state" style="padding:16px 0;">The crier has not yet been summoned. Ring the bell and hear the call.</div>`;
+  } else {
+    const active = board.filter(q=>!q.done);
+    const done = board.filter(q=>q.done);
+    if(active.length > 0){
+      html += `<div class="quest-tier-label" style="margin-bottom:8px;border-top:none;padding-top:0;">Active — ${active.length} quest${active.length!==1?'s':''}</div>`;
+      html += active.map(q => `
+        <div class="quest-item crier-quest-item" data-id="${q.id}">
+          <input type="checkbox" data-crier-id="${q.id}" ${q.done?'checked':''}>
+          <label class="${q.done?'done':''}">${q.text}</label>
+          <span class="qtag" style="color:${catColors[q.cat]||'var(--ink-soft)'};">${catLabels[q.cat]||q.cat}</span>
+          <button class="crier-refuse" data-crier-id="${q.id}" title="Refuse — returns to pool">✕</button>
+        </div>`).join("");
+    }
+    if(done.length > 0){
+      html += `<div class="quest-tier-label" style="margin-top:16px;color:var(--ink-soft);">Completed — ${done.length}</div>`;
+      html += done.map(q => `
+        <div class="quest-item" data-id="${q.id}">
+          <input type="checkbox" data-crier-id="${q.id}" checked>
+          <label class="done">${q.text}</label>
+          <span class="qtag" style="color:${catColors[q.cat]||'var(--ink-soft)'};">${catLabels[q.cat]||q.cat}</span>
+        </div>`).join("");
+    }
+  }
+  el.innerHTML = html;
+  el.querySelectorAll("input[data-crier-id]").forEach(cb => {
+    cb.addEventListener("change", () => toggleCrierQuest(cb.dataset.crierId, cb.checked));
+  });
+  el.querySelectorAll(".crier-refuse").forEach(btn => {
+    btn.addEventListener("click", () => refuseCrierQuest(btn.dataset.crierId));
+  });
+}
+
+function toggleCrierQuest(id, checked){
+  if(!state.crierBoard) return;
+  const q = state.crierBoard.find(x=>x.id===id);
+  if(!q) return;
+  q.done = checked;
+  if(checked){
+    addChronicle("quest", q.text + " — completed (Crier's Board)");
+    showSeal("Quest Complete");
+  }
+  saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
+}
+
+function refuseCrierQuest(id){
+  if(!state.crierBoard) return;
+  const idx = state.crierBoard.findIndex(x=>x.id===id);
+  if(idx === -1) return;
+  const q = state.crierBoard[idx];
+  // Return questIdx to pool by removing from crierSeen
+  state.crierSeen = state.crierSeen.filter(i => i !== q.questIdx);
+  state.crierBoard.splice(idx, 1);
+  addChronicle("event", "[Crier] Refused: " + q.text);
+  saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
+}
+
 function renderTabs(){
   const el = document.getElementById("districtTabs");
-  el.innerHTML = DISTRICTS.map(d => {
+  const crierCount = (state.crierBoard||[]).filter(q=>!q.done).length;
+  const crierBadge = crierCount > 0 ? ` <span class="tab-badge">${crierCount}</span>` : "";
+  let html = DISTRICTS.map(d => {
     const locked = state.era < d.unlockEra;
     let cls = "tab" + (d.id===activeTab?" active":"") + (locked?" locked":"");
     return `<div class="${cls}" data-id="${d.id}">${locked?'🔒 ':''}${d.name}</div>`;
   }).join("");
+  html += `<div class="tab crier-tab${activeTab==='__crier__'?' active':''}" data-id="__crier__">📯 Crier's Board${crierBadge}</div>`;
+  el.innerHTML = html;
   el.querySelectorAll(".tab").forEach(t => {
     t.addEventListener("click", () => {
+      if(t.dataset.id === "__crier__"){
+        activeTab = "__crier__";
+        renderTabs(); renderDistrictPanel();
+        return;
+      }
       const d = DISTRICTS.find(x=>x.id===t.dataset.id);
       if(state.era < d.unlockEra) return;
       activeTab = t.dataset.id;
@@ -1419,8 +1513,12 @@ function renderTabs(){
 }
 
 function renderDistrictPanel(){
-  const d = DISTRICTS.find(x=>x.id===activeTab);
   const el = document.getElementById("districtPanel");
+  if(activeTab === "__crier__"){
+    renderCrierBoard(el);
+    return;
+  }
+  const d = DISTRICTS.find(x=>x.id===activeTab);
   if(state.era < d.unlockEra){
     el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div><div class="locked-msg">${d.name} isn't open yet — reach Era ${d.unlockEra} to unlock it.</div>`;
     return;
