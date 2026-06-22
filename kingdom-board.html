@@ -207,7 +207,11 @@ body{margin:0;}
 .goal-row label.met{ text-decoration:line-through; color:var(--ink-soft); }
 .unlock-note{ font-size:12.5px; color:var(--teal-deep); font-style:italic; margin-top:8px; }
 .advance-block-note{ font-size:12.5px; color:var(--oxblood); font-style:italic; margin:8px 0 2px; }
+.advance-block-note--ready{ color:var(--teal-deep); font-style:italic; font-size:12.5px; margin:8px 0 2px; }
 .advance-breakdown{ font-size:11.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin:0 0 6px; line-height:1.6; }
+.declaration-row{ align-items:center; }
+.declaration-locked label{ opacity:0.5; font-style:italic; }
+.decl-lock{ font-size:14px; flex-shrink:0; margin-right:2px; opacity:0.6; }
 .advance-btn{
   margin-top:10px; width:100%;
   font-family:'Cinzel', serif; font-size:12px; letter-spacing:0.8px;
@@ -463,11 +467,11 @@ body{margin:0;}
 (function(){
 
 const ERAS = [
-  {name:"Landfall", subtitle:"The Age of Survival", declaration:"The founding charter is signed — give the settlement its name.", unlock:"Unlocks the Old Core and The Outer Fields."},
-  {name:"First Stones", subtitle:"The Age of Tools", declaration:"The hamlet becomes a town — create a flag to fly above it.", unlock:"Unlocks the North End and The Wharf District."},
-  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", declaration:"The market is in full swing — create a currency for the town.", unlock:"Unlocks Downtown and The New Core."},
-  {name:"Tide and Timber", subtitle:"The Age of the Harbor", declaration:"The town's growth continues — declare it a city and elect an NPC as its first mayor.", unlock:"Unlocks The Sprawl."},
-  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", declaration:"The city flourishes and ships set sail — found a small colony and claim it for the realm.", unlock:"Unlocks The New Core's grand expansion."},
+  {name:"Landfall", subtitle:"The Age of Survival", declaration:"The founding charter is signed — give the settlement its name.", unlock:"Completing this era unlocks The North End and The Wharf District."},
+  {name:"First Stones", subtitle:"The Age of Tools", declaration:"The hamlet becomes a town — create a flag to fly above it.", unlock:"Completing this era unlocks Downtown and The New Core."},
+  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", declaration:"The market is in full swing — create a currency for the town.", unlock:"Completing this era unlocks The Sprawl."},
+  {name:"Tide and Timber", subtitle:"The Age of the Harbor", declaration:"The town's growth continues — declare it a city and elect an NPC as its first mayor.", unlock:"Completing this era unlocks The New Core's full expansion."},
+  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", declaration:"The city flourishes and ships set sail — found a small colony and claim it for the realm.", unlock:"Completing this era begins The Gilded Haven — the final age."},
   {name:"The Gilded Haven", subtitle:"The Mythological Age", declaration:"The realm reigns eternal — engrave every player's name into the city's greatest wonder and live forever.", unlock:"The story is yours from here."}
 ];
 
@@ -1266,45 +1270,50 @@ function renderGoalCard(){
       <p class="era-sub">${e.subtitle}</p>
       <p class="future-note">Reach this era to unlock its declaration.</p>
       <div class="goal-row" style="opacity:0.45"><span>○ ${e.declaration}</span></div>
+      <p class="unlock-note">${e.unlock}</p>
     </div>`;
     return;
   }
   const g = state.eraGoals[i];
+  const remaining = state.era >= 5 ? 0 : countIncompleteQuests(state.era);
   el.innerHTML = `<div class="goal-card">
     <h3>${e.name}</h3>
     <p class="era-sub">${e.subtitle}</p>
-    <div class="goal-row">
-      <input type="checkbox" id="goalDeclared" ${g.declared?'checked':''}>
-      <label for="goalDeclared" class="${g.declared?'met':''}">${e.declaration}</label>
+    <div class="goal-row declaration-row ${remaining>0?'declaration-locked':''}">
+      ${remaining>0
+        ? '<span class="decl-lock">🔒</span>'
+        : '<input type="checkbox" id="goalDeclared" ' + (g.declared?'checked':'') + '>'}
+      <label ${remaining===0?'for="goalDeclared"':''} class="${g.declared?'met':''}${remaining>0?' locked-text':''}">${e.declaration}</label>
     </div>
     <p class="unlock-note">${e.unlock}</p>
     ${(()=>{
       if(state.era >= 5) return '<button class="advance-btn" disabled>Final Era Reached</button>';
-      const remaining = countIncompleteQuests(state.era);
       const canAdvance = g.declared && remaining === 0;
+      // Always build the quest breakdown
+      const breakdown = DISTRICTS
+        .filter(d => d.unlockEra <= state.era)
+        .map(d => {
+          const tiers = state.districts[d.id];
+          let inc = 0;
+          Object.keys(tiers).forEach(era => {
+            if(Number(era) > state.era) return;
+            tiers[era].forEach(q => { if(!q.done) inc++; });
+          });
+          return inc > 0 ? d.name + ' (' + inc + ')' : null;
+        })
+        .filter(Boolean);
       let noteHtml = '';
-      if(!g.declared){
-        noteHtml = '<p class="advance-block-note">⚔ Make the declaration above to advance.</p>';
-      } else if(remaining > 0){
-        const breakdown = DISTRICTS
-          .filter(d => d.unlockEra <= state.era)
-          .map(d => {
-            const tiers = state.districts[d.id];
-            let inc = 0;
-            Object.keys(tiers).forEach(era => {
-              if(Number(era) > state.era) return;
-              tiers[era].forEach(q => { if(!q.done) inc++; });
-            });
-            return inc > 0 ? d.name + ' (' + inc + ')' : null;
-          })
-          .filter(Boolean);
+      if(remaining > 0){
         noteHtml = '<p class="advance-block-note">⚔ ' + remaining + ' quest' + (remaining===1?'':'s')
-          + ' remaining:</p><p class="advance-breakdown">' + breakdown.join(' · ') + '</p>';
+          + ' remaining — complete all quests to unlock the era declaration:</p><p class="advance-breakdown">' + breakdown.join(' · ') + '</p>';
+      } else if(!g.declared){
+        noteHtml = '<p class="advance-block-note advance-block-note--ready">✦ All quests complete — make the declaration above to advance the era.</p>';
       }
       return noteHtml + '<button class="advance-btn" id="advanceBtn" ' + (canAdvance?'':'disabled') + '>Advance the Era</button>';
     })()}
   </div>`;
-  document.getElementById("goalDeclared").addEventListener("change", ev => { g.declared = ev.target.checked; saveState(); renderGoalCard(); });
+  const decl = document.getElementById("goalDeclared");
+  if(decl) decl.addEventListener("change", ev => { g.declared = ev.target.checked; saveState(); renderGoalCard(); });
   const btn = document.getElementById("advanceBtn");
   if(btn) btn.addEventListener("click", advanceEra);
 }
