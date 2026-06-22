@@ -318,7 +318,7 @@ body{margin:0;}
   background:rgba(255,255,255,0.55); border:1px solid var(--teal-deep); border-radius:4px;
   margin-top:0;
 }
-.scroll.open{ max-height:160px; opacity:1; margin-top:10px; }
+.scroll.open{ max-height:220px; opacity:1; margin-top:10px; }
 .scroll-inner{ padding:14px 16px; font-style:italic; font-size:14.5px; color:var(--teal-deep); }
 .scroll-tag{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--teal); display:block; margin-bottom:4px; font-style:normal; }
 
@@ -332,6 +332,13 @@ body{margin:0;}
 .chron-meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; padding-top:2px; }
 .chron-text{ flex:1; }
 .empty-state{ font-style:italic; color:var(--ink-soft); font-size:13.5px; padding:8px 0; }
+.chron-del{
+  flex-shrink:0; border:none; background:none; cursor:pointer;
+  color:var(--ink-soft); font-size:14px; line-height:1; padding:2px 5px;
+  border-radius:3px; opacity:0; transition:opacity 0.15s;
+}
+.chron-entry:hover .chron-del{ opacity:0.6; }
+.chron-del:hover{ opacity:1 !important; color:var(--oxblood); background:rgba(124,45,45,0.1); }
 
 /* WAX SEAL STAMP OVERLAY */
 .seal-overlay{
@@ -420,12 +427,12 @@ body{margin:0;}
         <div class="tabs" id="districtTabs"></div>
         <div class="district-panel" id="districtPanel"></div>
 
-        <button class="crier-btn" id="crierBtn">📯 Summon the Town Crier</button>
+        <button class="crier-btn" id="crierBtn">📯 Summon the Town Crier — Hear the Call</button>
         <div class="scroll" id="scroll"><div class="scroll-inner" id="scrollInner"></div></div>
 
         <div class="section-title-row spaced">
           <div class="section-title-inline">Chronicle of the Haven</div>
-          <button class="btn-small" id="clearChronicleBtn">Clear</button>
+          <button class="btn-small" id="clearChronicleBtn">Clear All</button>
         </div>
         <div class="chronicle" id="chronicle"></div>
       </div>
@@ -454,41 +461,328 @@ const ERAS = [
 
 const DISTRICTS = [
   {id:"hearthlands", name:"The Hearthlands", color:"var(--oxblood)", unlockEra:0, quests:{
-    0:["Clear a building plot in the town center","Raise a one-room lodge for the council","Mark the town's boundary stones"],
-    1:["Lay the foundation of the first stone house","Build a communal well","Pave the first market path"],
-    2:["Raise the market square","Build the first guildhall","Construct housing for new villagers","Open a trading post"],
-    3:["Build a town crier's post","Raise a counting house for harbor profits","Connect the Hearthlands to the Wharf road"],
-    4:["Raise a town hall","Build a courthouse","Establish a watch barracks"],
-    5:["Raise a grand cathedral or temple","Build a hall of records","Commission a monument to the founding council"]
+    0:[
+      "Clear a building plot in the town center",
+      "Raise a one-room lodge for the council",
+      "Mark the town's boundary stones",
+      "Chop and stockpile 64 logs for early construction",
+      "Craft a crafting table and place it in the lodge",
+      "Sleep through the first night without a death — the haven holds",
+      "Dig a shallow root cellar beneath the lodge for food storage",
+      "Place torches along the perimeter to keep the dark at bay",
+      "Gather 32 stone and store it near the building plot",
+      "Hold a founding council — name a Steward in the chronicle"
+    ],
+    1:[
+      "Lay the foundation of the first stone house",
+      "Build a communal well",
+      "Pave the first market path",
+      "Smelt 32 iron ingots and store them in a community chest",
+      "Build a second permanent house for a second player",
+      "Place a bed in every player's home",
+      "Construct a public notice board — a sign post with town rules",
+      "Build a small stone wall around the council lodge",
+      "Light every public path with lanterns or torches",
+      "Plant a tree-lined avenue between the two first houses"
+    ],
+    2:[
+      "Raise the market square",
+      "Build the first guildhall",
+      "Construct housing for new villagers",
+      "Open a trading post",
+      "Breed and house at least 10 villagers in the Hearthlands",
+      "Build a permanent storage hall with labeled chests",
+      "Construct a town fountain or decorative well in the square",
+      "Establish a smithy with blast furnace and anvil",
+      "Build a dedicated enchanting room in the guildhall",
+      "Pave the market square with stone slabs and add market stalls"
+    ],
+    3:[
+      "Build a town crier's post",
+      "Raise a counting house for harbor profits",
+      "Connect the Hearthlands to the Wharf road",
+      "Build a proper inn with at least 4 guest rooms",
+      "Install iron doors and a bell in the guildhall",
+      "Construct a dedicated potion brewery",
+      "Build a public library — bookshelves and a lectern in a named room",
+      "Place an item frame map of the settlement on the town hall wall",
+      "Renovate the original council lodge into a historic landmark",
+      "Build a decorative arch or gate marking the Hearthlands entrance"
+    ],
+    4:[
+      "Raise a town hall",
+      "Build a courthouse",
+      "Establish a watch barracks",
+      "Furnish the town hall with a throne or council table",
+      "Build a dedicated armoury stocked with iron gear for all players",
+      "Construct a prison cell beneath the courthouse",
+      "Install a bell tower on the town hall",
+      "Raise a monument plaza outside the town hall",
+      "Build a messenger's office connecting town hall to the Long Road",
+      "Station at least 2 iron golem guards near the town hall"
+    ],
+    5:[
+      "Raise a grand cathedral or temple",
+      "Build a hall of records",
+      "Commission a monument to the founding council",
+      "Fill the cathedral with stained glass and a pipe-organ build",
+      "Build a grand library — floor-to-ceiling bookshelves in a vaulted hall",
+      "Construct a memorial garden with named signs for fallen players",
+      "Build a royal treasury vault with hidden entrance",
+      "Light the town hall with sea lanterns and gold trim",
+      "Create a throne room fit for the final era",
+      "Build a town clock tower visible from the harbor"
+    ]
   }},
-  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:0, quests:{
-    0:["Scout the bay for a safe mooring","Build a simple dock","Set the first fish trap"],
-    1:["Reinforce the dock with stone pilings","Build a fisherman's hut","Stockpile timber for shipbuilding"],
-    2:["Open a fish market stall","Build a rope-maker's shed","Establish a ferry crossing"],
-    3:["Build the pier","Construct a shipwright's yard","Launch the first ship","Raise a lighthouse beacon"],
-    4:["Build harbor walls","Raise a customs house","Station a harbor guard"],
-    5:["Build a grand lighthouse wonder","Found a deep-sea trading fleet","Raise a shrine to the sea"]
+  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:2, quests:{
+    2:[
+      "Open a fish market stall",
+      "Build a rope-maker's shed",
+      "Establish a ferry crossing",
+      "Lay the first stone quay along the waterfront",
+      "Place at least 6 fishing rods in a public chest at the dockside",
+      "Build a harbormaster's shack overlooking the bay",
+      "Construct a salt house — a chest room for preserving fish",
+      "Light the waterfront with sea lanterns",
+      "Build a small boathouse for a rowboat or skiff",
+      "Uncover and mark any underwater ruins near the bay — there are old stones here"
+    ],
+    3:[
+      "Build the pier",
+      "Construct a shipwright's yard",
+      "Launch the first ship",
+      "Raise a lighthouse beacon",
+      "Build a dry dock — a pit where ships can be repaired",
+      "Construct a chandler's shop stocked with candles and rope",
+      "Build a warehouse for imported goods near the pier",
+      "Place a nautical chart on the harbormaster's wall",
+      "Build a crew quarters above the shipwright's yard",
+      "Discover what lies beneath the bay — dive and document any ruins"
+    ],
+    4:[
+      "Build harbor walls",
+      "Raise a customs house",
+      "Station a harbor guard",
+      "Install chain and iron gate sea-barriers at the harbor mouth",
+      "Build a signal tower for coordinating ship arrivals",
+      "Construct a separate fish-processing building with smokers",
+      "Build a smuggler's tunnel — a hidden passage beneath the wharf",
+      "Raise a memorial to sailors lost at sea",
+      "Fortify the lighthouse with a watch platform",
+      "Stock the customs house with emeralds representing trade taxes"
+    ],
+    5:[
+      "Build a grand lighthouse wonder",
+      "Found a deep-sea trading fleet",
+      "Raise a shrine to the sea",
+      "Build a captain's mansion overlooking the harbor",
+      "Construct a naval museum displaying trophies from sea expeditions",
+      "Fill the trading fleet warehouse with exotic goods from distant lands",
+      "Build a sea-gate wonder — a grand arch over the harbor mouth",
+      "Raise a kraken-warding monolith on the breakwater — what washed ashore here?",
+      "Commission a harbor mural in mosaic tile",
+      "Build a lighthouse keeper's cottage with a secret basement"
+    ]
   }},
-  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:0, quests:{
-    0:["Clear the road north out of town","Build a single waystation shack","Mark mile-stones along the road"],
-    1:["Build a proper inn for travelers","Mill the first grain","Dig a roadside well"],
-    2:["Plant a windbreak of trees along the road","Build a stable for horses","Establish a toll booth"],
-    3:["Pave the road in stone","Build a watchtower midway","Open a roadside market"],
-    4:["Build a garrison post on the road","Raise a gatehouse at the northern boundary"],
-    5:["Build a monument at the road's end","Establish a courier guild"]
+  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:1, quests:{
+    1:[
+      "Build a proper inn for travelers",
+      "Mill the first grain",
+      "Dig a roadside well",
+      "Clear and flatten the road to at least 3 blocks wide",
+      "Place stone road markers every 50 blocks northward",
+      "Build a covered rest stop halfway along the road",
+      "Construct a small stable with hay bales and fence posts",
+      "Plant oak saplings along both sides of the road",
+      "Build a hunter's outpost at the road's edge — bandits have been spotted",
+      "Place a lantern post every 20 blocks for night travel",
+      "Craft and store 16 bread in the inn's pantry chest",
+      "Build a small shrine at the road's first bend — travelers leave offerings",
+      "Investigate the abandoned cart found overturned in the ditch"
+    ],
+    2:[
+      "Plant a windbreak of trees along the road",
+      "Build a stable for horses",
+      "Establish a toll booth",
+      "Breed at least 2 horses and stable them",
+      "Build a second inn or waystation further north",
+      "Construct a roadside market with at least 4 stalls",
+      "Dig a drainage ditch alongside the muddiest stretch of road",
+      "Build a woodcutter's camp supplying timber to the town",
+      "Erect a notice board at the toll booth listing road laws",
+      "Uncover the origin of strange carvings found on a roadside stone",
+      "Build a small chapel for travelers seeking blessing before the wilds",
+      "Construct a messenger relay post with a chest for letters"
+    ],
+    3:[
+      "Pave the road in stone",
+      "Build a watchtower midway",
+      "Open a roadside market",
+      "Build a garrison bunkhouse beside the watchtower",
+      "Construct a road patrol checkpoint with iron gates",
+      "Build a trading post at the road's northern end",
+      "Add signal fire pits at the watchtower and town gate",
+      "Build a smithy at the waystation for repairing traveler gear",
+      "Construct a bridge over any stream or ravine crossing the road",
+      "Expand the roadside market to a permanent covered market hall",
+      "Investigate and clear the bandit camp reported north of the waystation",
+      "Build a dedicated horse breeding pen at the stable"
+    ],
+    4:[
+      "Build a garrison post on the road",
+      "Raise a gatehouse at the northern boundary",
+      "Station iron golem patrols along the road's length",
+      "Upgrade the watchtower to a full stone fortification",
+      "Build a barracks inside the gatehouse for road guards",
+      "Construct a vault beneath the toll booth for road-tax gold",
+      "Build a courier station with named chests for each district",
+      "Raise a second gatehouse at the town's southern entry",
+      "Construct a road shrine dedicated to those who fell defending it",
+      "Build a stone bridge at the northern gatehouse",
+      "Equip every road guard post with crossbows and iron armor",
+      "Build a prison annex at the garrison for captured brigands"
+    ],
+    5:[
+      "Build a monument at the road's end",
+      "Establish a courier guild",
+      "Pave the entire road in polished stone and add gold lamp posts",
+      "Build a grand triumphal arch at the town's northern entrance",
+      "Construct a postal headquarters in the Hearthlands linked by the road",
+      "Build a legendary waystation — an inn, market, forge, and chapel combined",
+      "Commission a road map carved into stone and mounted at the guild hall",
+      "Build a final watchtower at the road's farthest reach — what can you see?",
+      "Establish a horse-drawn carriage route between the town and northern end",
+      "Raise a hall of travelers — a museum of those who passed through",
+      "Build a secret vault beneath the monument — what is buried here?",
+      "Construct a grand gate wonder at the road's end marking the kingdom's border"
+    ]
   }},
   {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, quests:{
-    0:["Fence the first wheat field","Clear a pasture","Plant an orchard sapling row"],
-    1:["Raise a granary","Build a farmhouse","Dig an irrigation ditch"],
-    2:["Establish a livestock pen","Build a mill","Plant a second crop field"],
-    3:["Build a smokehouse for surplus meat","Raise a barn","Establish a beekeeping plot"],
-    4:["Build a fortified farmstead","Raise a watch post on the fields"],
-    5:["Build a grand granary wonder","Establish a harvest festival ground"]
+    0:[
+      "Fence the first wheat field",
+      "Clear a pasture",
+      "Plant an orchard sapling row",
+      "Till at least 16 soil blocks and plant wheat seeds",
+      "Build a scarecrow — an armour stand with a hat and carved pumpkin",
+      "Dig an irrigation channel connecting a water source to the wheat field",
+      "Catch and pen at least 2 chickens",
+      "Gather 32 seeds and store them in a field chest",
+      "Build a simple lean-to shelter at the field edge for workers",
+      "Mark the field boundaries with fence posts and a gate"
+    ],
+    1:[
+      "Raise a granary",
+      "Build a farmhouse",
+      "Dig an irrigation ditch",
+      "Breed at least 4 cows in the pasture",
+      "Plant a second crop — carrots or potatoes alongside the wheat",
+      "Build a hay storage barn with hay bales",
+      "Craft and store 32 bread in the granary chest",
+      "Build a compost area using composter blocks",
+      "Construct a beekeeper's shed with at least 2 bee nests",
+      "Build a small chapel at the field's edge — harvest offerings are made here"
+    ],
+    2:[
+      "Establish a livestock pen",
+      "Build a mill",
+      "Plant a second crop field",
+      "Build a dedicated sheep pen and shear at least 32 wool",
+      "Construct a pig pen and breed at least 6 pigs",
+      "Dig a fish pond — a water pit stocked with salmon or cod",
+      "Build a pumpkin and melon farm",
+      "Construct a cider house — a brewing stand next to the orchard",
+      "Build a root cellar beneath the farmhouse for food stores",
+      "Investigate the strange lights seen in the fields at night"
+    ],
+    3:[
+      "Build a smokehouse for surplus meat",
+      "Raise a barn",
+      "Establish a beekeeping plot",
+      "Build a sugar cane plantation along the irrigation ditch",
+      "Construct a nether wart garden for the town's potion needs",
+      "Build a dedicated wool-dyeing shed with all 16 dye colours",
+      "Raise a second barn for overflow storage",
+      "Construct a mushroom farm in a dark underground cellar",
+      "Build a leather tannery beside the livestock pen",
+      "Discover and excavate the buried ruins beneath the oldest field"
+    ],
+    4:[
+      "Build a fortified farmstead",
+      "Raise a watch post on the fields",
+      "Build a stone perimeter wall around the Outer Fields",
+      "Construct a siege-proof grain vault — iron doors, stone walls",
+      "Station 2 iron golems to patrol the fields at night",
+      "Build a field barracks for the harvest guard",
+      "Construct a watchtower with a signal fire at the field's far edge",
+      "Build a dedicated horse stable for field workers",
+      "Raise a field shrine — crops have been failing, the land demands appeasement",
+      "Build a fortified gatehouse at the main field entrance"
+    ],
+    5:[
+      "Build a grand granary wonder",
+      "Establish a harvest festival ground",
+      "Build a vast greenhouse — glass-enclosed farm spanning at least 20x20",
+      "Construct a legendary orchard with every sapling type",
+      "Build a harvest hall for feasts — long tables, banners, fireplace",
+      "Raise a nature shrine wonder — moss, azalea, and ancient oak canopy",
+      "Build an underground mushroom kingdom — a massive cavern farm",
+      "Construct a final field watchtower as a beacon visible from the sea",
+      "Complete a crop census — fill one chest with every food type in the game",
+      "Unearth the ancient seeds found buried in the oldest field — what do they grow?"
+    ]
   }},
   {id:"bulwark", name:"The Bulwark", color:"var(--slate)", unlockEra:3, quests:{
-    3:["Lay the wall foundation","Stockpile stone for the walls"],
-    4:["Raise the outer wall","Build a gatehouse","Build a watchtower","Raise a keep"],
-    5:["Build a grand keep wonder","Raise battlements","Establish a garrison hall"]
+    3:[
+      "Lay the wall foundation",
+      "Stockpile stone for the walls",
+      "Survey the perimeter — walk the full planned wall line and place markers",
+      "Dig the foundation trench — 2 blocks deep along the marked perimeter",
+      "Stockpile 256 stone bricks in a dedicated build chest",
+      "Build the first corner tower as a proof-of-concept",
+      "Construct a temporary gate of wooden planks to close the gap",
+      "Build a wall-worker's camp beside the foundation trench",
+      "Carve a dedication stone — a named sign placed in the wall's first layer",
+      "Establish a quarry site dedicated to the wall's stone supply",
+      "Build a mortar shed — a crafting station beside the foundation",
+      "Clear all trees and terrain inside the planned wall perimeter",
+      "Document the wall plan in a book and quill held in the town hall",
+      "Construct a signal fire platform at the future gatehouse location",
+      "Recruit a Forgemaster — the wall demands iron and expertise"
+    ],
+    4:[
+      "Raise the outer wall",
+      "Build a gatehouse",
+      "Build a watchtower",
+      "Raise a keep",
+      "Build a second watchtower on the opposite wall corner",
+      "Add battlements — merlons and crenellations along the wall top",
+      "Construct a wall walk — a 2-block-wide path atop the full wall",
+      "Build an inner barracks against the wall for defenders",
+      "Raise the portcullis — iron bars in a track above the gatehouse entrance",
+      "Build a murder hole above the gatehouse — trapdoors over the passage",
+      "Construct a wall armory stocked with bows and arrows",
+      "Add arrow slits — narrow windows in the wall towers",
+      "Build a dungeon beneath the keep",
+      "Raise the keep's banner — place your banner design on the highest point",
+      "Build a stable inside the Bulwark for mounted defenders"
+    ],
+    5:[
+      "Build a grand keep wonder",
+      "Raise battlements",
+      "Establish a garrison hall",
+      "Construct a throne room inside the grand keep",
+      "Build a great hall for feasting — long tables, fireplaces, banners",
+      "Raise a second wall — an outer curtain wall beyond the first",
+      "Build a secret postern gate — a hidden exit through the wall",
+      "Construct a treasury vault inside the keep with an iron door",
+      "Build a war room with maps and a strategy table",
+      "Raise a hero's monument inside the keep courtyard",
+      "Build a chapel inside the Bulwark walls",
+      "Construct a dedicated siege weapon platform — catapult or ballista build",
+      "Build a legendary tower keep rising above all other structures",
+      "Light every battlement with lanterns — the Bulwark never goes dark",
+      "Seal the old dungeon — what was imprisoned here is not spoken of"
+    ]
   }}
 ];
 
@@ -502,19 +796,66 @@ const RESOURCES = [
   {key:"gold", name:"Gold", color:"var(--oxblood)", threshold:32, questDistrict:"hearthlands", questText:"A trade caravan arrives — build a merchant's hall"}
 ];
 
-const RANDOM_EVENTS = [
-  {cat:"boon", text:"A trade caravan from the inland hills arrives at the Long Road with rare goods."},
-  {cat:"boon", text:"A great shoal of fish blesses the Wharf — fishing yields double this week."},
-  {cat:"boon", text:"Spring rains swell the Outer Fields — crop yields surge."},
-  {cat:"boon", text:"A villager family resettles in the Hearthlands, drawn by the town's reputation."},
-  {cat:"trial", text:"A squall batters the Wharf District — repair the pier before the next ship arrives."},
-  {cat:"trial", text:"Bandits are spotted on the Long Road."},
-  {cat:"trial", text:"Blight withers part of the Outer Fields — a new food source is needed within days."},
-  {cat:"trial", text:"Tremors crack stone in the Hearthlands — nearby buildings need inspecting."},
-  {cat:"twist", text:"Strange lights are seen out past the harbor at night."},
-  {cat:"twist", text:"An old ruin is uncovered while digging foundations in the Hearthlands."},
-  {cat:"twist", text:"A traveling bard arrives on the Long Road with a tale of buried treasure."},
-  {cat:"twist", text:"A diplomatic envoy from a distant village proposes an alliance."}
+const CRIER_QUESTS = [
+  // BOONS
+  {cat:"boon", text:"A merchant's cart overturned on the Long Road — build a covered trading post near the incident site to prevent future losses."},
+  {cat:"boon", text:"Shoals of silver fish have gathered in the bay. Build or expand a dock-side smoking rack to preserve the haul before it spoils."},
+  {cat:"boon", text:"A wandering mason arrives seeking work. Give them purpose — lay the foundation of a new public building before they move on."},
+  {cat:"boon", text:"Spring floods have deposited rich silt in the Outer Fields. Plant a new crop type in the enriched soil this season."},
+  {cat:"boon", text:"A villager family arrives at the gate with rare seeds from the east. Build a dedicated garden plot and plant what they brought."},
+  {cat:"boon", text:"A travelling blacksmith offers to share techniques. Craft a set of iron armor and store it in the town armoury."},
+  {cat:"boon", text:"An old map surfaces in the market — it marks something offshore. Sail out and investigate the marked location; document what you find."},
+  {cat:"boon", text:"Bees have colonised an old oak at the field's edge. Build a dedicated apiary of at least 3 hive blocks before they swarm elsewhere."},
+  {cat:"boon", text:"A ship has arrived bearing hardwood not found locally. Use it — build a decorative structure using a wood type different from your usual."},
+  {cat:"boon", text:"The harvest is early and overflowing. Stockpile 64 bread and store it in a named emergency chest in the granary."},
+  {cat:"boon", text:"A cartographer is passing through. Commission a map — place an item-frame map of the current settlement in the town hall."},
+  {cat:"boon", text:"A monk seeks sanctuary. Build a small chapel or scriptorium and welcome them — they will copy your laws into a book and quill."},
+  // TRIALS
+  {cat:"trial", text:"A squall has battered the Wharf. Before the next session ends, repair or reinforce the dock — replace any missing blocks and add a breakwater."},
+  {cat:"trial", text:"Bandits have been raiding the Long Road. Build a fortified checkpoint and stock it with weapons before the next caravan arrives."},
+  {cat:"trial", text:"Blight has struck the western fields. Tear out the infected crop and replace it with a different food source within 2 in-game days."},
+  {cat:"trial", text:"A fire broke out near the Hearthlands forge. Every player must check their home for flammable materials — replace any wood adjacent to fire sources."},
+  {cat:"trial", text:"Tremors have cracked the well. Dig a second water source and enclose it in stone before the old one is abandoned."},
+  {cat:"trial", text:"A skeleton archer was spotted inside the walls at dawn. Find and seal every gap in your perimeter, then light every dark corner."},
+  {cat:"trial", text:"The grain stores have been raided by something — tracks suggest a cave entrance beneath the granary. Find and seal it."},
+  {cat:"trial", text:"A diplomatic insult has reached the settlement — a visiting envoy was robbed. Build a proper guest house before they return, or face consequences."},
+  {cat:"trial", text:"A harsh winter is forecast. Every player must have a fully enclosed, lit home with a bed and food chest before the next session ends."},
+  {cat:"trial", text:"Creepers have destroyed part of the outer road. Repair the damage and build a lit watchtower to prevent future incidents."},
+  {cat:"trial", text:"A villager has gone missing near the eastern fields. Search the area and document what you find — build a marker where they disappeared."},
+  {cat:"trial", text:"The docks have rotted in places. Replace all wooden dock blocks with stone, deepslate, or dark oak before a ship is lost."},
+  {cat:"trial", text:"Raiders were spotted on the coastal cliffs. Build a signal fire beacon on the highest point of the settlement before nightfall."},
+  // TWISTS
+  {cat:"twist", text:"Strange lights flicker beneath the harbor at night. Dive down and explore — if you find anything, build a marker and log it in the chronicle."},
+  {cat:"twist", text:"A ruined foundation has been uncovered in the Hearthlands. Excavate it fully and decide: preserve it as a landmark, or build over it."},
+  {cat:"twist", text:"A bard arrives with a song about a buried vault beneath the Long Road. Dig beneath the oldest section of road and see what you find."},
+  {cat:"twist", text:"A diplomatic envoy from a distant village arrives. Build a meeting hall or annex in the town hall to receive them formally."},
+  {cat:"twist", text:"A child was found at the gate clutching a strange iron key. Build a locked vault somewhere in the settlement — place the key inside."},
+  {cat:"twist", text:"A hermit on the cliffs claims the sea will rise. Build an elevated storage platform above the current high-water mark — just in case."},
+  {cat:"twist", text:"Crows have been gathering around one specific building for three days. The players must collectively decide what it means — log the decision in the chronicle."},
+  {cat:"twist", text:"An ancient stone idol has washed ashore. Build a shrine around it somewhere in the settlement. What do you dedicate it to?"},
+  {cat:"twist", text:"A second settlement has been spotted on the horizon. Build a signal tower and light it — establish first contact or warn them off."},
+  {cat:"twist", text:"A locked chest has washed ashore with no key. Build a dedicated reliquary to house it. No one opens it until the final era."},
+  {cat:"twist", text:"A deserter from a distant war arrives seeking refuge. Build a safe house — a hidden room inside an existing building."},
+  {cat:"twist", text:"An eclipse is predicted. Construct an observation platform and mark the event with a sign in the chronicle. Something changes after."},
+  {cat:"twist", text:"The old founding lodge has begun to crumble. Restore it exactly as it was, or tear it down and replace it with something worthy — the council must vote."},
+  {cat:"twist", text:"A plague of silverfish has infested one stone structure. Identify the building, quarantine it with a fence, and replace all infested blocks."},
+  {cat:"twist", text:"A travelling oracle names one player the Keeper of Secrets. That player must build a hidden room known only to themselves somewhere in the settlement."},
+  {cat:"twist", text:"Wolves have moved into the forest near the Long Road. Tame at least 3 and house them at a named kennel beside the road garrison."},
+  {cat:"twist", text:"A ghost ship drifts into harbor with no crew. Board it, salvage what you can, and document the cargo in the chronicle."},
+  {cat:"twist", text:"The well water has turned black overnight. Find an alternate water source and build a stone-enclosed cistern before the old well is unsealed."},
+  {cat:"twist", text:"A dying courier arrives with a sealed letter. The players must write the contents in a book and quill and place it in the town hall. No one knows who sent it."},
+  // DARK
+  {cat:"dark", text:"Bones have been found in the old building plot. Consecrate the ground — build a small cemetery with named grave markers."},
+  {cat:"dark", text:"One player's home was found ransacked and their chest emptied. The culprit is unknown. Build a lockhouse — a secure vault only that player can access."},
+  {cat:"dark", text:"A fog rolled in from the sea and three cows were found dead in the morning. Salt the field boundary. Whether it helps is unclear."},
+  {cat:"dark", text:"A door in the Hearthlands opens on its own at night. Seal the building, reinforce it with iron doors, and post a guard sign. Do not enter until dawn."},
+  {cat:"dark", text:"Something has been eating the crops — not animals. Dig beneath the oldest field and seal whatever you find. Do not name it in the chronicle."},
+  {cat:"dark", text:"A grave was found pre-dug outside the settlement walls — sized for a person. Build a watch post overlooking the site and log every night it remains empty."},
+  {cat:"dark", text:"A player dreamt of fire. Before the next session ends, every player must have a safe room — fully enclosed stone, no wood, with a chest of essentials."},
+  {cat:"dark", text:"The lighthouse light went out on its own. Reignite it before dawn — and build a backup beacon in case it happens again."},
+  {cat:"boon", text:"A retiring adventurer has donated their enchanted gear to the settlement. Build a dedicated trophy room and display it — others may be inspired."},
+  {cat:"trial", text:"A river upstream has been dammed by something unknown. Investigate the source, clear the blockage, and document what caused it."},
+  {cat:"twist", text:"A child in the Hearthlands claims to have found a door underground that wasn't there yesterday. Dig beneath the marked spot and see what lies below."}
 ];
 
 /* =====================================================================
@@ -557,7 +898,7 @@ function defaultState(){
   return {
     day:1, era:0, eraGoals, resources,
     triggered:[], districts, roster:[], chronicle:[],
-    questSeq: 0
+    questSeq: 0, crierSeen: []
   };
 }
 
@@ -680,12 +1021,22 @@ function addCustomQuest(districtId, text){
 }
 
 function summonCrier(){
-  const ev = RANDOM_EVENTS[Math.floor(Math.random()*RANDOM_EVENTS.length)];
+  // Build pool of unseen quests; reset if all exhausted
+  let unseen = CRIER_QUESTS.filter((_,i) => !state.crierSeen.includes(i));
+  if(unseen.length === 0){
+    state.crierSeen = [];
+    unseen = CRIER_QUESTS.slice();
+  }
+  // Pick a random unseen quest
+  const available = CRIER_QUESTS.map((q,i)=>({q,i})).filter(x=>!state.crierSeen.includes(x.i));
+  const pick = available[Math.floor(Math.random()*available.length)];
+  state.crierSeen.push(pick.i);
+  const ev = pick.q;
   const scroll = document.getElementById("scroll");
   const inner = document.getElementById("scrollInner");
   inner.innerHTML = '<span class="scroll-tag">'+ev.cat+'</span>' + ev.text;
   scroll.classList.add("open");
-  addChronicle("event", ev.text);
+  addChronicle("event", "[Crier] " + ev.text);
   saveState(); renderChronicle();
 }
 
@@ -844,17 +1195,23 @@ function renderDistrictPanel(){
     const locked = era > state.era;
     const isCurrent = era === state.era;
     const doneCount = quests.filter(q=>q.done).length;
-    html += `<div class="quest-tier ${locked?'locked':''} ${isCurrent?'quest-tier-current':''}">
-      <div class="quest-tier-label">${locked?'🔒 ':''}Era ${era} — ${ERAS[era].name} <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:400;">${doneCount}/${quests.length}</span></div>
-      ${quests.map(q => {
-        const tag = q.id.indexOf('-auto-')>-1 ? 'surplus' : (q.id.indexOf('-c-')>-1 ? 'custom' : '');
-        return `<div class="quest-item">
-          <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''} ${locked?'disabled':''}>
-          <label class="${q.done?'done':''} ${locked?'locked-text':''}">${q.text}</label>
-          ${tag?'<span class="qtag">'+tag+'</span>':''}
-        </div>`;
-      }).join("")}
-    </div>`;
+    if(locked){
+      html += `<div class="quest-tier locked">
+        <div class="quest-tier-label">🔒 Era ${era} — ${ERAS[era].name} <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:400;">${quests.length} quest${quests.length!==1?'s':''} sealed</span></div>
+      </div>`;
+    } else {
+      html += `<div class="quest-tier ${isCurrent?'quest-tier-current':''}">
+        <div class="quest-tier-label">Era ${era} — ${ERAS[era].name} <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:400;">${doneCount}/${quests.length}</span></div>
+        ${quests.map(q => {
+          const tag = q.id.indexOf('-auto-')>-1 ? 'surplus' : (q.id.indexOf('-c-')>-1 ? 'custom' : '');
+          return `<div class="quest-item">
+            <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''}>
+            <label class="${q.done?'done':''}">${q.text}</label>
+            ${tag?'<span class="qtag">'+tag+'</span>':''}
+          </div>`;
+        }).join("")}
+      </div>`;
+    }
   });
   html += `<div class="add-quest"><input type="text" id="newQuestInput" placeholder="Add a custom quest…" maxlength="80">
      <button class="btn-small" id="addQuestBtn">+ Add</button></div>`;
@@ -890,11 +1247,18 @@ function renderChronicle(){
     return;
   }
   const icons = {event:"📯", quest:"☑", milestone:"⛨", trigger:"⚖"};
-  el.innerHTML = state.chronicle.map(c => `<div class="chron-entry">
+  el.innerHTML = state.chronicle.map((c,i) => `<div class="chron-entry">
     <span class="chron-icon">${icons[c.type]||"•"}</span>
     <span class="chron-text">${c.text}</span>
     <span class="chron-meta">D${c.day}·E${c.era}</span>
+    <button class="chron-del" data-idx="${i}" title="Remove this entry">&times;</button>
   </div>`).join("");
+  el.querySelectorAll(".chron-del").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.chronicle.splice(parseInt(btn.dataset.idx), 1);
+      saveState(); renderChronicle();
+    });
+  });
 }
 
 /* ---------- WIRE UP STATIC CONTROLS ---------- */
