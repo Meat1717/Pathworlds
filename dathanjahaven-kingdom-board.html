@@ -1463,66 +1463,71 @@ function renderChronicle(){
 
 /* ---------- WIRE UP STATIC CONTROLS ---------- */
 
-document.getElementById("dayInput").addEventListener("change", e => {
-  state.day = Math.max(1, parseInt(e.target.value)||1);
-  saveState();
-});
+function wireControls(){
+  document.getElementById("dayInput").addEventListener("change", e => {
+    state.day = Math.max(1, parseInt(e.target.value)||1);
+    saveState();
+  });
 
-document.getElementById("crierBtn").addEventListener("click", summonCrier);
+  document.getElementById("crierBtn").addEventListener("click", summonCrier);
 
-document.getElementById("clearChronicleBtn").addEventListener("click", () => {
-  if(state.chronicle.length === 0) return;
-  if(confirm("Clear all chronicle entries? This can't be undone.")){
-    state.chronicle = [];
-    saveState(); renderChronicle();
-  }
-});
+  document.getElementById("clearChronicleBtn").addEventListener("click", () => {
+    if(state.chronicle.length === 0) return;
+    if(confirm("Clear all chronicle entries? This can't be undone.")){
+      state.chronicle = [];
+      saveState(); renderChronicle();
+    }
+  });
 
-
-document.getElementById("resetTrigger").addEventListener("click", () => {
-  const pw = prompt("Enter the reset passphrase:");
-  if(pw === null) return;
-  if(pw !== "foundingstone") { alert("Wrong passphrase."); return; }
-  if(!confirm("Reset ALL progress? This wipes eras, quests, resources, roster, and chronicle. Cannot be undone.")) return;
-  const fresh = defaultState();
-  if(storageOK && boardRef){
-    suppressNextSnapshot = true;
-    boardRef.set(fresh).then(() => {
+  document.getElementById("resetTrigger").addEventListener("click", () => {
+    const pw = prompt("Enter the reset passphrase:");
+    if(pw === null) return;
+    if(pw !== "foundingstone") { alert("Wrong passphrase."); return; }
+    if(!confirm("Reset ALL progress? This wipes all progress and cannot be undone.")) return;
+    const fresh = defaultState();
+    if(storageOK && boardRef){
+      suppressNextSnapshot = true;
+      boardRef.set(fresh).then(() => {
+        state = fresh;
+        selectedEraView = 0;
+        activeTab = "oldcore";
+        renderAll();
+      });
+    } else {
       state = fresh;
       selectedEraView = 0;
-      activeTab = "hearthlands";
+      activeTab = "oldcore";
       renderAll();
-    });
-  } else {
-    state = fresh;
-    selectedEraView = 0;
-    activeTab = "hearthlands";
-    renderAll();
-  }
-});
-
-// Lightbox
-document.getElementById("mapBtn").addEventListener("click", () => {
-  document.getElementById("lightboxOverlay").classList.add("open");
-});
-document.getElementById("lightboxClose").addEventListener("click", () => {
-  document.getElementById("lightboxOverlay").classList.remove("open");
-});
-document.getElementById("lightboxOverlay").addEventListener("click", e => {
-  if(e.target === document.getElementById("lightboxOverlay"))
-    document.getElementById("lightboxOverlay").classList.remove("open");
-});
-document.addEventListener("keydown", e => {
-  if(e.key === "Escape") document.getElementById("lightboxOverlay").classList.remove("open");
-});
-["lbImg1","lbImg2"].forEach(id => {
-  document.getElementById(id).addEventListener("click", e => {
-    e.stopPropagation();
-    e.target.classList.toggle("zoomed");
+    }
   });
-});
 
-attachBoardListener();
+  // Lightbox
+  document.getElementById("mapBtn").addEventListener("click", () => {
+    document.getElementById("lightboxOverlay").classList.add("open");
+  });
+  document.getElementById("lightboxClose").addEventListener("click", () => {
+    document.getElementById("lightboxOverlay").classList.remove("open");
+  });
+  document.getElementById("lightboxOverlay").addEventListener("click", e => {
+    if(e.target === document.getElementById("lightboxOverlay"))
+      document.getElementById("lightboxOverlay").classList.remove("open");
+  });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape") document.getElementById("lightboxOverlay").classList.remove("open");
+  });
+  ["lbImg1","lbImg2"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("click", e => {
+      e.stopPropagation();
+      e.target.classList.toggle("zoomed");
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  wireControls();
+  attachBoardListener();
+});
 })();
 </script>
 </body>
