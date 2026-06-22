@@ -1206,7 +1206,7 @@ function summonCrier(){
   const scroll = document.getElementById("scroll");
   const inner = document.getElementById("scrollInner");
   inner.innerHTML = '<span class="scroll-tag">'+ev.cat+'</span>' + ev.text
-    + '<div style="margin-top:8px;font-size:12px;font-family:'Cinzel',serif;color:var(--teal);letter-spacing:0.5px;">Added to the Crier's Board ↓</div>';
+    + '<div style="margin-top:8px;font-size:12px;font-family:Cinzel,serif;color:var(--teal);letter-spacing:0.5px;">Added to the Crier\'s Board ↓</div>';
   scroll.classList.add("open");
   addChronicle("event", "[Crier] " + ev.text);
   saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
