@@ -463,12 +463,12 @@ body{margin:0;}
 (function(){
 
 const ERAS = [
-  {name:"Landfall", subtitle:"The Age of Survival", arch:"Raise the council lodge and a palisade wall in the Old Core.", survival:"Every player has a shelter, tools, and a food supply.", unlock:"Unlocks the Old Core and The Outer Fields."},
-  {name:"First Stones", subtitle:"The Age of Tools", arch:"Lay the first permanent stone buildings in the Old Core and open the harbor.", survival:"Iron tools smelted; first stone wall segment raised.", unlock:"Unlocks the North End and The Wharf District."},
-  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", arch:"Raise Downtown's civic square and a trading post; connect all open districts by road.", survival:"House at least 10 villagers across the settlement.", unlock:"Unlocks Downtown and The New Core."},
-  {name:"Tide and Timber", subtitle:"The Age of the Harbor", arch:"Build a full pier, a lighthouse, and launch the first ship from the Wharf.", survival:"Establish a steady harbor income and a curtain wall around the Old Core.", unlock:"Unlocks The Sprawl."},
-  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", arch:"Raise the keep in the Old Core and wall the city's settled core.", survival:"Survive a raid event without losing a district.", unlock:"Unlocks The New Core's grand expansion."},
-  {name:"The Gilded Haven", subtitle:"The Mythological Age", arch:"Raise one wonder in any district — a cathedral, lighthouse, palace, or legendary hall.", survival:"Complete a true end-game feat.", unlock:"The story is yours from here."}
+  {name:"Landfall", subtitle:"The Age of Survival", declaration:"The founding charter is signed — give the settlement its name.", unlock:"Unlocks the Old Core and The Outer Fields."},
+  {name:"First Stones", subtitle:"The Age of Tools", declaration:"The hamlet becomes a town — create a flag to fly above it.", unlock:"Unlocks the North End and The Wharf District."},
+  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", declaration:"The market is in full swing — create a currency for the town.", unlock:"Unlocks Downtown and The New Core."},
+  {name:"Tide and Timber", subtitle:"The Age of the Harbor", declaration:"The town's growth continues — declare it a city and elect an NPC as its first mayor.", unlock:"Unlocks The Sprawl."},
+  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", declaration:"The city flourishes and ships set sail — found a small colony and claim it for the realm.", unlock:"Unlocks The New Core's grand expansion."},
+  {name:"The Gilded Haven", subtitle:"The Mythological Age", declaration:"The realm reigns eternal — engrave every player's name into the city's greatest wonder and live forever.", unlock:"The story is yours from here."}
 ];
 
 const DISTRICTS = [
@@ -1043,7 +1043,7 @@ function defaultState(){
     });
   });
   const eraGoals = {};
-  ERAS.forEach((e,i) => { eraGoals[i] = {arch:false, survival:false}; });
+  ERAS.forEach((e,i) => { eraGoals[i] = {declared:false}; });
   return {
     day:1, era:0, eraGoals,
     districts, chronicle:[],
@@ -1081,7 +1081,7 @@ function attachBoardListener(){
         state = fresh;
         if(typeof val.day === 'number') state.day = val.day;
         if(typeof val.era === 'number') state.era = Math.min(val.era, 5);
-        if(val.eraGoals) state.eraGoals = Object.assign(fresh.eraGoals, val.eraGoals);
+        if(val.eraGoals){ state.eraGoals = fresh.eraGoals; Object.keys(val.eraGoals).forEach(k => { if(state.eraGoals[k]) state.eraGoals[k].declared = !!val.eraGoals[k].declared; }); }
         if(Array.isArray(val.chronicle)) state.chronicle = val.chronicle;
         if(typeof val.questSeq === 'number') state.questSeq = val.questSeq;
         if(Array.isArray(val.crierSeen)) state.crierSeen = val.crierSeen;
@@ -1160,7 +1160,7 @@ function countIncompleteQuests(upToEra){
 
 function advanceEra(){
   const g = state.eraGoals[state.era];
-  if(!g.arch || !g.survival || state.era >= 5) return;
+  if(!g.declared || state.era >= 5) return;
   const remaining = countIncompleteQuests(state.era);
   if(remaining > 0) return;
   state.era++;
@@ -1256,8 +1256,7 @@ function renderGoalCard(){
     el.innerHTML = `<div class="goal-card">
       <h3>${e.name} <span style="font-size:12px;color:var(--brass);font-family:'JetBrains Mono',monospace;">COMPLETE</span></h3>
       <p class="era-sub">${e.subtitle}</p>
-      <div class="goal-row"><label class="met">✓ ${e.arch}</label></div>
-      <div class="goal-row"><label class="met">✓ ${e.survival}</label></div>
+      <div class="goal-row"><label class="met">✓ ${e.declaration}</label></div>
     </div>`;
     return;
   }
@@ -1265,9 +1264,8 @@ function renderGoalCard(){
     el.innerHTML = `<div class="goal-card">
       <h3>${e.name}</h3>
       <p class="era-sub">${e.subtitle}</p>
-      <p class="future-note">Reach Era ${state.era + (i - state.era === 1 ? '' : '–'+(i-1))}${i-state.era>1?' first':' before this'}. Goals preview:</p>
-      <div class="goal-row" style="opacity:0.55"><span>○ ${e.arch}</span></div>
-      <div class="goal-row" style="opacity:0.55"><span>○ ${e.survival}</span></div>
+      <p class="future-note">Reach this era to unlock its declaration.</p>
+      <div class="goal-row" style="opacity:0.45"><span>○ ${e.declaration}</span></div>
     </div>`;
     return;
   }
@@ -1276,24 +1274,18 @@ function renderGoalCard(){
     <h3>${e.name}</h3>
     <p class="era-sub">${e.subtitle}</p>
     <div class="goal-row">
-      <input type="checkbox" id="goalArch" ${g.arch?'checked':''}>
-      <label for="goalArch" class="${g.arch?'met':''}">${e.arch}</label>
-    </div>
-    <div class="goal-row">
-      <input type="checkbox" id="goalSurv" ${g.survival?'checked':''}>
-      <label for="goalSurv" class="${g.survival?'met':''}">${e.survival}</label>
+      <input type="checkbox" id="goalDeclared" ${g.declared?'checked':''}>
+      <label for="goalDeclared" class="${g.declared?'met':''}">${e.declaration}</label>
     </div>
     <p class="unlock-note">${e.unlock}</p>
     ${(()=>{
       if(state.era >= 5) return '<button class="advance-btn" disabled>Final Era Reached</button>';
-      const goalsOk = g.arch && g.survival;
       const remaining = countIncompleteQuests(state.era);
-      const canAdvance = goalsOk && remaining === 0;
+      const canAdvance = g.declared && remaining === 0;
       let noteHtml = '';
-      if(!goalsOk){
-        noteHtml = '<p class="advance-block-note">⚔ Complete both era goals above to advance.</p>';
+      if(!g.declared){
+        noteHtml = '<p class="advance-block-note">⚔ Make the declaration above to advance.</p>';
       } else if(remaining > 0){
-        // Build per-district breakdown
         const breakdown = DISTRICTS
           .filter(d => d.unlockEra <= state.era)
           .map(d => {
@@ -1312,8 +1304,7 @@ function renderGoalCard(){
       return noteHtml + '<button class="advance-btn" id="advanceBtn" ' + (canAdvance?'':'disabled') + '>Advance the Era</button>';
     })()}
   </div>`;
-  document.getElementById("goalArch").addEventListener("change", ev => { g.arch = ev.target.checked; saveState(); renderGoalCard(); });
-  document.getElementById("goalSurv").addEventListener("change", ev => { g.survival = ev.target.checked; saveState(); renderGoalCard(); });
+  document.getElementById("goalDeclared").addEventListener("change", ev => { g.declared = ev.target.checked; saveState(); renderGoalCard(); });
   const btn = document.getElementById("advanceBtn");
   if(btn) btn.addEventListener("click", advanceEra);
 }
