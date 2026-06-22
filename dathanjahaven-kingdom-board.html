@@ -1066,19 +1066,47 @@ function attachBoardListener(){
 
   boardRef.on("value", snapshot => {
     if(suppressNextSnapshot){ suppressNextSnapshot = false; return; }
-    const val = snapshot.val();
-    if(val){
-      state = Object.assign(defaultState(), val);
-      const freshDistricts = defaultState().districts;
-      DISTRICTS.forEach(d => {
-        if(Array.isArray(state.districts[d.id])){
-          state.districts[d.id] = freshDistricts[d.id];
+    try {
+      const val = snapshot.val();
+      const fresh = defaultState();
+      if(val){
+        // Merge saved scalar fields safely
+        state = fresh;
+        if(typeof val.day === 'number') state.day = val.day;
+        if(typeof val.era === 'number') state.era = Math.min(val.era, 5);
+        if(val.eraGoals) state.eraGoals = Object.assign(fresh.eraGoals, val.eraGoals);
+        if(Array.isArray(val.chronicle)) state.chronicle = val.chronicle;
+        if(typeof val.questSeq === 'number') state.questSeq = val.questSeq;
+        if(Array.isArray(val.crierSeen)) state.crierSeen = val.crierSeen;
+        if(Array.isArray(val.crierBoard)) state.crierBoard = val.crierBoard;
+        // Only load districts that exist in the current district list
+        if(val.districts){
+          DISTRICTS.forEach(d => {
+            const saved = val.districts[d.id];
+            if(saved && !Array.isArray(saved) && typeof saved === 'object'){
+              // Merge saved quest done-states onto fresh quest list
+              state.districts[d.id] = fresh.districts[d.id];
+              Object.keys(state.districts[d.id]).forEach(era => {
+                if(saved[era] && Array.isArray(saved[era])){
+                  state.districts[d.id][era] = state.districts[d.id][era].map((q, idx) => {
+                    const savedQ = saved[era][idx];
+                    return savedQ ? Object.assign({}, q, {done: !!savedQ.done}) : q;
+                  });
+                }
+              });
+            }
+            // If district not in saved data, fresh quests already set above
+          });
         }
-      });
-      selectedEraView = state.era;
-      activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "oldcore";
+        selectedEraView = state.era;
+        activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "oldcore";
+      }
+      document.getElementById("storageNote").textContent = "Shared council board — everyone who opens this sees the same ledger, live.";
+    } catch(e) {
+      console.error("State load error:", e);
+      state = defaultState();
+      document.getElementById("storageNote").textContent = "State load error — reset recommended. (" + e.message + ")";
     }
-    document.getElementById("storageNote").textContent = "Shared council board — everyone who opens this sees the same ledger, live.";
     renderAll();
   }, err => {
     document.getElementById("storageNote").textContent = "Lost connection to the shared ledger — check your Firebase database rules.";
