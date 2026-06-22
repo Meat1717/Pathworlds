@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dathanjahaven — Steward's Ledger</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root{
+  --ink:#23303d;
+  --ink-soft:#3d4c5c;
+  --parchment:#e7dab9;
+  --parchment-dark:#d7c598;
+  --parchment-darker:#c4b182;
+  --oxblood:#7c2d2d;
+  --oxblood-deep:#5e1f1f;
+  --brass:#a9803f;
+  --brass-light:#c9a35f;
+  --teal:#37666b;
+  --teal-deep:#264a4e;
+  --field:#4d5f3c;
+  --field-deep:#3a4a2c;
+  --umber:#7c5230;
+  --umber-deep:#5c3c22;
+  --slate:#4b4b54;
+  --slate-deep:#34343c;
+  --paper-shadow: rgba(35,30,15,0.25);
+}
+
+*{box-sizing:border-box;}
+body{margin:0;}
+
+.app{
+  font-family:'EB Garamond', serif;
+  color:var(--ink);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255,255,255,0.15), transparent 60%),
+    linear-gradient(180deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+  min-height:100%;
+  padding:18px;
+}
+
+.ledger{
+  max-width:1180px;
+  margin:0 auto;
+  background:
+    repeating-linear-gradient(0deg, rgba(120,95,40,0.035) 0px, rgba(120,95,40,0.035) 1px, transparent 1px, transparent 28px),
+    var(--parchment);
+  border:1px solid var(--parchment-darker);
+  border-radius:4px;
+  box-shadow: 0 12px 32px var(--paper-shadow), inset 0 0 0 6px rgba(255,255,255,0.08);
+  position:relative;
+  overflow:hidden;
+}
+
+.ledger::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(circle at 8% 12%, rgba(120,95,40,0.06) 0, transparent 4%),
+    radial-gradient(circle at 92% 80%, rgba(120,95,40,0.05) 0, transparent 5%),
+    radial-gradient(circle at 70% 5%, rgba(120,95,40,0.04) 0, transparent 6%);
+  pointer-events:none;
+}
+
+/* HEADER */
+.header{
+  padding:26px 32px 18px;
+  border-bottom:2px solid var(--parchment-darker);
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px;
+  position:relative;
+}
+.title-block h1{
+  font-family:'Cinzel', serif;
+  font-weight:700;
+  font-size:clamp(28px,4vw,42px);
+  letter-spacing:1.5px;
+  margin:0 0 2px;
+  color:var(--ink);
+}
+.title-block .sub{
+  font-style:italic;
+  font-size:15px;
+  color:var(--ink-soft);
+  margin:0;
+}
+.header-right{
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.era-pill{
+  font-family:'Cinzel', serif;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  color:#f1e6c8;
+  background:linear-gradient(180deg, var(--oxblood), var(--oxblood-deep));
+  padding:8px 16px;
+  border-radius:3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.day-field{
+  display:flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px;
+  color:var(--ink-soft);
+}
+.day-field input{
+  width:56px; padding:5px 6px;
+  font-family:'JetBrains Mono', monospace; font-size:13px;
+  border:1px solid var(--parchment-darker); border-radius:3px;
+  background:rgba(255,255,255,0.5); color:var(--ink);
+  text-align:center;
+}
+
+/* ROSTER STRIP */
+.roster-strip{
+  padding:12px 32px;
+  border-bottom:1px solid var(--parchment-darker);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.roster-label{
+  font-family:'Cinzel', serif; font-size:11px; letter-spacing:1px;
+  color:var(--ink-soft); text-transform:uppercase; margin-right:4px;
+}
+.chip{
+  display:flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.4);
+  border:1px solid var(--parchment-darker);
+  border-radius:14px;
+  padding:4px 6px 4px 12px;
+  font-size:13.5px;
+}
+.chip .role{ color:var(--ink-soft); font-style:italic; font-size:12px; }
+.chip button{
+  border:none; background:none; cursor:pointer; color:var(--oxblood);
+  font-size:14px; line-height:1; padding:2px 6px; border-radius:50%;
+}
+.chip button:hover{ background:rgba(124,45,45,0.12); }
+.add-roster{ display:flex; gap:6px; align-items:center; }
+.add-roster input, .add-roster select{
+  font-family:'EB Garamond', serif; font-size:13.5px;
+  padding:5px 8px; border:1px solid var(--parchment-darker); border-radius:3px;
+  background:rgba(255,255,255,0.5); color:var(--ink);
+}
+.add-roster input{ width:120px; }
+.btn-small{
+  font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.5px;
+  padding:6px 12px; border-radius:3px; border:1px solid var(--brass);
+  background:rgba(169,128,63,0.12); color:var(--brass-light); cursor:pointer;
+}
+.btn-small:hover{ background:rgba(169,128,63,0.22); }
+
+/* MAIN GRID */
+.spread{
+  display:grid;
+  grid-template-columns: 1fr 2px 1.25fr;
+  align-items:stretch;
+}
+.spine{
+  background:
+    repeating-linear-gradient(90deg, rgba(35,30,15,0.18) 0, rgba(35,30,15,0.18) 1px, transparent 1px, transparent 3px);
+  opacity:0.6;
+}
+.page{ padding:26px 28px 30px; }
+.page-left{ border-right:none; }
+@media (max-width: 880px){
+  .spread{ grid-template-columns: 1fr; }
+  .spine{ display:none; }
+  .page-left{ border-bottom:2px solid var(--parchment-darker); }
+}
+
+.section-title{
+  font-family:'Cinzel', serif; font-size:14px; letter-spacing:1.2px;
+  text-transform:uppercase; color:var(--ink-soft);
+  margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--parchment-darker);
+}
+.section-title.spaced{ margin-top:28px; }
+
+/* ERA TRACK */
+.era-track{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.era-node{
+  flex:1; min-width:60px;
+  text-align:center; cursor:pointer; padding:8px 4px 6px; border-radius:4px;
+  border:1px solid transparent;
+  transition:background 0.15s;
+}
+.era-node:hover{ background:rgba(124,45,45,0.06); }
+.era-node .num{
+  width:26px; height:26px; border-radius:50%; margin:0 auto 4px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel', serif; font-size:12px; font-weight:700;
+  border:2px solid var(--parchment-darker); color:var(--ink-soft);
+  background:rgba(255,255,255,0.3);
+}
+.era-node .lbl{ font-size:10.5px; color:var(--ink-soft); line-height:1.2; }
+.era-node.done .num{ background:var(--brass); border-color:var(--brass); color:#fff7e6; }
+.era-node.current .num{ background:var(--oxblood); border-color:var(--oxblood-deep); color:#f1e6c8; box-shadow:0 0 0 3px rgba(124,45,45,0.18); }
+.era-node.current .lbl{ color:var(--oxblood); font-weight:600; }
+.era-node.selected{ background:rgba(124,45,45,0.1); }
+
+.goal-card{
+  background:rgba(255,255,255,0.35);
+  border:1px solid var(--parchment-darker);
+  border-radius:4px;
+  padding:14px 16px;
+  margin-bottom:6px;
+}
+.goal-card h3{
+  font-family:'Cinzel', serif; font-size:16px; margin:0 0 2px; color:var(--ink);
+}
+.goal-card .era-sub{ font-style:italic; font-size:13px; color:var(--ink-soft); margin:0 0 10px; }
+.goal-row{ display:flex; align-items:flex-start; gap:8px; margin:6px 0; font-size:14.5px; }
+.goal-row input[type=checkbox]{ margin-top:3px; accent-color:var(--oxblood); width:15px; height:15px; }
+.goal-row label.met{ text-decoration:line-through; color:var(--ink-soft); }
+.unlock-note{ font-size:12.5px; color:var(--teal-deep); font-style:italic; margin-top:8px; }
+.advance-btn{
+  margin-top:10px; width:100%;
+  font-family:'Cinzel', serif; font-size:12px; letter-spacing:0.8px;
+  padding:9px; border-radius:3px; border:1px solid var(--oxblood-deep);
+  background:linear-gradient(180deg, var(--oxblood), var(--oxblood-deep)); color:#f1e6c8;
+  cursor:pointer;
+}
+.advance-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+.advance-btn:not(:disabled):hover{ filter:brightness(1.08); }
+.future-note{ font-size:13px; color:var(--ink-soft); font-style:italic; }
+
+/* RESOURCE LEDGER */
+.resource-row{
+  display:grid; grid-template-columns: 90px 1fr auto; align-items:center; gap:10px;
+  padding:7px 0; border-bottom:1px dashed var(--parchment-darker);
+}
+.resource-row:last-child{ border-bottom:none; }
+.resource-name{ font-size:14px; font-weight:600; color:var(--ink); }
+.resource-bar-track{
+  height:8px; border-radius:4px; background:rgba(35,30,15,0.08); overflow:hidden; position:relative;
+}
+.resource-bar-fill{ height:100%; border-radius:4px; transition:width 0.3s; }
+.resource-thresh-mark{
+  position:absolute; top:-2px; bottom:-2px; width:2px; background:rgba(35,30,15,0.4);
+}
+.resource-controls{ display:flex; align-items:center; gap:5px; }
+.resource-controls button{
+  width:22px; height:22px; border-radius:3px; border:1px solid var(--parchment-darker);
+  background:rgba(255,255,255,0.5); cursor:pointer; font-size:13px; color:var(--ink);
+  display:flex; align-items:center; justify-content:center; line-height:1;
+}
+.resource-controls button:hover{ background:rgba(255,255,255,0.85); }
+.resource-controls input{
+  width:48px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:13px;
+  padding:3px 2px; border:1px solid var(--parchment-darker); border-radius:3px; background:rgba(255,255,255,0.5);
+}
+
+/* DISTRICT TABS */
+.tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.tab{
+  font-family:'Cinzel', serif; font-size:11.5px; letter-spacing:0.4px;
+  padding:7px 12px; border-radius:3px 3px 0 0; cursor:pointer;
+  border:1px solid var(--parchment-darker); border-bottom:none;
+  background:rgba(255,255,255,0.25); color:var(--ink-soft);
+}
+.tab.active{ background:rgba(255,255,255,0.55); color:var(--ink); font-weight:700; }
+.tab.locked{ opacity:0.5; cursor:not-allowed; }
+.district-panel{
+  background:rgba(255,255,255,0.4); border:1px solid var(--parchment-darker);
+  border-radius:0 4px 4px 4px; padding:14px 16px;
+}
+.district-accent{ height:4px; border-radius:2px; margin:-14px -16px 12px; }
+.quest-item{
+  display:flex; align-items:flex-start; gap:9px; padding:7px 0;
+  border-bottom:1px solid rgba(35,30,15,0.08); font-size:14.5px;
+}
+.quest-item:last-child{ border-bottom:none; }
+.quest-item input[type=checkbox]{ margin-top:3px; width:15px; height:15px; }
+.quest-item label.done{ text-decoration:line-through; color:var(--ink-soft); }
+.quest-item .qtag{ font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--teal-deep); margin-left:auto; padding-top:2px; flex-shrink:0; }
+.add-quest{ display:flex; gap:6px; margin-top:12px; }
+.add-quest input{
+  flex:1; font-family:'EB Garamond', serif; font-size:14px;
+  padding:7px 10px; border:1px solid var(--parchment-darker); border-radius:3px; background:rgba(255,255,255,0.5);
+}
+.locked-msg{ font-size:13.5px; font-style:italic; color:var(--ink-soft); padding:10px 0; }
+
+/* CRIER */
+.crier-btn{
+  width:100%; font-family:'Cinzel', serif; font-size:12.5px; letter-spacing:0.8px;
+  padding:11px; border-radius:3px; border:1px solid var(--teal-deep);
+  background:linear-gradient(180deg, var(--teal), var(--teal-deep)); color:#eaf3f1;
+  cursor:pointer; margin-top:18px;
+}
+.crier-btn:hover{ filter:brightness(1.08); }
+.scroll{
+  max-height:0; opacity:0; overflow:hidden;
+  transition:max-height 0.45s ease, opacity 0.4s ease, margin 0.4s ease;
+  background:rgba(255,255,255,0.55); border:1px solid var(--teal-deep); border-radius:4px;
+  margin-top:0;
+}
+.scroll.open{ max-height:160px; opacity:1; margin-top:10px; }
+.scroll-inner{ padding:14px 16px; font-style:italic; font-size:14.5px; color:var(--teal-deep); }
+.scroll-tag{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--teal); display:block; margin-bottom:4px; font-style:normal; }
+
+/* CHRONICLE */
+.chronicle{ max-height:280px; overflow-y:auto; padding-right:4px; }
+.chron-entry{
+  display:flex; gap:8px; padding:7px 0; border-bottom:1px solid rgba(35,30,15,0.07); font-size:13.5px;
+}
+.chron-entry:last-child{ border-bottom:none; }
+.chron-icon{ flex-shrink:0; font-size:14px; line-height:1.5; }
+.chron-meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; padding-top:2px; }
+.chron-text{ flex:1; }
+.empty-state{ font-style:italic; color:var(--ink-soft); font-size:13.5px; padding:8px 0; }
+
+/* WAX SEAL STAMP OVERLAY */
+.seal-overlay{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.4) rotate(-8deg);
+  opacity:0; pointer-events:none; z-index:999;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition:none;
+}
+.seal-overlay.stamp{
+  animation: sealStamp 1.7s ease-out forwards;
+}
+@keyframes sealStamp{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(2.2) rotate(-8deg); }
+  12%{ opacity:1; transform:translate(-50%,-50%) scale(0.95) rotate(-8deg); }
+  20%{ transform:translate(-50%,-50%) scale(1) rotate(-8deg); }
+  78%{ opacity:1; }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1) rotate(-8deg); }
+}
+.seal-circle{
+  width:96px; height:96px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--oxblood) 0%, var(--oxblood-deep) 70%);
+  border:3px solid #3e1414;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel', serif; font-weight:700; color:#f1e6c8; font-size:30px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.4);
+}
+.seal-text{
+  font-family:'Cinzel', serif; font-size:13px; letter-spacing:0.5px; color:var(--ink);
+  background:var(--parchment); padding:6px 14px; border-radius:3px; border:1px solid var(--parchment-darker);
+  max-width:280px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.footer-note{
+  text-align:center; font-size:12px; color:var(--ink-soft); font-style:italic;
+  padding:14px 28px 22px;
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="ledger">
+    <div class="header">
+      <div class="title-block">
+        <h1>Dathanjahaven</h1>
+        <p class="sub">The Steward's Ledger of the Haven</p>
+      </div>
+      <div class="header-right">
+        <div class="day-field">Day <input type="number" id="dayInput" min="1" value="1"></div>
+        <div class="era-pill" id="eraPill">Era 0 — Landfall</div>
+      </div>
+    </div>
+
+    <div class="roster-strip" id="rosterStrip">
+      <span class="roster-label">Council</span>
+      <div id="rosterChips"></div>
+      <div class="add-roster">
+        <input type="text" id="rosterName" placeholder="Player name" maxlength="20">
+        <select id="rosterRole">
+          <option>Architect</option>
+          <option>Steward</option>
+          <option>Harbor Master</option>
+          <option>Forgemaster</option>
+          <option>Diplomat/Merchant</option>
+          <option>Freehand</option>
+        </select>
+        <button class="btn-small" id="addRosterBtn">+ Add</button>
+      </div>
+    </div>
+
+    <div class="spread">
+      <div class="page page-left">
+        <div class="section-title">Eras of the Haven</div>
+        <div class="era-track" id="eraTrack"></div>
+        <div id="goalCard"></div>
+
+        <div class="section-title spaced">Resource Ledger</div>
+        <div id="resourceLedger"></div>
+      </div>
+
+      <div class="spine"></div>
+
+      <div class="page page-right">
+        <div class="section-title">District Quest Board</div>
+        <div class="tabs" id="districtTabs"></div>
+        <div class="district-panel" id="districtPanel"></div>
+
+        <button class="crier-btn" id="crierBtn">📯 Summon the Town Crier</button>
+        <div class="scroll" id="scroll"><div class="scroll-inner" id="scrollInner"></div></div>
+
+        <div class="section-title spaced">Chronicle of the Haven</div>
+        <div class="chronicle" id="chronicle"></div>
+      </div>
+    </div>
+
+    <div class="footer-note" id="storageNote">Shared council board — everyone who opens this sees the same ledger.</div>
+  </div>
+</div>
+
+<div class="seal-overlay" id="sealOverlay">
+  <div class="seal-circle">D</div>
+  <div class="seal-text" id="sealText"></div>
+</div>
+
+<script>
+(function(){
+
+const ERAS = [
+  {name:"Landfall", subtitle:"The Age of Survival", arch:"Raise a temporary camp or shelter near the bay.", survival:"Every player has basic tools and a food buffer.", unlock:"Unlocks the Outer Fields."},
+  {name:"First Stones", subtitle:"The Age of Tools", arch:"Lay the first permanent stone-and-wood houses in the Hearthlands.", survival:"Iron tools smelted and distributed to every player.", unlock:"Unlocks the Long Road."},
+  {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", arch:"Raise a town square and trading post; connect the Long Road with proper paths.", survival:"House at least 10 villagers across the settlement.", unlock:"Unlocks the Wharf District."},
+  {name:"Tide and Timber", subtitle:"The Age of the Harbor", arch:"Build docks, a pier, and at least one ship.", survival:"Establish a steady fish or sea-trade income.", unlock:"Unlocks the Bulwark."},
+  {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", arch:"Wall the Hearthlands and raise a keep or town hall.", survival:"Survive a raid event without losing a district.", unlock:"Unlocks the Gilded Haven."},
+  {name:"The Gilded Haven", subtitle:"The Mythological Age", arch:"Raise one wonder — a cathedral, beacon-lighthouse, or legendary hall.", survival:"Complete a true end-game feat.", unlock:"The story is yours from here."}
+];
+
+const DISTRICTS = [
+  {id:"hearthlands", name:"The Hearthlands", color:"var(--oxblood)", unlockEra:0, seed:["Mark out the market square","Raise the first guildhall","Build a well at the crossroads"]},
+  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:0, seed:["Drive the first pilings for the pier","Build a fish-drying rack","Raise a lighthouse beacon"]},
+  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:0, seed:["Build a waystation inn","Mill the first grain","Plant a windbreak along the road"]},
+  {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, seed:["Fence the first wheat field","Raise a granary","Establish a pasture for livestock"]},
+  {id:"bulwark", name:"The Bulwark", color:"var(--slate)", unlockEra:3, seed:["Lay the wall foundation","Raise a gatehouse","Build a watchtower"]}
+];
+
+const RESOURCES = [
+  {key:"wheat", name:"Wheat", color:"var(--field)", threshold:64, questDistrict:"hearthlands", questText:"Build a bakery — wheat is overflowing"},
+  {key:"stone", name:"Stone", color:"var(--slate)", threshold:128, questDistrict:"bulwark", questText:"Begin the wall foundation — stone is stockpiled"},
+  {key:"iron", name:"Iron", color:"var(--brass)", threshold:64, questDistrict:"hearthlands", questText:"Upgrade the forge — iron surplus on hand"},
+  {key:"fish", name:"Fish", color:"var(--teal)", threshold:64, questDistrict:"wharf", questText:"Build a fish market & smokehouse"},
+  {key:"wood", name:"Wood", color:"var(--umber)", threshold:128, questDistrict:"wharf", questText:"Raise a shipwright's yard — timber is plentiful"},
+  {key:"gold", name:"Gold", color:"var(--oxblood)", threshold:32, questDistrict:"hearthlands", questText:"A trade caravan arrives — build a merchant's hall"}
+];
+
+const RANDOM_EVENTS = [
+  {cat:"boon", text:"A trade caravan from the inland hills arrives at the Long Road with rare goods."},
+  {cat:"boon", text:"A great shoal of fish blesses the Wharf — fishing yields double this week."},
+  {cat:"boon", text:"Spring rains swell the Outer Fields — crop yields surge."},
+  {cat:"boon", text:"A villager family resettles in the Hearthlands, drawn by the town's reputation."},
+  {cat:"trial", text:"A squall batters the Wharf District — repair the pier before the next ship arrives."},
+  {cat:"trial", text:"Bandits are spotted on the Long Road."},
+  {cat:"trial", text:"Blight withers part of the Outer Fields — a new food source is needed within days."},
+  {cat:"trial", text:"Tremors crack stone in the Hearthlands — nearby buildings need inspecting."},
+  {cat:"twist", text:"Strange lights are seen out past the harbor at night."},
+  {cat:"twist", text:"An old ruin is uncovered while digging foundations in the Hearthlands."},
+  {cat:"twist", text:"A traveling bard arrives on the Long Road with a tale of buried treasure."},
+  {cat:"twist", text:"A diplomatic envoy from a distant village proposes an alliance."}
+];
+
+/* =====================================================================
+   FIREBASE SETUP — paste your own project's config below.
+   1. Go to https://console.firebase.google.com -> Add project (free).
+   2. In the project, click Build > Realtime Database > Create Database
+      (choose "Start in test mode" for a quick start).
+   3. Click the gear icon > Project settings > scroll to "Your apps" >
+      click the </> (web) icon to register an app and copy the config.
+   4. Paste the values below, replacing the YOUR_... placeholders.
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID"
+};
+
+const BOARD_PATH = "dathanjahaven-board";
+let storageOK = false;
+let boardRef = null;
+let suppressNextSnapshot = false;
+
+function firebaseConfigured(){
+  return FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf("YOUR_") !== 0;
+}
+
+function defaultState(){
+  const districts = {};
+  DISTRICTS.forEach(d => { districts[d.id] = d.seed.map((t,i) => ({id:d.id+"-"+i, text:t, done:false})); });
+  const eraGoals = {};
+  ERAS.forEach((e,i) => { eraGoals[i] = {arch:false, survival:false}; });
+  const resources = {};
+  RESOURCES.forEach(r => resources[r.key] = 0);
+  return {
+    day:1, era:0, eraGoals, resources,
+    triggered:[], districts, roster:[], chronicle:[],
+    questSeq: DISTRICTS.length
+  };
+}
+
+let state = defaultState();
+let selectedEraView = 0;
+let activeTab = "hearthlands";
+
+function attachBoardListener(){
+  if(!firebaseConfigured()){
+    document.getElementById("storageNote").textContent = "Add your Firebase config near the top of the script to enable the shared, saving ledger. Running in local-only mode for now.";
+    renderAll();
+    return;
+  }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    boardRef = firebase.database().ref(BOARD_PATH);
+    storageOK = true;
+  }catch(e){
+    document.getElementById("storageNote").textContent = "Couldn't connect to Firebase — check your config values. Running in local-only mode for now.";
+    renderAll();
+    return;
+  }
+
+  boardRef.on("value", snapshot => {
+    if(suppressNextSnapshot){ suppressNextSnapshot = false; return; }
+    const val = snapshot.val();
+    if(val){
+      state = Object.assign(defaultState(), val);
+      selectedEraView = state.era;
+      activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "hearthlands";
+    }
+    document.getElementById("storageNote").textContent = "Shared council board — everyone who opens this sees the same ledger, live.";
+    renderAll();
+  }, err => {
+    document.getElementById("storageNote").textContent = "Lost connection to the shared ledger — check your Firebase database rules.";
+  });
+}
+
+function saveState(){
+  if(!storageOK || !boardRef) return;
+  suppressNextSnapshot = true;
+  boardRef.set(state).catch(e => {
+    suppressNextSnapshot = false;
+    document.getElementById("storageNote").textContent = "Couldn't save — check your Firebase database rules allow writes.";
+  });
+}
+
+
+function showSeal(text){
+  const overlay = document.getElementById("sealOverlay");
+  document.getElementById("sealText").textContent = text;
+  overlay.classList.remove("stamp");
+  void overlay.offsetWidth;
+  overlay.classList.add("stamp");
+}
+
+function addChronicle(type, text){
+  state.chronicle.unshift({day:state.day, era:state.era, type, text});
+  if(state.chronicle.length > 80) state.chronicle.pop();
+}
+
+function checkResourceTriggers(key){
+  const r = RESOURCES.find(x => x.key === key);
+  if(!r) return;
+  const flagKey = key + "-" + r.threshold;
+  if(state.resources[key] >= r.threshold && !state.triggered.includes(flagKey)){
+    state.triggered.push(flagKey);
+    const qid = r.questDistrict + "-auto-" + state.questSeq++;
+    state.districts[r.questDistrict].push({id:qid, text:r.questText, done:false});
+    addChronicle("trigger", r.questText + " (" + DISTRICTS.find(d=>d.id===r.questDistrict).name + ")");
+    showSeal("Surplus: " + r.name);
+  }
+}
+
+function advanceEra(){
+  const g = state.eraGoals[state.era];
+  if(!g.arch || !g.survival || state.era >= 5) return;
+  state.era++;
+  selectedEraView = state.era;
+  addChronicle("milestone", "The Haven advances — " + ERAS[state.era].name + " begins.");
+  showSeal("Era Advanced");
+  saveState(); renderAll();
+}
+
+function toggleQuest(districtId, qid, checked){
+  const list = state.districts[districtId];
+  const q = list.find(x => x.id === qid);
+  if(!q) return;
+  q.done = checked;
+  if(checked){
+    addChronicle("quest", q.text + " — completed in " + DISTRICTS.find(d=>d.id===districtId).name);
+    showSeal("Quest Complete");
+  }
+  saveState(); renderAll();
+}
+
+function addCustomQuest(districtId, text){
+  if(!text.trim()) return;
+  const qid = districtId + "-c-" + state.questSeq++;
+  state.districts[districtId].push({id:qid, text:text.trim(), done:false});
+  saveState(); renderAll();
+}
+
+function summonCrier(){
+  const ev = RANDOM_EVENTS[Math.floor(Math.random()*RANDOM_EVENTS.length)];
+  const scroll = document.getElementById("scroll");
+  const inner = document.getElementById("scrollInner");
+  inner.innerHTML = '<span class="scroll-tag">'+ev.cat+'</span>' + ev.text;
+  scroll.classList.add("open");
+  addChronicle("event", ev.text);
+  saveState(); renderChronicle();
+}
+
+function changeResource(key, delta){
+  state.resources[key] = Math.max(0, state.resources[key] + delta);
+  checkResourceTriggers(key);
+  saveState(); renderAll();
+}
+function setResource(key, value){
+  const v = Math.max(0, parseInt(value)||0);
+  state.resources[key] = v;
+  checkResourceTriggers(key);
+  saveState(); renderAll();
+}
+
+function addRoster(name, role){
+  if(!name.trim()) return;
+  state.roster.push({name:name.trim(), role});
+  saveState(); renderRoster();
+}
+function removeRoster(idx){
+  state.roster.splice(idx,1);
+  saveState(); renderRoster();
+}
+
+/* ---------- RENDER ---------- */
+
+function renderAll(){
+  document.getElementById("dayInput").value = state.day;
+  document.getElementById("eraPill").textContent = "Era " + state.era + " — " + ERAS[state.era].name;
+  renderEraTrack();
+  renderGoalCard();
+  renderResources();
+  renderTabs();
+  renderDistrictPanel();
+  renderRoster();
+  renderChronicle();
+}
+
+function renderEraTrack(){
+  const el = document.getElementById("eraTrack");
+  el.innerHTML = ERAS.map((e,i) => {
+    let cls = "era-node";
+    if(i < state.era) cls += " done";
+    else if(i === state.era) cls += " current";
+    if(i === selectedEraView) cls += " selected";
+    const mark = i < state.era ? "✓" : i;
+    return `<div class="${cls}" data-era="${i}"><div class="num">${mark}</div><div class="lbl">${e.name}</div></div>`;
+  }).join("");
+  el.querySelectorAll(".era-node").forEach(node => {
+    node.addEventListener("click", () => { selectedEraView = parseInt(node.dataset.era); renderEraTrack(); renderGoalCard(); });
+  });
+}
+
+function renderGoalCard(){
+  const i = selectedEraView;
+  const e = ERAS[i];
+  const el = document.getElementById("goalCard");
+  if(i < state.era){
+    el.innerHTML = `<div class="goal-card">
+      <h3>${e.name} <span style="font-size:12px;color:var(--brass);font-family:'JetBrains Mono',monospace;">COMPLETE</span></h3>
+      <p class="era-sub">${e.subtitle}</p>
+      <div class="goal-row"><label class="met">✓ ${e.arch}</label></div>
+      <div class="goal-row"><label class="met">✓ ${e.survival}</label></div>
+    </div>`;
+    return;
+  }
+  if(i > state.era){
+    el.innerHTML = `<div class="goal-card">
+      <h3>${e.name}</h3>
+      <p class="era-sub">${e.subtitle}</p>
+      <p class="future-note">Reach Era ${state.era + (i - state.era === 1 ? '' : '–'+(i-1))}${i-state.era>1?' first':' before this'}. Goals preview:</p>
+      <div class="goal-row" style="opacity:0.55"><span>○ ${e.arch}</span></div>
+      <div class="goal-row" style="opacity:0.55"><span>○ ${e.survival}</span></div>
+    </div>`;
+    return;
+  }
+  const g = state.eraGoals[i];
+  el.innerHTML = `<div class="goal-card">
+    <h3>${e.name}</h3>
+    <p class="era-sub">${e.subtitle}</p>
+    <div class="goal-row">
+      <input type="checkbox" id="goalArch" ${g.arch?'checked':''}>
+      <label for="goalArch" class="${g.arch?'met':''}">${e.arch}</label>
+    </div>
+    <div class="goal-row">
+      <input type="checkbox" id="goalSurv" ${g.survival?'checked':''}>
+      <label for="goalSurv" class="${g.survival?'met':''}">${e.survival}</label>
+    </div>
+    <p class="unlock-note">${e.unlock}</p>
+    <button class="advance-btn" id="advanceBtn" ${(g.arch&&g.survival&&state.era<5)?'':'disabled'}>${state.era>=5?'Final Era Reached':'Advance the Era'}</button>
+  </div>`;
+  document.getElementById("goalArch").addEventListener("change", ev => { g.arch = ev.target.checked; saveState(); renderGoalCard(); });
+  document.getElementById("goalSurv").addEventListener("change", ev => { g.survival = ev.target.checked; saveState(); renderGoalCard(); });
+  const btn = document.getElementById("advanceBtn");
+  if(btn) btn.addEventListener("click", advanceEra);
+}
+
+function renderResources(){
+  const el = document.getElementById("resourceLedger");
+  el.innerHTML = RESOURCES.map(r => {
+    const val = state.resources[r.key];
+    const pct = Math.min(100, (val / r.threshold) * 100);
+    const triggered = state.triggered.includes(r.key+"-"+r.threshold);
+    return `<div class="resource-row">
+      <div class="resource-name">${r.name}</div>
+      <div class="resource-bar-track">
+        <div class="resource-bar-fill" style="width:${pct}%; background:${r.color};"></div>
+        <div class="resource-thresh-mark" style="left:calc(${Math.min(100,(r.threshold/Math.max(val,r.threshold,1))*0+100)}% - 2px); display:none;"></div>
+      </div>
+      <div class="resource-controls">
+        <button data-key="${r.key}" data-d="-10">−</button>
+        <input type="number" data-key="${r.key}" value="${val}">
+        <button data-key="${r.key}" data-d="10">+</button>
+      </div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll("button[data-d]").forEach(b => {
+    b.addEventListener("click", () => changeResource(b.dataset.key, parseInt(b.dataset.d)));
+  });
+  el.querySelectorAll("input[type=number]").forEach(inp => {
+    inp.addEventListener("change", () => setResource(inp.dataset.key, inp.value));
+  });
+}
+
+function renderTabs(){
+  const el = document.getElementById("districtTabs");
+  el.innerHTML = DISTRICTS.map(d => {
+    const locked = state.era < d.unlockEra;
+    let cls = "tab" + (d.id===activeTab?" active":"") + (locked?" locked":"");
+    return `<div class="${cls}" data-id="${d.id}">${locked?'🔒 ':''}${d.name}</div>`;
+  }).join("");
+  el.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      const d = DISTRICTS.find(x=>x.id===t.dataset.id);
+      if(state.era < d.unlockEra) return;
+      activeTab = t.dataset.id;
+      renderTabs(); renderDistrictPanel();
+    });
+  });
+}
+
+function renderDistrictPanel(){
+  const d = DISTRICTS.find(x=>x.id===activeTab);
+  const el = document.getElementById("districtPanel");
+  if(state.era < d.unlockEra){
+    el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div><div class="locked-msg">${d.name} isn't open yet — reach Era ${d.unlockEra} to unlock it.</div>`;
+    return;
+  }
+  const quests = state.districts[d.id];
+  el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div>` +
+    quests.map(q => `<div class="quest-item">
+      <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''}>
+      <label class="${q.done?'done':''}">${q.text}</label>
+      ${q.id.includes('-auto-')?'<span class="qtag">surplus</span>':''}
+    </div>`).join("") +
+    `<div class="add-quest"><input type="text" id="newQuestInput" placeholder="Add a custom quest…" maxlength="80">
+     <button class="btn-small" id="addQuestBtn">+ Add</button></div>`;
+  el.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => toggleQuest(d.id, cb.dataset.id, cb.checked));
+  });
+  document.getElementById("addQuestBtn").addEventListener("click", () => {
+    const inp = document.getElementById("newQuestInput");
+    addCustomQuest(d.id, inp.value);
+  });
+  document.getElementById("newQuestInput").addEventListener("keydown", e => {
+    if(e.key === "Enter") addCustomQuest(d.id, e.target.value);
+  });
+}
+
+function renderRoster(){
+  const el = document.getElementById("rosterChips");
+  if(state.roster.length === 0){
+    el.innerHTML = `<span class="empty-state" style="padding:0;">No one's signed the charter yet.</span>`;
+  } else {
+    el.innerHTML = state.roster.map((p,i) => `<div class="chip" style="display:inline-flex;margin:2px 4px 2px 0;">
+      ${p.name} <span class="role">${p.role}</span> <button data-idx="${i}">×</button>
+    </div>`).join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => removeRoster(parseInt(b.dataset.idx))));
+  }
+}
+
+function renderChronicle(){
+  const el = document.getElementById("chronicle");
+  if(state.chronicle.length === 0){
+    el.innerHTML = `<div class="empty-state">Nothing's happened yet. Log a resource, finish a quest, or summon the crier.</div>`;
+    return;
+  }
+  const icons = {event:"📯", quest:"☑", milestone:"⛨", trigger:"⚖"};
+  el.innerHTML = state.chronicle.map(c => `<div class="chron-entry">
+    <span class="chron-icon">${icons[c.type]||"•"}</span>
+    <span class="chron-text">${c.text}</span>
+    <span class="chron-meta">D${c.day}·E${c.era}</span>
+  </div>`).join("");
+}
+
+/* ---------- WIRE UP STATIC CONTROLS ---------- */
+
+document.getElementById("dayInput").addEventListener("change", e => {
+  state.day = Math.max(1, parseInt(e.target.value)||1);
+  saveState();
+});
+
+document.getElementById("crierBtn").addEventListener("click", summonCrier);
+
+document.getElementById("addRosterBtn").addEventListener("click", () => {
+  const nameInp = document.getElementById("rosterName");
+  const roleSel = document.getElementById("rosterRole");
+  addRoster(nameInp.value, roleSel.value);
+  nameInp.value = "";
+});
+document.getElementById("rosterName").addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    addRoster(e.target.value, document.getElementById("rosterRole").value);
+    e.target.value = "";
+  }
+});
+
+attachBoardListener();
+})();
+</script>
+</body>
+</html>
