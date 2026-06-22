@@ -177,6 +177,29 @@ body{margin:0;}
 }
 .section-title.spaced{ margin-top:28px; }
 
+.section-title-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding-bottom:6px; border-bottom:1px solid var(--parchment-darker); margin:0 0 12px;
+}
+.section-title-row.spaced{ margin-top:28px; }
+.section-title-inline{
+  font-family:'Cinzel', serif; font-size:14px; letter-spacing:1.2px;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+
+/* QUEST TIERS (era-grouped quests within a district) */
+.quest-tier{ margin-bottom:4px; }
+.quest-tier-label{
+  font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.6px; text-transform:uppercase;
+  color:var(--brass); margin:14px 0 4px; padding-top:8px; border-top:1px dashed var(--parchment-darker);
+  display:flex; align-items:center; gap:6px;
+}
+.quest-tier:first-child .quest-tier-label{ border-top:none; padding-top:0; margin-top:0; }
+.quest-tier.locked .quest-tier-label{ color:var(--ink-soft); }
+.quest-tier.locked .quest-item{ opacity:0.45; }
+.quest-item label.locked-text{ font-style:italic; }
+.quest-tier-current .quest-tier-label{ color:var(--oxblood); }
+
 /* ERA TRACK */
 .era-track{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
 .era-node{
@@ -400,7 +423,10 @@ body{margin:0;}
         <button class="crier-btn" id="crierBtn">📯 Summon the Town Crier</button>
         <div class="scroll" id="scroll"><div class="scroll-inner" id="scrollInner"></div></div>
 
-        <div class="section-title spaced">Chronicle of the Haven</div>
+        <div class="section-title-row spaced">
+          <div class="section-title-inline">Chronicle of the Haven</div>
+          <button class="btn-small" id="clearChronicleBtn">Clear</button>
+        </div>
         <div class="chronicle" id="chronicle"></div>
       </div>
     </div>
@@ -427,12 +453,45 @@ const ERAS = [
 ];
 
 const DISTRICTS = [
-  {id:"hearthlands", name:"The Hearthlands", color:"var(--oxblood)", unlockEra:0, seed:["Mark out the market square","Raise the first guildhall","Build a well at the crossroads"]},
-  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:0, seed:["Drive the first pilings for the pier","Build a fish-drying rack","Raise a lighthouse beacon"]},
-  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:0, seed:["Build a waystation inn","Mill the first grain","Plant a windbreak along the road"]},
-  {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, seed:["Fence the first wheat field","Raise a granary","Establish a pasture for livestock"]},
-  {id:"bulwark", name:"The Bulwark", color:"var(--slate)", unlockEra:3, seed:["Lay the wall foundation","Raise a gatehouse","Build a watchtower"]}
+  {id:"hearthlands", name:"The Hearthlands", color:"var(--oxblood)", unlockEra:0, quests:{
+    0:["Clear a building plot in the town center","Raise a one-room lodge for the council","Mark the town's boundary stones"],
+    1:["Lay the foundation of the first stone house","Build a communal well","Pave the first market path"],
+    2:["Raise the market square","Build the first guildhall","Construct housing for new villagers","Open a trading post"],
+    3:["Build a town crier's post","Raise a counting house for harbor profits","Connect the Hearthlands to the Wharf road"],
+    4:["Raise a town hall","Build a courthouse","Establish a watch barracks"],
+    5:["Raise a grand cathedral or temple","Build a hall of records","Commission a monument to the founding council"]
+  }},
+  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:0, quests:{
+    0:["Scout the bay for a safe mooring","Build a simple dock","Set the first fish trap"],
+    1:["Reinforce the dock with stone pilings","Build a fisherman's hut","Stockpile timber for shipbuilding"],
+    2:["Open a fish market stall","Build a rope-maker's shed","Establish a ferry crossing"],
+    3:["Build the pier","Construct a shipwright's yard","Launch the first ship","Raise a lighthouse beacon"],
+    4:["Build harbor walls","Raise a customs house","Station a harbor guard"],
+    5:["Build a grand lighthouse wonder","Found a deep-sea trading fleet","Raise a shrine to the sea"]
+  }},
+  {id:"longroad", name:"The Long Road", color:"var(--umber)", unlockEra:0, quests:{
+    0:["Clear the road north out of town","Build a single waystation shack","Mark mile-stones along the road"],
+    1:["Build a proper inn for travelers","Mill the first grain","Dig a roadside well"],
+    2:["Plant a windbreak of trees along the road","Build a stable for horses","Establish a toll booth"],
+    3:["Pave the road in stone","Build a watchtower midway","Open a roadside market"],
+    4:["Build a garrison post on the road","Raise a gatehouse at the northern boundary"],
+    5:["Build a monument at the road's end","Establish a courier guild"]
+  }},
+  {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, quests:{
+    0:["Fence the first wheat field","Clear a pasture","Plant an orchard sapling row"],
+    1:["Raise a granary","Build a farmhouse","Dig an irrigation ditch"],
+    2:["Establish a livestock pen","Build a mill","Plant a second crop field"],
+    3:["Build a smokehouse for surplus meat","Raise a barn","Establish a beekeeping plot"],
+    4:["Build a fortified farmstead","Raise a watch post on the fields"],
+    5:["Build a grand granary wonder","Establish a harvest festival ground"]
+  }},
+  {id:"bulwark", name:"The Bulwark", color:"var(--slate)", unlockEra:3, quests:{
+    3:["Lay the wall foundation","Stockpile stone for the walls"],
+    4:["Raise the outer wall","Build a gatehouse","Build a watchtower","Raise a keep"],
+    5:["Build a grand keep wonder","Raise battlements","Establish a garrison hall"]
+  }}
 ];
+
 
 const RESOURCES = [
   {key:"wheat", name:"Wheat", color:"var(--field)", threshold:64, questDistrict:"hearthlands", questText:"Build a bakery — wheat is overflowing"},
@@ -485,7 +544,12 @@ function firebaseConfigured(){
 
 function defaultState(){
   const districts = {};
-  DISTRICTS.forEach(d => { districts[d.id] = d.seed.map((t,i) => ({id:d.id+"-"+i, text:t, done:false})); });
+  DISTRICTS.forEach(d => {
+    districts[d.id] = {};
+    Object.keys(d.quests).forEach(era => {
+      districts[d.id][era] = d.quests[era].map((t,i) => ({id:d.id+"-"+era+"-"+i, text:t, done:false}));
+    });
+  });
   const eraGoals = {};
   ERAS.forEach((e,i) => { eraGoals[i] = {arch:false, survival:false}; });
   const resources = {};
@@ -493,7 +557,7 @@ function defaultState(){
   return {
     day:1, era:0, eraGoals, resources,
     triggered:[], districts, roster:[], chronicle:[],
-    questSeq: DISTRICTS.length
+    questSeq: 0
   };
 }
 
@@ -522,6 +586,16 @@ function attachBoardListener(){
     const val = snapshot.val();
     if(val){
       state = Object.assign(defaultState(), val);
+      // Migration guard: older saved boards stored each district as a flat
+      // array of quests. The new format groups quests by era. If we detect
+      // the old shape, rebuild fresh quest lists (era/resources/roster/chronicle
+      // are kept either way) rather than rendering broken data.
+      const freshDistricts = defaultState().districts;
+      DISTRICTS.forEach(d => {
+        if(Array.isArray(state.districts[d.id])){
+          state.districts[d.id] = freshDistricts[d.id];
+        }
+      });
       selectedEraView = state.era;
       activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "hearthlands";
     }
@@ -561,8 +635,10 @@ function checkResourceTriggers(key){
   const flagKey = key + "-" + r.threshold;
   if(state.resources[key] >= r.threshold && !state.triggered.includes(flagKey)){
     state.triggered.push(flagKey);
+    const tier = state.era;
     const qid = r.questDistrict + "-auto-" + state.questSeq++;
-    state.districts[r.questDistrict].push({id:qid, text:r.questText, done:false});
+    if(!state.districts[r.questDistrict][tier]) state.districts[r.questDistrict][tier] = [];
+    state.districts[r.questDistrict][tier].push({id:qid, text:r.questText, done:false});
     addChronicle("trigger", r.questText + " (" + DISTRICTS.find(d=>d.id===r.questDistrict).name + ")");
     showSeal("Surplus: " + r.name);
   }
@@ -579,8 +655,12 @@ function advanceEra(){
 }
 
 function toggleQuest(districtId, qid, checked){
-  const list = state.districts[districtId];
-  const q = list.find(x => x.id === qid);
+  const tiers = state.districts[districtId];
+  let q = null;
+  Object.keys(tiers).forEach(era => {
+    const found = tiers[era].find(x => x.id === qid);
+    if(found) q = found;
+  });
   if(!q) return;
   q.done = checked;
   if(checked){
@@ -592,8 +672,10 @@ function toggleQuest(districtId, qid, checked){
 
 function addCustomQuest(districtId, text){
   if(!text.trim()) return;
+  const tier = state.era;
   const qid = districtId + "-c-" + state.questSeq++;
-  state.districts[districtId].push({id:qid, text:text.trim(), done:false});
+  if(!state.districts[districtId][tier]) state.districts[districtId][tier] = [];
+  state.districts[districtId][tier].push({id:qid, text:text.trim(), done:false});
   saveState(); renderAll();
 }
 
@@ -753,16 +835,31 @@ function renderDistrictPanel(){
     el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div><div class="locked-msg">${d.name} isn't open yet — reach Era ${d.unlockEra} to unlock it.</div>`;
     return;
   }
-  const quests = state.districts[d.id];
-  el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div>` +
-    quests.map(q => `<div class="quest-item">
-      <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''}>
-      <label class="${q.done?'done':''}">${q.text}</label>
-      ${q.id.includes('-auto-')?'<span class="qtag">surplus</span>':''}
-    </div>`).join("") +
-    `<div class="add-quest"><input type="text" id="newQuestInput" placeholder="Add a custom quest…" maxlength="80">
+  const tiers = state.districts[d.id];
+  const tierEras = Object.keys(tiers).map(Number).sort((a,b)=>a-b);
+  let html = `<div class="district-accent" style="background:${d.color}"></div>`;
+  tierEras.forEach(era => {
+    const quests = tiers[era];
+    if(!quests || quests.length === 0) return;
+    const locked = era > state.era;
+    const isCurrent = era === state.era;
+    const doneCount = quests.filter(q=>q.done).length;
+    html += `<div class="quest-tier ${locked?'locked':''} ${isCurrent?'quest-tier-current':''}">
+      <div class="quest-tier-label">${locked?'🔒 ':''}Era ${era} — ${ERAS[era].name} <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:400;">${doneCount}/${quests.length}</span></div>
+      ${quests.map(q => {
+        const tag = q.id.indexOf('-auto-')>-1 ? 'surplus' : (q.id.indexOf('-c-')>-1 ? 'custom' : '');
+        return `<div class="quest-item">
+          <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''} ${locked?'disabled':''}>
+          <label class="${q.done?'done':''} ${locked?'locked-text':''}">${q.text}</label>
+          ${tag?'<span class="qtag">'+tag+'</span>':''}
+        </div>`;
+      }).join("")}
+    </div>`;
+  });
+  html += `<div class="add-quest"><input type="text" id="newQuestInput" placeholder="Add a custom quest…" maxlength="80">
      <button class="btn-small" id="addQuestBtn">+ Add</button></div>`;
-  el.querySelectorAll("input[type=checkbox]").forEach(cb => {
+  el.innerHTML = html;
+  el.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(cb => {
     cb.addEventListener("change", () => toggleQuest(d.id, cb.dataset.id, cb.checked));
   });
   document.getElementById("addQuestBtn").addEventListener("click", () => {
@@ -808,6 +905,14 @@ document.getElementById("dayInput").addEventListener("change", e => {
 });
 
 document.getElementById("crierBtn").addEventListener("click", summonCrier);
+
+document.getElementById("clearChronicleBtn").addEventListener("click", () => {
+  if(state.chronicle.length === 0) return;
+  if(confirm("Clear all chronicle entries? This can't be undone.")){
+    state.chronicle = [];
+    saveState(); renderChronicle();
+  }
+});
 
 document.getElementById("addRosterBtn").addEventListener("click", () => {
   const nameInp = document.getElementById("rosterName");
