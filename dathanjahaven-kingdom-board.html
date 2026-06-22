@@ -206,7 +206,8 @@ body{margin:0;}
 .goal-row input[type=checkbox]{ margin-top:3px; accent-color:var(--oxblood); width:15px; height:15px; }
 .goal-row label.met{ text-decoration:line-through; color:var(--ink-soft); }
 .unlock-note{ font-size:12.5px; color:var(--teal-deep); font-style:italic; margin-top:8px; }
-.advance-block-note{ font-size:12.5px; color:var(--oxblood); font-style:italic; margin:8px 0 4px; }
+.advance-block-note{ font-size:12.5px; color:var(--oxblood); font-style:italic; margin:8px 0 2px; }
+.advance-breakdown{ font-size:11.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin:0 0 6px; line-height:1.6; }
 .advance-btn{
   margin-top:10px; width:100%;
   font-family:'Cinzel', serif; font-size:12px; letter-spacing:0.8px;
@@ -229,6 +230,12 @@ body{margin:0;}
 }
 .tab.active{ background:rgba(255,255,255,0.55); color:var(--ink); font-weight:700; }
 .tab.locked{ opacity:0.5; cursor:not-allowed; }
+.tab-progress-track{
+  height:3px; border-radius:2px; background:rgba(35,30,15,0.12);
+  margin-top:5px; overflow:hidden;
+}
+.tab-progress-fill{ height:100%; border-radius:2px; transition:width 0.4s ease; opacity:0.7; }
+.tab.active .tab-progress-fill{ opacity:1; }
 .district-panel{
   background:rgba(255,255,255,0.4); border:1px solid var(--parchment-darker);
   border-radius:0 4px 4px 4px; padding:14px 16px;
@@ -1282,11 +1289,27 @@ function renderGoalCard(){
       const goalsOk = g.arch && g.survival;
       const remaining = countIncompleteQuests(state.era);
       const canAdvance = goalsOk && remaining === 0;
-      let note = '';
-      if(!goalsOk) note = 'Complete both era goals above to advance.';
-      else if(remaining > 0) note = remaining + ' quest' + (remaining===1?'':'s') + ' still unfinished across the settlement.';
-      return (note ? '<p class="advance-block-note">⚔ ' + note + '</p>' : '')
-        + '<button class="advance-btn" id="advanceBtn" ' + (canAdvance?'':'disabled') + '>Advance the Era</button>';
+      let noteHtml = '';
+      if(!goalsOk){
+        noteHtml = '<p class="advance-block-note">⚔ Complete both era goals above to advance.</p>';
+      } else if(remaining > 0){
+        // Build per-district breakdown
+        const breakdown = DISTRICTS
+          .filter(d => d.unlockEra <= state.era)
+          .map(d => {
+            const tiers = state.districts[d.id];
+            let inc = 0;
+            Object.keys(tiers).forEach(era => {
+              if(Number(era) > state.era) return;
+              tiers[era].forEach(q => { if(!q.done) inc++; });
+            });
+            return inc > 0 ? d.name + ' (' + inc + ')' : null;
+          })
+          .filter(Boolean);
+        noteHtml = '<p class="advance-block-note">⚔ ' + remaining + ' quest' + (remaining===1?'':'s')
+          + ' remaining:</p><p class="advance-breakdown">' + breakdown.join(' · ') + '</p>';
+      }
+      return noteHtml + '<button class="advance-btn" id="advanceBtn" ' + (canAdvance?'':'disabled') + '>Advance the Era</button>';
     })()}
   </div>`;
   document.getElementById("goalArch").addEventListener("change", ev => { g.arch = ev.target.checked; saveState(); renderGoalCard(); });
@@ -1360,6 +1383,18 @@ function refuseCrierQuest(id){
   saveState(); renderTabs(); renderDistrictPanel(); renderChronicle();
 }
 
+function districtProgress(d){
+  // Returns {done, total} for all unlocked eras in a district
+  let done = 0, total = 0;
+  if(state.era < d.unlockEra) return {done:0, total:0};
+  const tiers = state.districts[d.id];
+  Object.keys(tiers).forEach(era => {
+    if(Number(era) > state.era) return;
+    tiers[era].forEach(q => { total++; if(q.done) done++; });
+  });
+  return {done, total};
+}
+
 function renderTabs(){
   const el = document.getElementById("districtTabs");
   const crierCount = (state.crierBoard||[]).filter(q=>!q.done).length;
@@ -1367,7 +1402,12 @@ function renderTabs(){
   let html = DISTRICTS.map(d => {
     const locked = state.era < d.unlockEra;
     let cls = "tab" + (d.id===activeTab?" active":"") + (locked?" locked":"");
-    return `<div class="${cls}" data-id="${d.id}">${locked?'🔒 ':''}${d.name}</div>`;
+    const {done, total} = districtProgress(d);
+    const pct = total > 0 ? Math.round((done/total)*100) : 0;
+    const bar = !locked && total > 0
+      ? `<div class="tab-progress-track"><div class="tab-progress-fill" style="width:${pct}%;background:${d.color};"></div></div>`
+      : '';
+    return `<div class="${cls}" data-id="${d.id}">${locked?'🔒 ':''}${d.name}${bar}</div>`;
   }).join("");
   html += `<div class="tab crier-tab${activeTab==='__crier__'?' active':''}" data-id="__crier__">📯 Crier's Board${crierBadge}</div>`;
   el.innerHTML = html;
