@@ -440,6 +440,9 @@ body{margin:0;}
     </div>
 
     <div class="footer-note" id="storageNote">Shared council board — everyone who opens this sees the same ledger.</div>
+    <div class="footer-note" style="padding-top:0;margin-top:-8px;">
+      <span id="resetTrigger" style="cursor:pointer;opacity:0.18;font-size:11px;user-select:none;" title="">&#9881;</span>
+    </div>
   </div>
 </div>
 
@@ -1312,6 +1315,28 @@ document.getElementById("rosterName").addEventListener("keydown", e => {
   if(e.key === "Enter"){
     addRoster(e.target.value, document.getElementById("rosterRole").value);
     e.target.value = "";
+  }
+});
+
+document.getElementById("resetTrigger").addEventListener("click", () => {
+  const pw = prompt("Enter the reset passphrase:");
+  if(pw === null) return;
+  if(pw !== "foundingstone") { alert("Wrong passphrase."); return; }
+  if(!confirm("Reset ALL progress? This wipes eras, quests, resources, roster, and chronicle. Cannot be undone.")) return;
+  const fresh = defaultState();
+  if(storageOK && boardRef){
+    suppressNextSnapshot = true;
+    boardRef.set(fresh).then(() => {
+      state = fresh;
+      selectedEraView = 0;
+      activeTab = "hearthlands";
+      renderAll();
+    });
+  } else {
+    state = fresh;
+    selectedEraView = 0;
+    activeTab = "hearthlands";
+    renderAll();
   }
 });
 
