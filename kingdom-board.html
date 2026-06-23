@@ -474,10 +474,10 @@ body{margin:0;}
 (function(){
 
 const ERAS = [
-  {name:"Landfall", subtitle:"The Age of Survival", declaration:"The founding charter is signed — give the settlement its name.", unlock:"Completing this era unlocks The North End and The Wharf District."},
+  {name:"Landfall", subtitle:"The Age of Survival", declaration:"The founding charter is signed — give the settlement its name.", unlock:"Completing this era unlocks The North End."},
   {name:"First Stones", subtitle:"The Age of Tools", declaration:"The hamlet becomes a town — create a flag to fly above it.", unlock:"Completing this era unlocks Downtown and The New Core."},
   {name:"The Market Charter", subtitle:"The Age of Trade and Villagers", declaration:"The market is in full swing — create a currency for the town.", unlock:"Completing this era unlocks The Sprawl."},
-  {name:"Tide and Timber", subtitle:"The Age of the Harbor", declaration:"The town's growth continues — declare it a city and elect an NPC as its first mayor.", unlock:"Completing this era unlocks The New Core's full expansion."},
+  {name:"Tide and Timber", subtitle:"The Age of the Harbor", declaration:"The town's growth continues — declare it a city and elect an NPC as its first mayor.", unlock:"Completing this era unlocks The Outer Fields."},
   {name:"The Bulwark Age", subtitle:"The Age of Defense and Law", declaration:"The city flourishes and ships set sail — found a small colony and claim it for the realm.", unlock:"Completing this era begins The Gilded Haven — the final age."},
   {name:"The Gilded Haven", subtitle:"The Mythological Age", declaration:"The realm reigns eternal — engrave every player's name into the city's greatest wonder and live forever.", unlock:"The story is yours from here."}
 ];
@@ -569,78 +569,90 @@ const DISTRICTS = [
       "Construct a grand library in a vaulted hall separate from the guildhall"
     ]
   }},
-  {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:0, quests:{
+  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:0, quests:{
     0:[
-      "Terraform and fence the first wheat field — level ground, full fence perimeter",
-      "Clear and fence a livestock pasture separate from the crop field",
-      "Terrace a hillside for an orchard row — flat planted tiers with paths between",
-      "Build a lean-to field shelter at the crop edge — roof and one open wall",
-      "Construct a scarecrow on a raised platform in the center of the field",
-      "Dig an irrigation channel from a water source to the wheat field",
-      "Build a field storage chest shed — small, roofed, lockable with a door",
-      "Raise a simple watchtower post at the field's far corner",
-      "Construct a stone-ringed fire pit at the field workers' camp",
-      "Fence and mark a second field plot separate from the first"
+      "Build a rough timber dock extending at least 8 blocks into the water",
+      "Construct a harbormaster's shack overlooking the bay entrance",
+      "Raise a beacon post at the bay's edge — a tall pole with a lantern frame",
+      "Build a fish market stall with a counter and overhead cover",
+      "Construct a rope-maker's shed with rope coils and wall storage",
+      "Build a covered net-drying rack on the waterfront",
+      "Raise a small boathouse with water access and a double door",
+      "Construct a salt house — a stone room for preserving the catch",
+      "Build a ferry landing — a flat stone platform at the water's edge",
+      "Terrace the waterfront — flatten and pave the ground between dock and shore",
+      "Raise a storage shack at the dock's base for fishing equipment",
+      "Build a waterfront campfire enclosure for fishermen's shelter"
     ],
     1:[
-      "Build a granary — a large roofed structure with an elevated timber floor",
-      "Construct a farmhouse with a kitchen area, sleeping room, and storage",
-      "Dig a stepped irrigation system — multiple channels branching across the fields",
-      "Build a hay barn with hay bale walls and a high roof structure",
-      "Raise a beekeeper's shed with hive frames and a windbreak fence",
-      "Construct a compost yard — walled enclosure with composter blocks",
-      "Build a small stone chapel at the field's edge for harvest offerings",
-      "Raise a second distinct crop field plot on fresh ground",
-      "Construct a covered drying rack for herbs and crops beside the farmhouse",
-      "Build a stone-walled animal pen with separate sections for each species"
+      "Build a stone quay along the waterfront — flat, edged, and accessible from land",
+      "Construct a chandler's shop — shelved walls, counter, and storage",
+      "Raise a proper wooden dock extending at least 15 blocks into the water",
+      "Build a dedicated fish-processing building with smoker stacks",
+      "Construct a covered net storage warehouse beside the quay",
+      "Raise a waterfront tavern with a ground-floor common room and harbor view",
+      "Construct a second dock extending from the quay's opposite end",
+      "Raise a stone seawall along the waterfront's most exposed stretch",
+      "Build a harbor office with a chart room and meeting table",
+      "Construct a rope bridge or timber footbridge connecting the two dock sections",
+      "Raise a stone road connecting the Wharf District to the Old Core",
+      "Build a harbourside inn with rooms overlooking the water"
     ],
     2:[
-      "Build a dedicated livestock barn for cattle — stalls and a hay loft above",
-      "Construct a grain mill building with a wheel mechanism beside a stream",
-      "Build a pig pen with a mud pit, shelter, and feeding trough structure",
-      "Construct a fish pond — a dug and lined water enclosure beside the fields",
-      "Raise a pumpkin and melon farm with raised beds and paths between rows",
-      "Build a cider house — a stone building with brewing stands and barrel storage",
-      "Construct a root cellar beneath the farmhouse with stone-lined walls",
-      "Raise a wool-dyeing shed with vat stations and overhead drying lines",
-      "Build a dedicated field watchtower — stone, roofed, taller than the Era 0 post",
-      "Construct a second farmhouse for a field overseer on the far side of the fields"
+      "Build a full pier extending at least 20 blocks into the water",
+      "Construct a shipwright's yard — covered dry dock with tool racks and storage",
+      "Raise a lighthouse tower at least 15 blocks tall with a lantern room at the top",
+      "Build a harbor warehouse for imported goods behind the quay",
+      "Construct a sea wall breakwater protecting the harbor mouth",
+      "Raise a dry dock pit where ships can be lowered for repair",
+      "Build crew quarters above the shipwright's yard",
+      "Construct a watchtower on the pier's far end",
+      "Raise a stone seawall along the full waterfront length",
+      "Build a dedicated rope and sail storage warehouse",
+      "Construct a harbour master's mansion overlooking the full harbor",
+      "Raise a stone stairway from the harbor up to the Old Core walls"
     ],
     3:[
-      "Build a smokehouse with chimney stacks for curing surplus meat",
-      "Raise a large overflow barn — distinct from and larger than the Era 1 version",
-      "Construct a sugar cane plantation terrace along the main irrigation channel",
-      "Build an underground mushroom farm — a sealed dark cellar with grow beds",
-      "Raise a leather tannery beside the livestock pen — vats and drying racks",
-      "Construct a nether wart garden shed with a dedicated sealed growing area",
-      "Build a second dedicated farmhouse further from the city than the first two",
-      "Raise a field shrine on a stone plinth in the center of the oldest field",
-      "Construct a seed vault — a small stone room with an iron door",
-      "Build a dye garden with raised beds for every plant-based dye colour"
+      "Build stone harbor walls flanking the harbor mouth on both sides",
+      "Raise a customs house with inspection rooms and a holding cell",
+      "Construct a harbor guard post at the pier entrance with iron doors",
+      "Build a signal tower for coordinating ship arrivals with flag poles",
+      "Raise a second lighthouse on the far side of the harbor mouth",
+      "Construct an iron sea-gate between the harbor walls",
+      "Build a captain's quarters above the customs house",
+      "Raise a memorial to sailors lost at sea — a stone marker on the main pier",
+      "Build a harbourside market hall — a permanent covered trading floor on the quay",
+      "Construct a smuggler's tunnel — a hidden passage beneath the wharf",
+      "Raise a fortified lighthouse with a watch platform at its base",
+      "Build a sea-facing chapel on the harbor's edge"
     ],
     4:[
-      "Build a fortified farmstead — stone walls enclosing house, barn, and pen together",
-      "Raise a stone watch post on a hill with sightlines across all the fields",
-      "Construct a stone perimeter boundary wall along the fields' outer edge",
-      "Build a siege-proof grain vault — iron doors, stone walls, concealed entrance",
-      "Raise a field barracks for a harvest guard — bunk room and weapon rack",
-      "Construct a fortified gatehouse at the main road entrance to the fields",
-      "Raise a signal fire tower at the field's farthest corner from the city",
-      "Construct a stone bridge over the main irrigation channel",
-      "Build a second fortified watch post on the opposite field boundary",
-      "Raise a dedicated horse stable for field workers and patrol riders"
+      "Raise a grand customs hall replacing the Era 3 customs house",
+      "Build a naval command tower at the harbor's center with a roof platform",
+      "Construct a second harbor warehouse on the far side of the pier",
+      "Raise a fortified sea-gate tower on each side of the harbor mouth",
+      "Build a shipwright's guild hall beside the dry dock",
+      "Construct a dedicated chart room and navigator's office",
+      "Build a harbor market hall — a permanent covered trading floor on the quay",
+      "Construct a dedicated vessel repair cradle — a stone-framed dry dock extension",
+      "Build a bell tower at the harbor entrance audible across the water",
+      "Construct a second breakwater extending beyond the Era 2 version",
+      "Raise a dedicated naval armoury beside the command tower",
+      "Build a stone colonnade along the full waterfront promenade"
     ],
     5:[
-      "Raise a grand granary wonder — the largest storage structure in the settlement",
-      "Build a harvest festival ground — stage, terraced seating, and fire pit ring",
-      "Construct a vast greenhouse spanning at least 20x20 in glass and iron framing",
-      "Raise a nature shrine wonder — moss, azalea, ancient oak canopy over a stone altar",
-      "Build a legendary orchard — terraced with stone paths and a central pavilion",
-      "Construct a final perimeter watchtower as the tallest point in the Outer Fields",
-      "Raise a harvest hall for feasts — long stone hall with fireplaces and a high ceiling",
-      "Build a buried excavation site marking the oldest farmed ground in the settlement",
-      "Construct a field beacon tower visible from the harbor",
-      "Raise an underground mushroom kingdom — a massive vaulted cavern farm"
+      "Raise a grand lighthouse wonder — the tallest structure on the coastline",
+      "Build a naval museum in a dedicated stone hall displaying expedition trophies",
+      "Construct a sea-gate arch wonder spanning the full harbor mouth",
+      "Raise a captain's mansion on the cliff face overlooking the harbor",
+      "Build a grand fleet warehouse spanning the full wharf length",
+      "Construct a lighthouse keeper's cottage with a sealed secret basement room",
+      "Raise a harbor cathedral — a sea-facing shrine with a beacon spire",
+      "Build a sunken memorial garden beneath the pier — glass floor over water",
+      "Construct a fortified harbor citadel at the water's edge",
+      "Raise a kraken-warding monolith on the outer breakwater",
+      "Build a grand colonnaded promenade along the full waterfront",
+      "Construct a subterranean vault beneath the quay for harbor treasury storage"
     ]
   }},
   {id:"northend", name:"The North End", color:"var(--brass)", unlockEra:1, quests:{
@@ -678,7 +690,7 @@ const DISTRICTS = [
       "Construct a stone-paved square at the North End's center",
       "Raise a second stone wall tower on the northern boundary",
       "Build a neighbourhood guildhall for local tradespeople",
-      "Construct a stone bridge connecting the North End to the Northern Sprawl",
+      "Construct a stone bridge connecting the North End to The Sprawl",
       "Raise a dedicated herbalist's shop with a garden annex",
       "Build a public notice board post at the district square",
       "Construct a stone drainage channel running beneath the main road",
@@ -705,7 +717,7 @@ const DISTRICTS = [
       "Build a public hall for neighbourhood assemblies — stone, vaulted, with a raised platform",
       "Construct a monument district — a paved plaza with named pillars and statues",
       "Raise a neighbourhood cathedral annex — a chapel tower added to the Era 2 chapel",
-      "Build a grand covered market — a permanent stone hall replacing all prior stalls",
+      "Build a grand covered market replacing all prior stalls in a permanent stone hall",
       "Construct a second formal garden on the district's quieter eastern edge",
       "Raise a glass-roofed atrium building — the North End's most decorative structure",
       "Build a neighbourhood crypt beneath the burial ground",
@@ -713,78 +725,6 @@ const DISTRICTS = [
       "Raise a final watchtower as a beacon at the district's northernmost point",
       "Build a dedicated music hall — a performance space with tiered seating",
       "Construct a colonnaded plaza entrance marking the district's southern boundary"
-    ]
-  }},
-  {id:"wharf", name:"The Wharf District", color:"var(--teal)", unlockEra:1, quests:{
-    1:[
-      "Build a stone quay along the waterfront — flat, edged, and accessible from land",
-      "Construct a harbormaster's shack overlooking the bay entrance",
-      "Raise a simple wooden dock extending at least 10 blocks into the water",
-      "Build a fish market stall with a counter and overhead cover",
-      "Construct a rope-maker's shed with rope coils and wall storage",
-      "Build a salt house — a stone room for preserving the catch",
-      "Raise a small boathouse with water access and a double door",
-      "Construct a covered net-drying rack on the waterfront",
-      "Build a ferry landing — a flat stone platform at the water's edge",
-      "Raise a beacon post at the bay's edge — a tall pole with a lantern frame",
-      "Construct a chandler's shop — shelved walls, counter, and storage",
-      "Build a waterfront tavern with a ground-floor common room and harbor view"
-    ],
-    2:[
-      "Build a full pier extending at least 20 blocks into the water",
-      "Construct a shipwright's yard — covered dry dock with tool racks and storage",
-      "Raise a lighthouse tower at least 15 blocks tall with a lantern room at the top",
-      "Build a harbor warehouse for imported goods behind the quay",
-      "Construct a sea wall breakwater protecting the harbor mouth",
-      "Raise a dry dock pit where ships can be lowered for repair",
-      "Build crew quarters above the shipwright's yard",
-      "Construct a harbor office with a chart room and meeting table",
-      "Raise a watchtower on the pier's far end",
-      "Build a dedicated fish-processing building with smoker stacks",
-      "Construct a second dock extending from the quay's opposite end",
-      "Raise a stone seawall along the waterfront's most exposed stretch"
-    ],
-    3:[
-      "Build stone harbor walls flanking the harbor mouth on both sides",
-      "Raise a customs house with inspection rooms and a holding cell",
-      "Construct a harbor guard post at the pier entrance with iron doors",
-      "Build a signal tower for coordinating ship arrivals with flag poles",
-      "Raise a second lighthouse on the far side of the harbor mouth",
-      "Construct an iron sea-gate between the harbor walls",
-      "Build a captain's quarters above the customs house",
-      "Raise a memorial to sailors lost at sea — a stone marker on the main pier",
-      "Construct a dedicated rope and sail storage warehouse",
-      "Build a harbourside inn with rooms overlooking the water",
-      "Raise a fortified lighthouse with a watch platform at its base",
-      "Construct a stone stairway from the harbor up to the Old Core walls"
-    ],
-    4:[
-      "Raise a grand customs hall — replacing the Era 3 customs house with a larger structure",
-      "Build a naval command tower at the harbor's center with a roof platform",
-      "Construct a second harbor warehouse on the far side of the pier",
-      "Raise a fortified sea-gate tower on each side of the harbor mouth",
-      "Build a shipwright's guild hall beside the dry dock",
-      "Construct a dedicated chart room and navigator's office separate from the harbor office",
-      "Raise a stone breakwater extending beyond the Era 2 version",
-      "Build a harbor market hall — a permanent covered trading floor on the quay",
-      "Construct a smuggler's tunnel — a hidden passage beneath the wharf",
-      "Raise a dedicated vessel repair cradle — a stone-framed dry dock extension",
-      "Build a harbourmaster's mansion overlooking the full harbor",
-      "Construct a bell tower at the harbor entrance audible across the water"
-    ],
-    5:[
-      "Raise a grand lighthouse wonder — the tallest structure on the coastline",
-      "Build a naval museum in a dedicated stone hall displaying expedition trophies",
-      "Construct a sea-gate arch wonder spanning the full harbor mouth",
-      "Raise a captain's mansion on the cliff face overlooking the harbor",
-      "Build a grand fleet warehouse spanning the full wharf length",
-      "Construct a lighthouse keeper's cottage with a sealed secret basement room",
-      "Raise a harbor cathedral — a sea-facing shrine with a beacon spire",
-      "Build a sunken memorial garden beneath the pier — glass floor over water",
-      "Construct a fortified harbor citadel at the water's edge",
-      "Raise a kraken-warding monolith on the outer breakwater",
-      "Build a grand colonnaded promenade along the full waterfront",
-      "Construct a subterranean vault beneath the quay for harbor treasury storage"
     ]
   }},
   {id:"downtown", name:"Downtown", color:"var(--slate)", unlockEra:2, quests:{
@@ -955,6 +895,42 @@ const DISTRICTS = [
       "Build a dedicated physician's hall for the Sprawl's growing population",
       "Construct a final watchtower at the Sprawl's outermost boundary point"
     ]
+  }},
+  {id:"outerfields", name:"The Outer Fields", color:"var(--field)", unlockEra:4, quests:{
+    4:[
+      "Terraform and level a vast agricultural plain — clear trees, flatten terrain across a 60x60 area",
+      "Raise a grand granary complex — a multi-building walled compound with separate grain stores",
+      "Construct a planned irrigation network — stone-lined channels feeding every field from a central reservoir",
+      "Build a fortified farmstead — stone walls enclosing house, barn, livestock pen, and granary together",
+      "Raise a field watchtower network — at least three stone towers spaced across the fields with sightlines between them",
+      "Construct a dedicated slaughterhouse and smokehouse complex away from the main settlement",
+      "Build a mill district — a row of grain mills along the main water channel",
+      "Raise a field barracks — a full garrison building housing the harvest guard",
+      "Construct a stone perimeter boundary wall enclosing the entire cultivated area",
+      "Build a cattle ranch — a large fenced pasture with dedicated barn, feed store, and breeding pen",
+      "Raise a market road connecting the Outer Fields to the city — paved, lit, and gated",
+      "Construct a seed vault complex — a fortified stone building with vault rooms and an iron-doored archive",
+      "Build a dedicated tannery compound beside the livestock area",
+      "Raise a field chapel on a hill overlooking the full agricultural plain",
+      "Construct a series of raised terrace farms on any hillside within the district"
+    ],
+    5:[
+      "Raise a grand granary wonder — a monumental storage complex visible from the city walls",
+      "Build a harvest festival ground — a permanent stone amphitheatre with terraced seating, stage, and fire pits",
+      "Construct a vast greenhouse complex spanning at least 30x30 — glass and iron, fully enclosed",
+      "Raise an aqueduct connecting a distant water source to the field irrigation network",
+      "Build a legendary orchard estate — terraced hillside with every tree type, stone paths, and a central manor",
+      "Construct a field citadel — a fully fortified farmstead with walls, towers, a keep, and a gatehouse",
+      "Raise a nature wonder — a massive ancient oak canopy over a stone altar, surrounded by moss and azalea",
+      "Build an underground mushroom kingdom — a vast vaulted cavern farm beneath the fields",
+      "Construct a field beacon tower visible from both the harbor and the city walls",
+      "Raise a harvest hall wonder — a grand feasting hall with vaulted ceiling, long stone tables, fireplaces, and banners",
+      "Build a planned village within the fields — homes, a well, a chapel, and a market in a self-contained settlement",
+      "Construct a field aqueduct bridge — a raised stone channel carrying water across a valley or ravine",
+      "Raise a watchtower citadel at the field's farthest boundary — the last outpost before the wilderness",
+      "Build a royal hunting lodge on the fields' edge — a grand timber and stone manor with stables and kennels",
+      "Construct a final monument at the heart of the fields — a stone obelisk marking the realm's breadth"
+    ]
   }}
 ];
 
@@ -978,7 +954,7 @@ const CRIER_QUESTS = [
   // TRIAL
   {cat:"trial", text:"A squall has battered the Wharf — build a stone breakwater or sea wall before the next ship is lost."},
   {cat:"trial", text:"Bandits have raided the Long Road — build a fortified checkpoint across the road before the next caravan passes through."},
-  {cat:"trial", text:"Blight has struck the northern fields — terraform and build a new crop terrace on fresh ground before the next harvest."},
+  {cat:"trial", text:"Blight has struck the western fields — terraform and build a new crop terrace on fresh ground before the next harvest."},
   {cat:"trial", text:"A fire broke out near the forge — build a dedicated firebreak wall between the forge and the nearest wooden structure."},
   {cat:"trial", text:"Tremors have cracked the main well — build a second enclosed stone water source before the old one is sealed."},
   {cat:"trial", text:"Something breached the walls at dawn — seal the gap in stone and raise a new watch post directly at the breach point."},
