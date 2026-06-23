@@ -1085,32 +1085,25 @@ function attachBoardListener(){
       const val = snapshot.val();
       const fresh = defaultState();
       if(val){
-        // Merge saved scalar fields safely
         state = fresh;
         if(typeof val.day === 'number') state.day = val.day;
         if(typeof val.era === 'number') state.era = Math.min(val.era, 5);
-        if(val.eraGoals){ state.eraGoals = fresh.eraGoals; Object.keys(val.eraGoals).forEach(k => { if(state.eraGoals[k]) state.eraGoals[k].declared = !!val.eraGoals[k].declared; }); }
-        if(Array.isArray(val.chronicle)) state.chronicle = val.chronicle;
+        if(val.eraGoals){ state.eraGoals = fresh.eraGoals; Object.keys(val.eraGoals).forEach(k => { if(state.eraGoals[k]) state.eraGoals[k].declared = !!(val.eraGoals[k]||{}).declared; }); }
+        if(val.chronicle && typeof val.chronicle === 'object') state.chronicle = Object.values(val.chronicle);
         if(typeof val.questSeq === 'number') state.questSeq = val.questSeq;
-        if(Array.isArray(val.crierSeen)) state.crierSeen = val.crierSeen;
-        if(Array.isArray(val.crierBoard)) state.crierBoard = val.crierBoard;
-        // Only load districts that exist in the current district list
-        if(val.districts){
+        // crierSeen — Firebase may return as object with numeric keys
+        if(val.crierSeen) state.crierSeen = Array.isArray(val.crierSeen) ? val.crierSeen : Object.values(val.crierSeen);
+        // crierBoard — restore from serialized array
+        if(val.crierBoard) state.crierBoard = Array.isArray(val.crierBoard) ? val.crierBoard : Object.values(val.crierBoard);
+        // Restore quest done states from flat questDone map {districtId: {questId: bool}}
+        if(val.questDone){
           DISTRICTS.forEach(d => {
-            const saved = val.districts[d.id];
-            if(saved && !Array.isArray(saved) && typeof saved === 'object'){
-              // Merge saved quest done-states onto fresh quest list
-              state.districts[d.id] = fresh.districts[d.id];
-              Object.keys(state.districts[d.id]).forEach(era => {
-                if(saved[era] && Array.isArray(saved[era])){
-                  state.districts[d.id][era] = state.districts[d.id][era].map((q, idx) => {
-                    const savedQ = saved[era][idx];
-                    return savedQ ? Object.assign({}, q, {done: !!savedQ.done}) : q;
-                  });
-                }
-              });
-            }
-            // If district not in saved data, fresh quests already set above
+            const doneMap = val.questDone[d.id] || {};
+            Object.keys(state.districts[d.id]).forEach(era => {
+              state.districts[d.id][era] = state.districts[d.id][era].map(q =>
+                Object.assign({}, q, {done: !!doneMap[q.id]})
+              );
+            });
           });
         }
         selectedEraView = state.era;
@@ -1128,10 +1121,36 @@ function attachBoardListener(){
   });
 }
 
+function serializeState(){
+  // Serialize quest done states as {districtId: {questId: bool}} to survive Firebase array->object conversion
+  const questDone = {};
+  DISTRICTS.forEach(d => {
+    questDone[d.id] = {};
+    const tiers = state.districts[d.id];
+    Object.keys(tiers).forEach(era => {
+      tiers[era].forEach(q => { if(q.done) questDone[d.id][q.id] = true; });
+    });
+  });
+  // Serialize crier board similarly
+  const crierBoard = (state.crierBoard||[]).map(q => ({
+    id:q.id, text:q.text, cat:q.cat, done:q.done, questIdx:q.questIdx
+  }));
+  return {
+    day: state.day,
+    era: state.era,
+    eraGoals: state.eraGoals,
+    chronicle: state.chronicle,
+    questSeq: state.questSeq,
+    crierSeen: state.crierSeen||[],
+    crierBoard,
+    questDone
+  };
+}
+
 function saveState(){
   if(!storageOK || !boardRef) return;
   suppressNextSnapshot = true;
-  boardRef.set(state).catch(e => {
+  boardRef.set(serializeState()).catch(e => {
     suppressNextSnapshot = false;
     document.getElementById("storageNote").textContent = "Couldn't save — check your Firebase database rules allow writes.";
   });
