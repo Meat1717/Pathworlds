@@ -402,7 +402,7 @@ body{margin:0;}
     <div class="header">
       <div class="title-block">
         <h1>Kingdom Board</h1>
-        <p class="sub">Steward's Ledger of the Settlement</p>
+        <div id="settlementNameDisplay"></div>
       </div>
       <div class="header-right">
         <div class="day-field">Day <input type="number" id="dayInput" min="1" value="1"></div>
@@ -420,7 +420,10 @@ body{margin:0;}
       <div class="spine"></div>
 
       <div class="page page-right">
-        <div class="section-title">District Quest Board</div>
+        <div class="section-title-row spaced">
+          <div class="section-title-inline">District Quest Board</div>
+          <input type="text" id="questSearch" placeholder="Search quests…" style="font-family:'EB Garamond',serif;font-size:13px;padding:3px 8px;border:1px solid var(--parchment-darker);border-radius:3px;background:rgba(255,255,255,0.4);color:var(--ink);width:160px;">
+        </div>
         <div class="tabs" id="districtTabs"></div>
         <div class="district-panel" id="districtPanel"></div>
 
@@ -1055,7 +1058,7 @@ function defaultState(){
   return {
     day:1, era:0, eraGoals,
     districts, chronicle:[],
-    questSeq: 0, crierSeen: [], crierBoard: []
+    questSeq: 0, crierSeen: [], crierBoard: [], settlementName: ''
   };
 }
 
@@ -1106,6 +1109,7 @@ function attachBoardListener(){
             });
           });
         }
+        if(typeof val.settlementName === 'string') state.settlementName = val.settlementName;
         selectedEraView = state.era;
         activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "oldcore";
       }
@@ -1143,7 +1147,8 @@ function serializeState(){
     questSeq: state.questSeq,
     crierSeen: state.crierSeen||[],
     crierBoard,
-    questDone
+    questDone,
+    settlementName: state.settlementName || ''
   };
 }
 
@@ -1250,11 +1255,49 @@ function summonCrier(){
 
 /* ---------- RENDER ---------- */
 
+function renderSettlementName(){
+  const el = document.getElementById("settlementNameDisplay");
+  if(!el) return;
+  const named = state.settlementName && state.settlementName.trim();
+  const declared = state.eraGoals && state.eraGoals[0] && state.eraGoals[0].declared;
+  if(named){
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+      <span class="sub" style="font-style:normal;font-size:17px;font-family:'Cinzel',serif;font-weight:500;color:var(--ink);">${state.settlementName}</span>
+      ${declared?`<button id="renameBtn" style="font-size:10px;font-family:'Cinzel',serif;padding:2px 7px;border:1px solid var(--parchment-darker);border-radius:3px;background:none;color:var(--ink-soft);cursor:pointer;">rename</button>`:''}
+    </div>`;
+  } else if(declared){
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+      <input id="nameInput" type="text" placeholder="Name your settlement…" style="font-family:'Cinzel',serif;font-size:14px;padding:3px 8px;border:1px solid var(--teal-deep);border-radius:3px;background:rgba(255,255,255,0.5);color:var(--ink);width:200px;">
+      <button id="nameSubmit" style="font-size:11px;font-family:'Cinzel',serif;padding:3px 10px;border:1px solid var(--teal-deep);border-radius:3px;background:rgba(55,102,107,0.12);color:var(--teal-deep);cursor:pointer;">Confirm</button>
+    </div>`;
+    const input = document.getElementById("nameInput");
+    const submit = document.getElementById("nameSubmit");
+    const saveName = () => {
+      const v = input.value.trim();
+      if(!v) return;
+      state.settlementName = v;
+      addChronicle("milestone", "The settlement is named: " + v);
+      saveState(); renderSettlementName(); renderChronicle();
+    };
+    submit.addEventListener("click", saveName);
+    input.addEventListener("keydown", e => { if(e.key==="Enter") saveName(); });
+    input.focus();
+  } else {
+    el.innerHTML = `<p class="sub">Steward's Ledger of the Settlement</p>`;
+  }
+  const renameBtn = document.getElementById("renameBtn");
+  if(renameBtn) renameBtn.addEventListener("click", () => {
+    state.settlementName = '';
+    renderSettlementName();
+  });
+}
+
 function renderAll(){
   document.getElementById("dayInput").value = state.day;
   document.getElementById("eraPill").textContent = "Era " + state.era + " — " + ERAS[state.era].name;
   renderEraTrack();
   renderGoalCard();
+  renderSettlementName();
   renderTabs();
   renderDistrictPanel();
   renderChronicle();
@@ -1476,7 +1519,9 @@ function renderDistrictPanel(){
         <div class="quest-tier-label">Era ${era} — ${ERAS[era].name} <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:400;">${doneCount}/${quests.length}</span></div>
         ${quests.map(q => {
           const tag = q.id.indexOf('-auto-')>-1 ? 'surplus' : (q.id.indexOf('-c-')>-1 ? 'custom' : '');
-          return `<div class="quest-item">
+          const searchTerm = (document.getElementById('questSearch')||{}).value||'';
+          const hidden = searchTerm && !q.text.toLowerCase().includes(searchTerm.toLowerCase());
+          return `<div class="quest-item" style="${hidden?'display:none':''}">
             <input type="checkbox" data-id="${q.id}" ${q.done?'checked':''}>
             <label class="${q.done?'done':''}">${q.text}</label>
             ${tag?'<span class="qtag">'+tag+'</span>':''}
@@ -1531,6 +1576,19 @@ function wireControls(){
   });
 
   document.getElementById("crierBtn").addEventListener("click", summonCrier);
+
+  // Keep crier button count updated
+  function updateCrierBtn(){
+    const pending = (state.crierBoard||[]).filter(q=>!q.done).length;
+    const btn = document.getElementById("crierBtn");
+    if(!btn) return;
+    btn.textContent = pending > 0
+      ? "📯 Summon the Town Crier — Hear the Call  (" + pending + " active)"
+      : "📯 Summon the Town Crier — Hear the Call";
+  }
+  // Patch renderAll to also update crier button
+  const _origRenderAll = renderAll;
+  window._renderAll = renderAll;
 
   document.getElementById("clearChronicleBtn").addEventListener("click", () => {
     if(state.chronicle.length === 0) return;
@@ -1615,6 +1673,7 @@ function wireControls(){
 
 document.addEventListener("DOMContentLoaded", () => {
   wireControls();
+  document.getElementById("questSearch").addEventListener("input", () => renderDistrictPanel());
   attachBoardListener();
 });
 })();
