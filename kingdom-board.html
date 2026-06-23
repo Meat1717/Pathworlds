@@ -380,7 +380,7 @@ body{margin:0;}
   cursor:zoom-in; transition:transform 0.2s;
   object-fit:contain;
 }
-.lightbox-imgs img.zoomed{ transform:scale(1.6); cursor:zoom-out; z-index:2; position:relative; }
+.lightbox-imgs img{ cursor:zoom-in !important; }
 .lightbox-label{
   font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.8px;
   color:var(--parchment); text-align:center; opacity:0.7;
@@ -453,6 +453,10 @@ body{margin:0;}
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
         <img src="https://raw.githubusercontent.com/Meat1717/Pathworlds/main/assets/City%20District%20Map.png" alt="City District Map" id="lbImg2">
         <span class="lightbox-label">District Map</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <img src="https://raw.githubusercontent.com/Meat1717/Pathworlds/main/assets/Overlay%20Idea.png" alt="Overlay Idea" id="lbImg3">
+        <span class="lightbox-label">Overlay</span>
       </div>
     </div>
   </div>
@@ -1553,12 +1557,40 @@ function wireControls(){
   document.addEventListener("keydown", e => {
     if(e.key === "Escape") document.getElementById("lightboxOverlay").classList.remove("open");
   });
-  ["lbImg1","lbImg2"].forEach(id => {
+  // Fullscreen overlay for individual images
+  const fsOverlay = document.createElement("div");
+  fsOverlay.id = "fsOverlay";
+  fsOverlay.style.cssText = "display:none;position:fixed;inset:0;z-index:2000;background:rgba(10,8,5,0.96);align-items:center;justify-content:center;cursor:zoom-out;";
+  const fsImg = document.createElement("img");
+  fsImg.style.cssText = "max-width:96vw;max-height:94vh;object-fit:contain;border-radius:3px;box-shadow:0 12px 48px rgba(0,0,0,0.7);";
+  const fsClose = document.createElement("button");
+  fsClose.textContent = "✕ Close";
+  fsClose.style.cssText = "position:absolute;top:16px;right:20px;background:none;border:1px solid rgba(255,255,255,0.3);color:#f1e6c8;font-family:'Cinzel',serif;font-size:12px;padding:5px 14px;border-radius:3px;cursor:pointer;";
+  fsOverlay.appendChild(fsImg);
+  fsOverlay.appendChild(fsClose);
+  document.body.appendChild(fsOverlay);
+
+  function openFullscreen(src){
+    fsImg.src = src;
+    fsOverlay.style.display = "flex";
+  }
+  function closeFullscreen(){
+    fsOverlay.style.display = "none";
+    fsImg.src = "";
+  }
+  fsOverlay.addEventListener("click", closeFullscreen);
+  fsClose.addEventListener("click", e => { e.stopPropagation(); closeFullscreen(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape") closeFullscreen(); });
+
+  ["lbImg1","lbImg2","lbImg3"].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.addEventListener("click", e => {
-      e.stopPropagation();
-      e.target.classList.toggle("zoomed");
-    });
+    if(el){
+      el.style.cursor = "zoom-in";
+      el.addEventListener("click", e => {
+        e.stopPropagation();
+        openFullscreen(el.src);
+      });
+    }
   });
 }
 
