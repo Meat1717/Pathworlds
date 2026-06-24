@@ -1035,7 +1035,7 @@ function defaultState(){
   return {
     day:1, era:0, eraGoals,
     districts, chronicle:[],
-    questSeq: 0, crierSeen: [], crierBoard: [], settlementName: ''
+    questSeq: 0, crierSeen: [], crierBoard: [], settlementName: '', customQuests: {}
   };
 }
 
@@ -1087,6 +1087,7 @@ function attachBoardListener(){
           });
         }
         if(typeof val.settlementName === 'string') state.settlementName = val.settlementName;
+        if(val.customQuests && typeof val.customQuests === 'object') state.customQuests = val.customQuests;
         selectedEraView = state.era;
         activeTab = DISTRICTS.find(d => state.era >= d.unlockEra) ? activeTab : "oldcore";
       }
@@ -1125,7 +1126,8 @@ function serializeState(){
     crierSeen: state.crierSeen||[],
     crierBoard,
     questDone,
-    settlementName: state.settlementName || ''
+    settlementName: state.settlementName || '',
+    customQuests: state.customQuests || {}
   };
 }
 
@@ -1164,6 +1166,12 @@ function countIncompleteQuests(upToEra){
       tiers[tierEra].forEach(q => { if(!q.done) incomplete++; });
     });
   });
+  Object.values(state.customQuests||{}).forEach(cq => {
+    const d = DISTRICTS.find(x => x.id === cq.districtId);
+    if(!d || d.unlockEra > upToEra) return;
+    if(cq.tier > upToEra) return;
+    if(!cq.done) incomplete++;
+  });
   return incomplete;
 }
 
@@ -1180,6 +1188,20 @@ function advanceEra(){
 }
 
 function toggleQuest(districtId, qid, checked){
+  // Custom quest — update in customQuests store
+  if(qid.indexOf("-c-") > -1){
+    if(!state.customQuests) state.customQuests = {};
+    if(state.customQuests[qid]){
+      state.customQuests[qid].done = checked;
+      if(checked){
+        addChronicle("quest", state.customQuests[qid].text + " — completed in " + DISTRICTS.find(d=>d.id===districtId).name);
+        showSeal("Quest Complete");
+      }
+      saveState(); renderAll();
+    }
+    return;
+  }
+  // Standard quest — update in questDone via districts
   const tiers = state.districts[districtId];
   let q = null;
   Object.keys(tiers).forEach(era => {
@@ -1199,8 +1221,8 @@ function addCustomQuest(districtId, text){
   if(!text.trim()) return;
   const tier = state.era;
   const qid = districtId + "-c-" + state.questSeq++;
-  if(!state.districts[districtId][tier]) state.districts[districtId][tier] = [];
-  state.districts[districtId][tier].push({id:qid, text:text.trim(), done:false});
+  if(!state.customQuests) state.customQuests = {};
+  state.customQuests[qid] = {id:qid, districtId, tier, text:text.trim(), done:false};
   saveState(); renderAll();
 }
 
@@ -1430,8 +1452,12 @@ function districtProgress(d){
   // Returns {done, total} for the current era only in a district
   if(state.era < d.unlockEra) return {done:0, total:0};
   const tiers = state.districts[d.id];
-  const tier = tiers[state.era];
-  if(!tier || tier.length === 0) return {done:0, total:0};
+  const tier = (tiers[state.era]||[]).slice();
+  // Add custom quests for this era
+  Object.values(state.customQuests||{}).forEach(cq => {
+    if(cq.districtId === d.id && cq.tier === state.era) tier.push(cq);
+  });
+  if(tier.length === 0) return {done:0, total:0};
   const done = tier.filter(q => q.done).length;
   return {done, total: tier.length};
 }
@@ -1478,7 +1504,19 @@ function renderDistrictPanel(){
     el.innerHTML = `<div class="district-accent" style="background:${d.color}"></div><div class="locked-msg">${d.name} isn't open yet — reach Era ${d.unlockEra} to unlock it.</div>`;
     return;
   }
-  const tiers = state.districts[d.id];
+  // Inject custom quests into a working copy of district tiers
+  const tiers = {};
+  Object.keys(state.districts[d.id]).forEach(era => {
+    tiers[era] = state.districts[d.id][era].slice();
+  });
+  // Add custom quests to their respective tiers
+  Object.values(state.customQuests||{}).forEach(cq => {
+    if(cq.districtId !== d.id) return;
+    const era = String(cq.tier);
+    if(!tiers[era]) tiers[era] = [];
+    // Merge done state from questDone (questDone tracks by id)
+    if(!tiers[era].find(q => q.id === cq.id)) tiers[era].push(cq);
+  });
   const tierEras = Object.keys(tiers).map(Number).sort((a,b)=>a-b);
   let html = `<div class="district-accent" style="background:${d.color}"></div>`;
   tierEras.forEach(era => {
