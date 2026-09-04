@@ -510,9 +510,43 @@ function land(seg){
     glowShelf(shelfPick.shelfIdx);
     phase='book';angle=0;draw();enableSpin();
   } else if(phase==='book'){
-    flash('Book #'+seg.name+' — go find it!','win');
     setPhase('Your book!');
     if(shelfPick.shelfIdx!==null) shelfHighlightBook(shelfPick.shelfIdx,seg.bookIdx,true);
+
+    // Find the originating series (shelf or goodreads)
+    const originId = shelfPick.shelfIdx!==null ? 'shelf' : 'goodreads';
+    const originSeries = getSeries(originId);
+
+    // Show winner banner
+    flash('','');
+    const wb=document.getElementById('winnerBanner');
+    document.getElementById('wbName').textContent='Book #'+seg.name+(shelfPick.label?' — '+shelfPick.label:'');
+    wb.style.display='flex';
+    wb.style.borderColor=originSeries.color;
+    const rgb3=hexToRgb(originSeries.color);
+    wb.style.background='rgba('+rgb3.r+','+rgb3.g+','+rgb3.b+',.15)';
+    wb.style.color=originSeries.color;
+    wb.style.animation='none'; void wb.offsetWidth; wb.style.animation='';
+
+    // Background image + coloured vignette
+    const vig=document.getElementById('seriesVignette');
+    if(rgb3){
+      vig.style.background='radial-gradient(ellipse at center,rgba('+rgb3.r+','+rgb3.g+','+rgb3.b+',.05) 0%,rgba('+Math.round(rgb3.r*.3)+','+Math.round(rgb3.g*.3)+','+Math.round(rgb3.b*.3)+',.92) 100%)';
+      vig.style.opacity='1';
+    }
+    if(originSeries.bgImage){
+      const bg=document.getElementById('seriesBg');
+      bg.style.backgroundImage='url('+originSeries.bgImage+')';
+      bg.style.opacity='1';
+    }
+
+    // Tint left panel
+    if(rgb3) document.querySelector('.left').style.background='rgb('+Math.round(30+rgb3.r*.18)+','+Math.round(28+rgb3.g*.18)+','+Math.round(38+rgb3.b*.18)+')';
+
+    // Confetti + win sound
+    launchConfetti(originSeries.color);
+    playWin();
+
     const btn=document.getElementById('spinBtn');
     btn.textContent='Re-spin';btn.disabled=false;btn.onclick=reSpinBook;
   }
