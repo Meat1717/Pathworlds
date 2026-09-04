@@ -77,6 +77,9 @@ input:checked+.sldr:before{transform:translateX(10px)}
 .elog{display:flex;flex-direction:column;gap:2px;max-height:80px;overflow-y:auto}
 .eentry{font-size:10px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border)}
 .right{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
+#seriesBg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease;pointer-events:none;z-index:0}
+#seriesBg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,.3) 0%,rgba(0,0,0,.85) 100%)}
+.right h2,.right .bookcase-wrap{position:relative;z-index:1}
 .right h2{font-family:'Crimson Pro',serif;font-size:17px;font-weight:400;color:var(--text-dim)}
 .bookcase{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--wood-mid);border:5px solid var(--wood-dark);border-radius:3px;padding:8px;box-shadow:inset 0 0 20px rgba(0,0,0,.5),0 4px 20px rgba(0,0,0,.5);background-image:repeating-linear-gradient(180deg,transparent,transparent 95px,rgba(0,0,0,.45) 95px,rgba(0,0,0,.45) 97px,rgba(255,255,255,.12) 97px,rgba(255,255,255,.12) 99px,transparent 99px)}
 .shelf{background:var(--shelf-back);border-radius:2px;padding:6px 4px 0;height:90px;display:flex;flex-direction:column;justify-content:flex-end;border-bottom:7px solid var(--wood-light);position:relative;transition:box-shadow .3s;overflow:hidden}
@@ -150,6 +153,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
     </div>
   </div>
   <div class="right">
+    <div id="seriesBg"></div>
     <canvas id="dust"></canvas>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <h2>Your Bookshelf</h2>
@@ -187,7 +191,7 @@ const CONFIG = {
   //   'shelf'     → triggers shelf picker then book number wheel
   //   'goodreads' → triggers book number wheel (1 to goodreadsCount below)
   series: [
-    { id:'swcanon',   name:'Star Wars Canon',  color:'#e03030', excl:false },
+    { id:'swcanon',   name:'Star Wars Canon',  color:'#e03030', excl:false, bgImage:'assets/bookshelf/swcanon.jpg' },
     { id:'swlegends', name:'SW Legends',        color:'#e07820', excl:false },
     { id:'asoiaf',    name:'ASOIAF',            color:'#d4c820', excl:false },
     { id:'tolkien',   name:'Tolkien',           color:'#20d840', excl:false },
@@ -202,7 +206,7 @@ const CONFIG = {
   // ── GOODREADS COUNT ───────────────────────────────────────────────
   // How many books are on your Goodreads want-to-read list.
   // Update this whenever your list changes.
-  goodreadsCount: 48,
+  goodreadsCount: 45,
 
   // ── SHELF PICK SHELVES ────────────────────────────────────────────
   // Which shelves contain books eligible for shelf pick.
@@ -214,7 +218,7 @@ const CONFIG = {
   // Colors for the shelf-picker wheel slices (one per entry):
   shelfPickColors: ['#7a5030', '#7a5030', '#7a5030'],
   shelfPicks: [
-    { shelfIdx:5, count:10, label:'Shelf 6' },
+    { shelfIdx:5, count:6, label:'Shelf 6' },
     { shelfIdx:6, count:28, label:'Shelf 7' },
     { shelfIdx:7, count:29, label:'Shelf 8' },
   ],
@@ -241,10 +245,10 @@ const CONFIG = {
     [ { id:'swcanon', count:4 }, { id:'swlegends', count:18 } ],
     // Shelf 4
     [ { id:'swlegends', count:22 } ],
-    // Shelf 5 — ASOIAF | Tolkien | Horus Heresy | unread
-    [ { id:'asoiaf', count:6 }, { id:'tolkien', count:5 }, { id:'horus', count:5 }, { id:'none', count:4 } ],
-    // Shelf 6 — Forgotten Realms | unread | Darkover | Asimov | shelf-pick books
-    [ { id:'fr', count:6 }, { id:'none', count:6 }, { id:'darkover', count:3 }, { id:'asimov', count:9 }, { id:'shelf', count:10 } ],
+    // Shelf 5
+    [ { id:'swlegends', count:6 }, { id:'asoiaf', count:6 }, { id:'tolkien', count:5 }, { id:'horus', count:4 } ],
+    // Shelf 6 — SW Legends | ASOIAF | unread | Forgotten Realms | unread | Darkover | Asimov | shelf-pick books
+    [ { id:'horus', count:1 }, { id:'none', count:4 }, { id:'fr', count:6 }, { id:'none', count:7 }, { id:'darkover', count:3 }, { id:'asimov', count:9 }, { id:'shelf', count:6 } ],
     // Shelf 7 — all shelf-pick books
     [ { id:'shelf', count:28 } ],
     // Shelf 8 — all shelf-pick books
@@ -458,6 +462,12 @@ function land(seg){
         setTimeout(()=>{phase='book';angle=0;draw();enableSpin();},1300);
       } else {
         flash('','');
+        // Show series background image if available
+        if(w.bgImage){
+          const bg = document.getElementById('seriesBg');
+          bg.style.backgroundImage = 'url('+w.bgImage+')';
+          bg.style.opacity = '1';
+        }
         // Show winner banner
         const wb = document.getElementById('winnerBanner');
         document.getElementById('wbName').textContent = w.name;
@@ -623,11 +633,7 @@ function buildBookcase(){
           gLabel.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:18px;opacity:0.35;pointer-events:none;filter:invert(1)';
           b.appendChild(gLabel);
         }
-        if(g.id==='shelf'){
-          const numEl=document.createElement('span');
-          numEl.className='bnum';numEl.textContent=String(i+1);
-          b.appendChild(numEl);
-        }
+
         row.appendChild(b);
       }
     });
@@ -682,6 +688,7 @@ function fullReset(){
   flash('Spin to begin','');
   document.querySelector('.left').style.background = '';
   document.getElementById('winnerBanner').style.display='none';
+  const bg=document.getElementById('seriesBg');bg.style.opacity='0';bg.style.backgroundImage='';
   clearBookGlow();
   buildBookcase();
   renderLegend();
