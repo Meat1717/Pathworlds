@@ -193,15 +193,15 @@ const CONFIG = {
   //   'goodreads' → triggers book number wheel (1 to goodreadsCount below)
   series: [
     { id:'swcanon',   name:'Star Wars Canon',  color:'#e03030', excl:false, bgImage:'assets/bookshelf/swcanon.jpg' },
-    { id:'swlegends', name:'SW Legends',        color:'#e07820', excl:false },
-    { id:'asoiaf',    name:'ASOIAF',            color:'#d4c820', excl:false },
-    { id:'tolkien',   name:'Tolkien',           color:'#20d840', excl:false },
-    { id:'horus',     name:'Horus Heresy',      color:'#00d8d8', excl:false },
-    { id:'fr',        name:'Forgotten Realms',  color:'#2858e0', excl:false },
-    { id:'darkover',  name:'Darkover',          color:'#9018c0', excl:false },
-    { id:'asimov',    name:'Asimov',            color:'#e018b8', excl:false },
-    { id:'shelf',     name:'Shelf Pick',        color:'#9a6840', excl:false },
-    { id:'goodreads', name:'Goodreads Pick',    color:'#e84040', excl:false },
+    { id:'swlegends', name:'SW Legends',        color:'#e07820', excl:false, bgImage:'assets/bookshelf/swlegends.jpg' },
+    { id:'asoiaf',    name:'ASOIAF',            color:'#d4c820', excl:false, bgImage:'assets/bookshelf/asoiaf.jpg' },
+    { id:'tolkien',   name:'Tolkien',           color:'#20d840', excl:false, bgImage:'assets/bookshelf/lotr.jpg' },
+    { id:'horus',     name:'Horus Heresy',      color:'#00d8d8', excl:false, bgImage:'assets/bookshelf/horus.jpg' },
+    { id:'fr',        name:'Forgotten Realms',  color:'#2858e0', excl:false, bgImage:'assets/bookshelf/forgottenrealms.jpg' },
+    { id:'darkover',  name:'Darkover',          color:'#9018c0', excl:false, bgImage:'assets/bookshelf/darkover.jpg' },
+    { id:'asimov',    name:'Asimov',            color:'#e018b8', excl:false, bgImage:'assets/bookshelf/asimov.jpg' },
+    { id:'shelf',     name:'Shelf Pick',        color:'#9a6840', excl:false, bgImage:'assets/bookshelf/shelf.jpg' },
+    { id:'goodreads', name:'Goodreads Pick',    color:'#e84040', excl:false, bgImage:'assets/bookshelf/goodreads.jpg' },
   ],
 
   // ── GOODREADS COUNT ───────────────────────────────────────────────
@@ -1007,8 +1007,15 @@ document.addEventListener('fullscreenchange',()=>{
 function scaleBookcase(val){
   const wrap = document.querySelector('.bookcase-wrap');
   if(wrap){
-    wrap.style.transform = 'scale('+val+')';
-    wrap.style.transformOrigin = 'top left';
+    // Scale the inner bookcase, not the wrapper, so wrapper width stays correct for centering
+    const bc = wrap.querySelector('.bookcase');
+    if(bc){
+      bc.style.transform = 'scale('+val+')';
+      bc.style.transformOrigin = 'top center';
+      // Adjust wrapper height to match scaled bookcase so page doesn't collapse
+      const naturalH = bc.scrollHeight;
+      wrap.style.height = Math.round(naturalH * val) + 'px';
+    }
   }
   document.getElementById('scaleVal').textContent = Math.round(val*100)+'%';
 }
