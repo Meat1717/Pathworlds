@@ -78,7 +78,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
 .eentry{font-size:10px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border)}
 .right{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
 #seriesBg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease;pointer-events:none;z-index:0}
-#seriesBg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,.3) 0%,rgba(0,0,0,.85) 100%)}
+#seriesVignette{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;transition:opacity 1s ease}
 .right h2,.right .bookcase-wrap{position:relative;z-index:1}
 .right h2{font-family:'Crimson Pro',serif;font-size:17px;font-weight:400;color:var(--text-dim)}
 .bookcase{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--wood-mid);border:5px solid var(--wood-dark);border-radius:3px;padding:8px;box-shadow:inset 0 0 20px rgba(0,0,0,.5),0 4px 20px rgba(0,0,0,.5);background-image:repeating-linear-gradient(180deg,transparent,transparent 95px,rgba(0,0,0,.45) 95px,rgba(0,0,0,.45) 97px,rgba(255,255,255,.12) 97px,rgba(255,255,255,.12) 99px,transparent 99px)}
@@ -154,9 +154,10 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
   <div class="right">
     <div id="seriesBg"></div>
+    <div id="seriesVignette"></div>
     <canvas id="dust"></canvas>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <h2>Your Bookshelf</h2>
+      <h2 style="width:100%;max-width:600px;margin:0 auto">Your Bookshelf</h2>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
         <label for="shelfScale" style="font-size:11px;color:var(--text-dim);white-space:nowrap">Size</label>
         <input type="range" id="shelfScale" min="0.6" max="2.2" step="0.05" value="1"
@@ -165,7 +166,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
         <span id="scaleVal" style="font-size:11px;color:var(--text-dim);min-width:32px">100%</span>
       </div>
     </div>
-    <div class="bookcase-wrap" style="position:relative;max-width:600px">
+    <div class="bookcase-wrap" style="position:relative;width:100%;max-width:600px;margin:0 auto">
       <canvas id="woodShimmer" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;opacity:.5;border-radius:3px"></canvas>
       <div class="bookcase" id="bookcase" style="max-width:100%"></div>
     </div>
@@ -462,7 +463,14 @@ function land(seg){
         setTimeout(()=>{phase='book';angle=0;draw();enableSpin();},1300);
       } else {
         flash('','');
-        // Show series background image if available
+        // Show series background image and coloured vignette
+        const rgb2 = hexToRgb(w.color);
+        const vig = document.getElementById('seriesVignette');
+        if(rgb2){
+          const r=rgb2.r,g=rgb2.g,b=rgb2.b;
+          vig.style.background = 'radial-gradient(ellipse at center,rgba('+r+','+g+','+b+',.05) 0%,rgba('+Math.round(r*.3)+','+Math.round(g*.3)+','+Math.round(b*.3)+',.92) 100%)';
+          vig.style.opacity = '1';
+        }
         if(w.bgImage){
           const bg = document.getElementById('seriesBg');
           bg.style.backgroundImage = 'url('+w.bgImage+')';
@@ -689,6 +697,8 @@ function fullReset(){
   document.querySelector('.left').style.background = '';
   document.getElementById('winnerBanner').style.display='none';
   const bg=document.getElementById('seriesBg');bg.style.opacity='0';bg.style.backgroundImage='';
+  const vig=document.getElementById('seriesVignette');vig.style.opacity='0';
+  stopConfetti();
   clearBookGlow();
   buildBookcase();
   renderLegend();
@@ -719,54 +729,81 @@ document.addEventListener('mousemove', e=>{
 document.addEventListener('mouseleave',()=>{ tip.style.opacity='0'; });
 
 // ── CONFETTI ──
+let confettiActive = false;
+let confettiColor = '#ffffff';
+let confettiPieces = [];
+let confettiRaf = null;
+
 function launchConfetti(baseColor){
+  confettiColor = baseColor;
   const cv=document.getElementById('confetti');
   cv.style.display='block';
   cv.width=window.innerWidth;cv.height=window.innerHeight;
   const ctx=cv.getContext('2d');
-  const pieces=[];
   const colors=[baseColor,'#ffffff',baseColor,'#ffffff',baseColor,'#ffe066',baseColor];
-  for(let i=0;i<120;i++){
-    pieces.push({
-      x:Math.random()*cv.width, y:-10-Math.random()*200,
-      w:7+Math.random()*7, h:10+Math.random()*8,
-      color:colors[Math.floor(Math.random()*colors.length)],
-      rot:Math.random()*Math.PI*2,
-      vx:(Math.random()-0.5)*4, vy:2+Math.random()*4,
-      vr:(Math.random()-0.5)*0.2, alpha:1
-    });
+
+  // Initial burst
+  confettiPieces = [];
+  for(let i=0;i<140;i++){
+    confettiPieces.push(makeBook(colors, cv.width, -10-Math.random()*300));
   }
-  let start=null;
-  function frame(ts){
-    if(!start)start=ts;
-    const elapsed=ts-start;
+  confettiActive = true;
+  if(confettiRaf) cancelAnimationFrame(confettiRaf);
+
+  function frame(){
     ctx.clearRect(0,0,cv.width,cv.height);
-    let alive=false;
-    pieces.forEach(p=>{
+    // Trickle in new pieces sporadically
+    if(confettiActive && Math.random()<0.25){
+      confettiPieces.push(makeBook(colors, cv.width, -15));
+    }
+    confettiPieces = confettiPieces.filter(p=>{
       p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
-      if(elapsed>1500) p.alpha=Math.max(0,p.alpha-0.015);
-      if(p.alpha>0&&p.y<cv.height+20){ alive=true; }
+      p.vx += (Math.random()-0.5)*0.04;
+      if(p.y > cv.height+20) return false;
       ctx.save();
       ctx.globalAlpha=p.alpha;
       ctx.translate(p.x,p.y);
       ctx.rotate(p.rot);
-      // Draw a tiny book shape: spine + pages
       const bw=p.w, bh=p.h;
-      // Pages (slightly lighter)
       ctx.fillStyle='rgba(240,230,210,.9)';
       ctx.fillRect(-bw/2+2,-bh/2,bw-2,bh);
-      // Spine
       ctx.fillStyle=p.color;
       ctx.fillRect(-bw/2,-bh/2,Math.max(3,bw*.35),bh);
-      // Cover highlight
       ctx.fillStyle='rgba(255,255,255,.15)';
       ctx.fillRect(-bw/2+Math.max(3,bw*.35),-bh/2,1,bh);
       ctx.restore();
+      return true;
     });
-    if(alive&&elapsed<4000) requestAnimationFrame(frame);
-    else{ ctx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
+    confettiRaf = requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  confettiRaf = requestAnimationFrame(frame);
+}
+
+function makeBook(colors, maxW, startY){
+  return {
+    x: Math.random()*maxW,
+    y: startY,
+    w: 7+Math.random()*7, h: 10+Math.random()*8,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    rot: Math.random()*Math.PI*2,
+    vx: (Math.random()-0.5)*4, vy: 1.5+Math.random()*3.5,
+    vr: (Math.random()-0.5)*0.2, alpha: 1
+  };
+}
+
+function stopConfetti(){
+  confettiActive = false;
+  const cv=document.getElementById('confetti');
+  // Let remaining pieces fall off then hide
+  setTimeout(()=>{
+    if(!confettiActive){
+      if(confettiRaf) cancelAnimationFrame(confettiRaf);
+      const ctx=cv.getContext('2d');
+      ctx.clearRect(0,0,cv.width,cv.height);
+      cv.style.display='none';
+      confettiPieces=[];
+    }
+  }, 4000);
 }
 
 
