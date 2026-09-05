@@ -1079,25 +1079,32 @@ function scaleBookcase(val){
 
 // ── GOOGLE SHEETS ──
 async function fetchNextBook(seriesId){
+  console.log('[Sheets] called for:', seriesId);
   const tabInfo = CONFIG.sheetsTabs[seriesId];
-  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === '') return null;
+  if(!tabInfo){console.log('[Sheets] no tab info');return null;}
+  if(!CONFIG.sheetsApiKey||CONFIG.sheetsApiKey===''){console.log('[Sheets] no key');return null;}
   try {
-    const range = encodeURIComponent(tabInfo.tab + '!A:G');
+    const range = encodeURIComponent(tabInfo.tab+'!A:G');
     const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
+    console.log('[Sheets] fetching:', url);
     const res = await fetch(url);
-    if(!res.ok) return null;
+    console.log('[Sheets] status:', res.status);
+    if(!res.ok){const e=await res.text();console.log('[Sheets] error:',e);return null;}
     const data = await res.json();
-    const rows = data.values || [];
-    for(let i=1; i<rows.length; i++){
-      const row = rows[i];
-      const readVal = (row[tabInfo.readCol]||'').toString().trim().toLowerCase();
-      if(readVal !== 'yes'){
-        const title = row[tabInfo.titleCol] || null;
+    const rows = data.values||[];
+    console.log('[Sheets] rows:', rows.length);
+    for(let i=1;i<rows.length;i++){
+      const row=rows[i];
+      const readVal=(row[tabInfo.readCol]||'').toString().trim().toLowerCase();
+      if(readVal!=='yes'){
+        const title=row[tabInfo.titleCol]||null;
+        console.log('[Sheets] next book row',i,':',title);
         return title;
       }
     }
+    console.log('[Sheets] no unread book found');
     return null;
-  } catch(e){ return null; }
+  } catch(e){console.log('[Sheets] exception:',e);return null;}
 }
 
 // ── INIT ──
