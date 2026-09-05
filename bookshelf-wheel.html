@@ -88,6 +88,27 @@ input:checked+.sldr:before{transform:translateX(10px)}
 .elog{display:flex;flex-direction:column;gap:2px;max-height:80px;overflow-y:auto}
 .eentry{font-size:10px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border)}
 .right{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
+/* Right stats panel */
+.stats-panel{width:260px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:14px;gap:14px;overflow-y:auto}
+.stats-panel h2{font-family:'Crimson Pro',serif;font-size:18px;font-weight:400;color:var(--text)}
+.sp-section{display:flex;flex-direction:column;gap:6px}
+.sp-title{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-family:'Inter',sans-serif}
+.sp-overall-card{display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px}
+.sp-oc-label{font-size:10px;color:var(--text-dim);font-family:'Inter',sans-serif;font-weight:500}
+.sp-oc-nums{display:flex;align-items:baseline;gap:6px}
+.sp-oc-main{font-family:'Crimson Pro',serif;font-size:20px;font-weight:600}
+.sp-oc-total{font-size:11px;color:var(--text-dim);font-family:'Inter',sans-serif}
+.sp-oc-pct{font-size:11px;font-weight:500;font-family:'Inter',sans-serif}
+.sp-bar-wrap{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.sp-bar{height:100%;border-radius:2px;transition:width 1s ease}
+.sp-series-card{display:flex;flex-direction:column;gap:5px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px}
+.sp-series-card:hover{border-color:var(--border-strong)}
+.sp-series-name{font-size:11px;font-weight:600;font-family:'Inter',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-series-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sp-series-count{font-family:'Crimson Pro',serif;font-size:15px;font-weight:600}
+.sp-series-pct{font-size:10px;font-weight:500;font-family:'Inter',sans-serif;opacity:.8}
+.sp-loading{font-size:11px;color:var(--text-dim);font-family:'Inter',sans-serif;text-align:center;padding:8px 0}
+
 /* Overall stats */
 #overallStats{width:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:8px;position:relative;z-index:1}
 #overallStats h3{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);font-family:'Inter',sans-serif}
@@ -216,6 +237,17 @@ input:checked+.sldr:before{transform:translateX(10px)}
       <div class="stats-grid" id="statsGrid"><div class="stat-loading">Loading stats…</div></div>
     </div>
   </div>
+  <div class="stats-panel">
+    <h2>Reading stats</h2>
+    <div class="sp-section">
+      <div class="sp-title">Overall</div>
+      <div id="spOverall"><div class="sp-loading">Loading…</div></div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-title">By series</div>
+      <div id="spSeries" style="display:flex;flex-direction:column;gap:5px"><div class="sp-loading">Loading…</div></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -247,6 +279,7 @@ const CONFIG = {
     { id:'asimov',    name:'Asimov',            color:'#00bcd4', excl:false, bgImage:'assets/bookshelf/asimov.jpg' },
     { id:'shelf',     name:'Shelf Pick',        color:'#9a6840', excl:false, bgImage:'assets/bookshelf/shelf.jpg' },
     { id:'goodreads', name:'Goodreads Pick',    color:'#e84040', excl:false, bgImage:'assets/bookshelf/goodreads.jpg' },
+  { id:'misc',      name:'Misc Books',          color:'#8a8fa8', excl:true },
   ],
 
   // ── GOODREADS COUNT ───────────────────────────────────────────────
@@ -285,6 +318,7 @@ const CONFIG = {
     'fr':        { tab: 'Forgotten Realms',  titleCol: 0, readCol: 6 },
     'darkover':  { tab: 'Darkover',          titleCol: 0, readCol: 6 },
     'asimov':    { tab: 'Asimov',            titleCol: 0, readCol: 5 },
+    'misc':      { tab: 'Misc Books',           titleCol: 0, readCol: 5 },
   },
 
   // ── SHELF LAYOUT ──────────────────────────────────────────────────
@@ -1242,10 +1276,37 @@ async function fetchOverallStats(){
         <div class="oc-bar-wrap"><div class="oc-bar" style="width:0%;background:#1D9E75" data-width="${pagesPct}%"></div></div>
       </div>`;
 
-    // Animate bars
+    // Animate bars in bottom section
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       grid.querySelectorAll('.oc-bar').forEach(b=>{ b.style.width=b.dataset.width; });
     }));
+
+    // Populate right panel overall
+    const spOverall = document.getElementById('spOverall');
+    if(spOverall){
+      spOverall.innerHTML = `
+        <div class="sp-overall-card" style="border-color:#7F77DD44">
+          <div class="sp-oc-label">Books read</div>
+          <div class="sp-oc-nums">
+            <div class="sp-oc-main" style="color:#7F77DD">${booksRead.toLocaleString()}</div>
+            <div class="sp-oc-total">/ ${booksTotal.toLocaleString()}</div>
+            <div class="sp-oc-pct" style="color:#7F77DD">${booksPct.toFixed(1)}%</div>
+          </div>
+          <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:#7F77DD" data-width="${booksPct}%"></div></div>
+        </div>
+        <div class="sp-overall-card" style="border-color:#1D9E7544;margin-top:5px">
+          <div class="sp-oc-label">Pages read</div>
+          <div class="sp-oc-nums">
+            <div class="sp-oc-main" style="color:#1D9E75">${pagesRead.toLocaleString()}</div>
+            <div class="sp-oc-total">/ ${pagesTotal.toLocaleString()}</div>
+            <div class="sp-oc-pct" style="color:#1D9E75">${pagesPct.toFixed(1)}%</div>
+          </div>
+          <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:#1D9E75" data-width="${pagesPct}%"></div></div>
+        </div>`;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        spOverall.querySelectorAll('.sp-bar').forEach(b=>{ b.style.width=b.dataset.width; });
+      }));
+    }
   } catch(e){ console.log('[Overall] exception:',e.message, e); }
 }
 
@@ -1253,7 +1314,7 @@ async function fetchOverallStats(){
 async function fetchSeriesStats(){
   const grid = document.getElementById('statsGrid');
   const tabs = CONFIG.sheetsTabs;
-  const seriesOrder = ['swcanon','swlegends','asoiaf','tolkien','horus','fr','darkover','asimov'];
+  const seriesOrder = ['swcanon','swlegends','asoiaf','tolkien','horus','fr','darkover','asimov','misc'];
 
   // Fetch all tabs in parallel
   const results = await Promise.all(seriesOrder.map(async id => {
@@ -1273,12 +1334,17 @@ async function fetchSeriesStats(){
     } catch(e){ return {id, total:0, read:0}; }
   }));
 
-  // Render cards
+  // Render bottom grid cards
   grid.innerHTML = '';
+  const spSeries = document.getElementById('spSeries');
+  if(spSeries) spSeries.innerHTML = '';
+
   results.forEach(({id, total, read}) => {
     const s = SERIES.find(x=>x.id===id);
     if(!s) return;
     const pct = total > 0 ? (read/total*100) : 0;
+
+    // Bottom grid card
     const card = document.createElement('div');
     card.className = 'stat-card';
     card.style.borderColor = s.color+'44';
@@ -1292,16 +1358,27 @@ async function fetchSeriesStats(){
         <div class="stat-bar" style="width:0%;background:${s.color}" data-width="${pct}%"></div>
       </div>`;
     grid.appendChild(card);
+
+    // Right panel card
+    if(spSeries){
+      const sc = document.createElement('div');
+      sc.className = 'sp-series-card';
+      sc.style.borderColor = s.color+'44';
+      sc.innerHTML = `
+        <div class="sp-series-name" style="color:${s.color}">${s.name}</div>
+        <div class="sp-series-row">
+          <div class="sp-series-count" style="color:${s.color}">${read}/${total}</div>
+          <div class="sp-series-pct" style="color:${s.color}">${pct.toFixed(1)}%</div>
+        </div>
+        <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:${s.color}" data-width="${pct}%"></div></div>`;
+      spSeries.appendChild(sc);
+    }
   });
 
-  // Animate bars after render
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      grid.querySelectorAll('.stat-bar').forEach(b=>{
-        b.style.width = b.dataset.width;
-      });
-    });
-  });
+  // Animate bars
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.stat-bar,.sp-bar').forEach(b=>{ b.style.width=b.dataset.width; });
+  }));
 }
 
 // ── INIT ──
