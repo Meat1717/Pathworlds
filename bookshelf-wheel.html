@@ -170,7 +170,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.38</div>
+<div id="version">v 0.40</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -534,8 +534,36 @@ function spin(){
       if(b.dataset.sid!=='none') b.classList.add('dimmed');
     });
   }
-  vel=initVel();
-  const dc=decelRate();
+  // ── Predetermine winner ──
+  const spinSegs = phase==='main' ? activeSegs.filter(s=>!eliminated.includes(s.id)) :
+                   phase==='shelf' ? shelfSegs() : bookSegs(shelfPick.count);
+  const targetSeg = spinSegs[Math.floor(Math.random()*spinSegs.length)];
+
+  // Pick a target angle that lands the pointer on the middle of the target segment
+  // Pointer is at angle=0 on the right side of the wheel
+  const PI2 = Math.PI*2;
+  const targetMidAngle = targetSeg.sa + targetSeg.sw/2;
+  // How much the wheel needs to rotate so targetMidAngle is under pointer (angle 0)
+  // We want: (targetMidAngle - finalAngle) % PI2 === 0
+  // So finalAngle = targetMidAngle + N*PI2 for some N
+  const p=SPEED_PRESETS[speed]||SPEED_PRESETS[3];
+  const initV = initVel();
+  // Estimate total rotation: sum of geometric series vel * dc^n until vel < 0.0018
+  // total ≈ vel / (1 - dc)
+  const dc = p.decel - 0.003 + Math.random()*0.006;
+  const estTotal = initV / (1 - dc);
+  // How many full rotations + remainder
+  const fullRots = Math.floor(estTotal / PI2);
+  // We want finalAngle = angle + estTotal to land on targetMidAngle
+  // So we nudge the starting angle so it works out
+  const estFinalAngle = angle + estTotal;
+  const estFinalMod = ((estFinalAngle % PI2) + PI2) % PI2;
+  const needed = ((targetMidAngle % PI2) + PI2) % PI2;
+  let nudge = needed - estFinalMod;
+  if(nudge < 0) nudge += PI2;
+  angle += nudge;
+
+  vel=initV;
   function frame(){
     angle+=vel;vel*=dc;draw();
     if(phase==='main'){
