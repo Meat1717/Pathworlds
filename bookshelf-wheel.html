@@ -1186,7 +1186,7 @@ function updatePopupName(name){
 async function fetchSeriesStats(){
   const grid = document.getElementById('statsGrid');
   const tabs = CONFIG.sheetsTabs;
-  const seriesOrder = ['swcanon','swlegends','horus','fr','darkover','asoiaf','tolkien','asimov'];
+  const seriesOrder = ['swcanon','swlegends','asoiaf','tolkien','horus','fr','darkover','asimov'];
 
   // Fetch all tabs in parallel
   const results = await Promise.all(seriesOrder.map(async id => {
