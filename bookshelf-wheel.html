@@ -64,8 +64,9 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 #winnerPopup .pop-name{font-family:'Crimson Pro',serif;font-size:42px;font-weight:600;line-height:1.2;max-width:600px}
 .speed-row{display:flex;align-items:center;gap:8px}
 .speed-row label{font-size:11px;color:var(--text-dim);white-space:nowrap}
-.speed-row input{flex:1;accent-color:#5060b0}
-.speed-val{font-size:11px;font-weight:600;color:var(--text);min-width:18px;text-align:right}
+.spd-btn{flex:1;padding:4px 0;font-size:10px;font-weight:600;font-family:'Inter',sans-serif;background:#252830;border:1px solid var(--border);color:var(--text-dim);border-radius:5px;cursor:pointer;transition:all .15s}
+.spd-btn:hover{background:#2c3040;color:var(--text)}
+.spd-btn.active{background:#5060b0;border-color:#5060b0;color:#fff}
 .btn-row{display:flex;gap:7px}
 button{font-family:'Inter',sans-serif;cursor:pointer;border-radius:7px;transition:all .15s;font-size:12px}
 .spin-btn{flex:1;padding:8px 14px;border:1px solid var(--border);background:var(--surface2);color:var(--text)}
@@ -169,7 +170,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.36</div>
+<div id="version">v 0.37</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -180,9 +181,13 @@ input:checked+.sldr:before{transform:translateX(10px)}
       <div class="ptr"></div>
     </div>
     <div class="speed-row">
-      <label for="spd">Speed</label>
-      <input type="range" id="spd" min="1" max="10" value="5" oninput="setSpeed(this.value)">
-      <span class="speed-val" id="spdV">5</span>
+      <label>Speed</label>
+      <div style="display:flex;gap:5px;flex:1">
+        <button class="spd-btn" onclick="setSpeed(1)" id="spdBtnBase">Base</button>
+        <button class="spd-btn" onclick="setSpeed(2)" id="spdBtnSlow">Slow</button>
+        <button class="spd-btn active" onclick="setSpeed(3)" id="spdBtnMed">Medium</button>
+        <button class="spd-btn" onclick="setSpeed(4)" id="spdBtnFast">Fast</button>
+      </div>
     </div>
     <div class="flash" id="flash">Spin to begin</div>
     <div id="winnerBanner">
@@ -525,7 +530,7 @@ function spin(){
       if(b.dataset.sid!=='none') b.classList.add('dimmed');
     });
   }
-  vel=initVel()*.85+Math.random()*initVel()*.3;
+  vel=initVel();
   const dc=decelRate();
   function frame(){
     angle+=vel;vel*=dc;draw();
