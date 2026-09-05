@@ -169,7 +169,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.34</div>
+<div id="version">v 0.35</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -446,17 +446,27 @@ function draw(){
       ctx.fillStyle=seg.color;ctx.fill();
       ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1.5;ctx.stroke();
     }
-    if(seg.frac>.022){
+    if(seg.frac>.015){
       const mid=s+seg.sw/2,tr=r*.63;
       ctx.save();
       ctx.translate(cx+Math.cos(mid)*tr,cy+Math.sin(mid)*tr);
       ctx.rotate(mid+Math.PI/2);
       ctx.fillStyle='rgba(255,255,255,.95)';
-      const fs=seg.frac>.18?11:seg.frac>.1?9:7;
+      const fs=seg.frac>.18?13:seg.frac>.1?11:seg.frac>.05?9:8;
       ctx.font='600 '+fs+'px Inter,sans-serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
       let lbl=seg.name;
-      if(ctx.measureText(lbl).width>seg.frac*r*1.0){const p=lbl.split(' ');lbl=p.length>1?p[0]:lbl.slice(0,5)+'…';}
+      // For vertical labels, available length is the arc length of the slice
+      const arcLen = seg.frac * r * 2;
+      if(ctx.measureText(lbl).width > arcLen * 0.85){
+        // Try removing last word progressively
+        const words = lbl.split(' ');
+        while(words.length > 1 && ctx.measureText(words.join(' ')).width > arcLen * 0.85){
+          words.pop();
+        }
+        lbl = words.join(' ');
+        if(ctx.measureText(lbl).width > arcLen * 0.85) lbl = lbl.slice(0,4)+'…';
+      }
       // Draw label vertically (rotated 90 degrees so text runs along the slice)
       ctx.rotate(-Math.PI/2);
       ctx.fillText(lbl,0,0);
