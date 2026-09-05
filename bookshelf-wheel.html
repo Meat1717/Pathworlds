@@ -496,7 +496,8 @@ function land(seg){
         }
         // Show winner banner
         const wb = document.getElementById('winnerBanner');
-        document.getElementById('wbName').textContent = w.name;
+        const wbName = document.getElementById('wbName');
+        wbName.textContent = w.name + ' — loading...';
         wb.style.display='flex';
         wb.style.borderColor = w.color;
         wb.style.background = 'rgba('+hexToRgb(w.color).r+','+hexToRgb(w.color).g+','+hexToRgb(w.color).b+',.15)';
@@ -511,6 +512,10 @@ function land(seg){
         if(rgb){
           document.querySelector('.left').style.background = 'rgb('+Math.round(30+rgb.r*.18)+','+Math.round(28+rgb.g*.18)+','+Math.round(38+rgb.b*.18)+')';
         }
+        // Fetch next book from Google Sheets
+        fetchNextBook(w.id).then(title=>{
+          wbName.textContent = title ? w.name+' — '+title : w.name;
+        });
       }
     } else if(!a.length){
       flash('All series eliminated!','win');
@@ -1075,7 +1080,7 @@ function scaleBookcase(val){
 // ── GOOGLE SHEETS ──
 async function fetchNextBook(seriesId){
   const tabInfo = CONFIG.sheetsTabs[seriesId];
-  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === 'YOUR_API_KEY_HERE') return null;
+  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === 'AIzaSyAJ7g2PGopcKUabGcGFd1fCNLlkY5lzBoI') return null;
   try {
     const range = encodeURIComponent(tabInfo.tab + '!A:G');
     const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
