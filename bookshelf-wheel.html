@@ -224,6 +224,24 @@ const CONFIG = {
     { shelfIdx:7, count:29, label:'Shelf 8' },
   ],
 
+  // ── GOOGLE SHEETS INTEGRATION ──
+  // Paste your API key below (keep this file private if sharing!)
+  sheetsApiKey: 'AIzaSyAJ7g2PGopcKUabGcGFd1fCNLlkY5lzBoI',
+  sheetId: '1uVRXjDsrFvvIoWZcB6NYv27WUdEllH4BI91IlYJYHB4',
+
+  // Tab name and read column for each series
+  // readCol: column that contains Yes/No (A=0, B=1, C=2, D=3, E=4, F=5, G=6)
+  sheetsTabs: {
+    'swcanon':   { tab: 'Star Wars Canon',   titleCol: 0, readCol: 5 },
+    'swlegends': { tab: 'Star Wars Legends', titleCol: 0, readCol: 5 },
+    'asoiaf':    { tab: 'ASOIAF',            titleCol: 0, readCol: 5 },
+    'tolkien':   { tab: 'Tolkien',           titleCol: 0, readCol: 5 },
+    'horus':     { tab: 'Horus Heresy',      titleCol: 0, readCol: 5 },
+    'fr':        { tab: 'Forgotten Realms',  titleCol: 0, readCol: 6 },
+    'darkover':  { tab: 'Darkover',          titleCol: 0, readCol: 6 },
+    'asimov':    { tab: 'Asimov',            titleCol: 0, readCol: 5 },
+  },
+
   // ── SHELF LAYOUT ──────────────────────────────────────────────────
   // One array entry per physical shelf, top-to-bottom left-to-right
   // (so index 0 = shelf 1, index 1 = shelf 2, index 2 = shelf 3 …)
@@ -1052,6 +1070,29 @@ function scaleBookcase(val){
     }
   }
   document.getElementById('scaleVal').textContent = Math.round(val*100)+'%';
+}
+
+// ── GOOGLE SHEETS ──
+async function fetchNextBook(seriesId){
+  const tabInfo = CONFIG.sheetsTabs[seriesId];
+  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === 'YOUR_API_KEY_HERE') return null;
+  try {
+    const range = encodeURIComponent(tabInfo.tab + '!A:G');
+    const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const rows = data.values || [];
+    for(let i=1; i<rows.length; i++){
+      const row = rows[i];
+      const readVal = (row[tabInfo.readCol]||'').toString().trim().toLowerCase();
+      if(readVal !== 'yes'){
+        const title = row[tabInfo.titleCol] || null;
+        return title;
+      }
+    }
+    return null;
+  } catch(e){ return null; }
 }
 
 // ── INIT ──
