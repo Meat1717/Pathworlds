@@ -45,11 +45,22 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .flash.boom{background:#3a1515;border-color:#7a2828;color:#ff9090}
 .flash.win{background:#153a22;border-color:#287a44;color:#90ffb8}
 /* Winner banner */
-#winnerBanner{display:none;flex-direction:column;align-items:center;gap:6px;padding:14px 16px;border-radius:10px;border:2px solid;text-align:center;animation:bannerSlide .5s cubic-bezier(.175,.885,.32,1.275) forwards;width:100%}
-@keyframes bannerSlide{from{opacity:0;transform:scale(.85) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+#winnerBanner{display:none;flex-direction:column;align-items:center;gap:6px;padding:14px 16px;border-radius:10px;border:2px solid;text-align:center;width:100%}
 #winnerBanner .wb-crown{font-size:22px;line-height:1}
 #winnerBanner .wb-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.7}
 #winnerBanner .wb-name{font-family:'Crimson Pro',serif;font-size:20px;font-weight:600;line-height:1.2}
+
+/* Winner popup overlay */
+#winnerPopup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000;pointer-events:none}
+#winnerPopup.active{display:flex}
+#winnerPopupInner{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 60px;border-radius:20px;border:3px solid;text-align:center;pointer-events:none;animation:popupIn .6s cubic-bezier(.175,.885,.32,1.275) forwards}
+@keyframes popupIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes popupOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.4) translateY(40px)}}
+#winnerPopupInner.shrinking{animation:popupOut .5s cubic-bezier(.55,.055,.675,.19) forwards}
+#winnerPopup .pop-crown{font-size:52px;line-height:1;animation:crownBounce .8s ease-out .4s both}
+@keyframes crownBounce{0%{transform:translateY(-20px) scale(.5);opacity:0}60%{transform:translateY(6px) scale(1.1)}100%{transform:translateY(0) scale(1);opacity:1}}
+#winnerPopup .pop-label{font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;opacity:.75;font-family:'Inter',sans-serif}
+#winnerPopup .pop-name{font-family:'Crimson Pro',serif;font-size:42px;font-weight:600;line-height:1.2;max-width:600px}
 .speed-row{display:flex;align-items:center;gap:8px}
 .speed-row label{font-size:11px;color:var(--text-dim);white-space:nowrap}
 .speed-row input{flex:1;accent-color:#5060b0}
@@ -120,6 +131,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
+<div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
   <div class="left">
@@ -232,7 +244,7 @@ const CONFIG = {
   // Tab name and read column for each series
   // readCol: column that contains Yes/No (A=0, B=1, C=2, D=3, E=4, F=5, G=6)
   sheetsTabs: {
-    'swcanon':   { tab: 'Star Wars Canon',   titleCol: 0, readCol: 5 },
+    'swcanon':   { tab: 'Star Wars Canon',   titleCol: 0, readCol: 5, startRow: 31 },
     'swlegends': { tab: 'Star Wars Legends', titleCol: 0, readCol: 5 },
     'asoiaf':    { tab: 'ASOIAF',            titleCol: 0, readCol: 5 },
     'tolkien':   { tab: 'Tolkien',           titleCol: 0, readCol: 5 },
@@ -512,9 +524,13 @@ function land(seg){
         if(rgb){
           document.querySelector('.left').style.background = 'rgb('+Math.round(30+rgb.r*.18)+','+Math.round(28+rgb.g*.18)+','+Math.round(38+rgb.b*.18)+')';
         }
+        // Show dramatic popup
+        showWinnerPopup(w.color, w.name);
         // Fetch next book from Google Sheets
         fetchNextBook(w.id).then(title=>{
-          wbName.textContent = title ? w.name+' — '+title : w.name;
+          const fullName = title ? w.name+' — '+title : w.name;
+          wbName.textContent = fullName;
+          updatePopupName(fullName);
         });
       }
     } else if(!a.length){
@@ -543,13 +559,15 @@ function land(seg){
     // Show winner banner
     flash('','');
     const wb=document.getElementById('winnerBanner');
-    document.getElementById('wbName').textContent='Book #'+seg.name+(shelfPick.label?' — '+shelfPick.label:'');
+    const bookWinName='Book #'+seg.name+(shelfPick.label?' — '+shelfPick.label:'');
+    document.getElementById('wbName').textContent=bookWinName;
     wb.style.display='flex';
     wb.style.borderColor=originSeries.color;
     const rgb3=hexToRgb(originSeries.color);
     wb.style.background='rgba('+rgb3.r+','+rgb3.g+','+rgb3.b+',.15)';
     wb.style.color=originSeries.color;
     wb.style.animation='none'; void wb.offsetWidth; wb.style.animation='';
+    showWinnerPopup(originSeries.color, bookWinName);
 
     // Background image + coloured vignette
     const vig=document.getElementById('seriesVignette');
@@ -1093,7 +1111,8 @@ async function fetchNextBook(seriesId){
     const data = await res.json();
     const rows = data.values||[];
     console.log('[Sheets] rows:', rows.length);
-    for(let i=1;i<rows.length;i++){
+    const startRow = tabInfo.startRow || 1;
+    for(let i=startRow;i<rows.length;i++){
       const row=rows[i];
       const readVal=(row[tabInfo.readCol]||'').toString().trim().toLowerCase();
       if(readVal!=='yes'){
@@ -1105,6 +1124,46 @@ async function fetchNextBook(seriesId){
     console.log('[Sheets] no unread book found');
     return null;
   } catch(e){console.log('[Sheets] exception:',e);return null;}
+}
+
+// ── WINNER POPUP ──
+function showWinnerPopup(color, name){
+  const popup = document.getElementById('winnerPopup');
+  const inner = document.getElementById('winnerPopupInner');
+  const popName = document.getElementById('popName');
+  const rgb = hexToRgb(color);
+
+  // Style it
+  inner.style.borderColor = color;
+  inner.style.background = rgb
+    ? 'rgba('+Math.round(rgb.r*.15)+','+Math.round(rgb.g*.15)+','+Math.round(rgb.b*.15)+',.97)'
+    : 'rgba(20,20,30,.97)';
+  inner.style.color = color;
+  inner.style.boxShadow = '0 0 80px rgba('+( rgb ? rgb.r+','+rgb.g+','+rgb.b : '255,255,255' )+',.25), 0 20px 60px rgba(0,0,0,.8)';
+  popName.textContent = name;
+  popName.style.color = '#e8e4d9';
+
+  // Reset animation
+  inner.classList.remove('shrinking');
+  inner.style.animation = 'none';
+  void inner.offsetWidth;
+  inner.style.animation = '';
+
+  popup.classList.add('active');
+
+  // After 5 seconds shrink away
+  setTimeout(()=>{
+    inner.classList.add('shrinking');
+    setTimeout(()=>{
+      popup.classList.remove('active');
+      inner.classList.remove('shrinking');
+    }, 500);
+  }, 5000);
+}
+
+// Update popup name when sheets data arrives
+function updatePopupName(name){
+  document.getElementById('popName').textContent = name;
 }
 
 // ── INIT ──
