@@ -170,7 +170,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.37</div>
+<div id="version">v 0.38</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -388,7 +388,11 @@ let hoveredSid=null;
 let bookColors=[];
 
 // ── SPEED ──
-function setSpeed(v){speed=+v;document.getElementById('spdV').textContent=v;}
+function setSpeed(v){
+  speed=+v;
+  const ids=['spdBtnBase','spdBtnSlow','spdBtnMed','spdBtnFast'];
+  ids.forEach((id,i)=>{ const btn=document.getElementById(id); if(btn) btn.classList.toggle('active',i+1===+v); });
+}
 function initVel(){return 0.08+(speed-1)*(0.47/9);}
 function decelRate(){return 0.988+(speed-1)*(0.008/9);}
 
