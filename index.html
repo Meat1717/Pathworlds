@@ -197,6 +197,15 @@ canvas#path-canvas {
 }
 #external-link:hover { color: rgba(201,168,76,0.85); }
 
+#external-link-2 {
+  position: fixed; bottom: 24px; right: 140px; z-index: 50;
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.1em;
+  color: rgba(201,168,76,0.4);
+  text-decoration: none; white-space: nowrap;
+  transition: color 0.2s;
+}
+#external-link-2:hover { color: rgba(201,168,76,0.85); }
+
 @media (max-width: 600px) {
   #header h1 { font-size: 26px; }
   #path-wrap { max-width: 100%; padding: 0 10px; }
@@ -298,7 +307,7 @@ canvas#path-canvas {
 <div id="tooltip"><strong id="tip-name"></strong><span id="tip-desc"></span></div>
 <div id="footer">THE PATHWORLDS UNIVERSE — c. 778 A.A.</div>
 <a id="external-link" href="kingdom-board.html" target="_blank" rel="noopener">⚒ Kingdom Board</a>
-<a id="external-link" href="bookshelf-wheel.html" target="_blank" rel="noopener">📚 Reading Wheel</a>
+<a id="external-link-2" href="bookshelf-wheel.html" target="_blank" rel="noopener">📚 Reading Wheel</a>
 
 <script>
 // ── STARFIELD ─────────────────────────────────────────────────────────────────
