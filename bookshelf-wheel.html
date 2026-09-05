@@ -1223,9 +1223,8 @@ async function fetchOverallStats(){
   try {
     const base = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/';
     const key = '?key='+CONFIG.sheetsApiKey;
-    const tab = encodeURIComponent('Star Wars Canon');
-    const url1 = base+tab+'!O5:P5'+key;
-    const url2 = base+tab+'!O11:P11'+key;
+    const url1 = base+encodeURIComponent('Star Wars Canon!O5:P5')+key;
+    const url2 = base+encodeURIComponent('Star Wars Canon!O11:P11')+key;
     console.log('[Overall] fetching:', url1);
     const [r1, r2] = await Promise.all([
       fetch(url1).then(async r=>{ if(!r.ok){const t=await r.text();console.log('[Overall] r1 error:',t);return{};} return r.json(); }),
