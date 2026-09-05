@@ -169,7 +169,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.32</div>
+<div id="version">v 0.33</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -782,6 +782,11 @@ function buildBookcase(){
         else if(g.id==='goodreads'){h=rand(55,72);col='#2a1010';} // starts dark, glows when active
         else{h=rand(55,78);col=getSeries(g.id)?.color||'#555';}
         b.style.cssText='height:'+h+'px;flex:1;min-width:0;background:'+col;
+        // Cross-panel hover for series books
+        if(g.id!=='none'&&g.id!=='shelf'&&g.id!=='goodreads'){
+          b.addEventListener('mouseenter',()=>{ if(!spinning) highlightSeriesGlobal(g.id); });
+          b.addEventListener('mouseleave',()=>{ if(!spinning) clearHighlightGlobal(); });
+        }
         // Store the lit colour for glow effect
         if(g.id==='goodreads') b.dataset.litColor=getSeries('goodreads')?.color||'#e84040';
         if(g.id==='goodreads'){
@@ -816,6 +821,10 @@ function renderLegend(){
     const tag=s.id==='shelf'?'shelves 6–8':s.id==='goodreads'?'#1–'+CONFIG.goodreadsCount:'';
     const tog=gone?'':`<label class="tog"><input type="checkbox" ${s.excl?'':'checked'} onchange="toggleExcl('${s.id}')"><span class="sldr"></span></label>`;
     item.innerHTML=`<span class="ldot" style="background:${s.color}"></span><span class="lname">${s.name}</span>${tag?`<span class="ltag">${tag}</span>`:''} ${tog}`;
+    if(!gone&&s.id!=='shelf'&&s.id!=='goodreads'){
+      item.addEventListener('mouseenter',()=>{ if(!spinning) highlightSeriesGlobal(s.id); });
+      item.addEventListener('mouseleave',()=>{ if(!spinning) clearHighlightGlobal(); });
+    }
     list.appendChild(item);
   });
 }
