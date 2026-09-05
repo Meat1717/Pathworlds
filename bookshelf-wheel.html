@@ -1080,7 +1080,7 @@ function scaleBookcase(val){
 // ── GOOGLE SHEETS ──
 async function fetchNextBook(seriesId){
   const tabInfo = CONFIG.sheetsTabs[seriesId];
-  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === 'AIzaSyAJ7g2PGopcKUabGcGFd1fCNLlkY5lzBoI') return null;
+  if(!tabInfo || !CONFIG.sheetsApiKey || CONFIG.sheetsApiKey === '') return null;
   try {
     const range = encodeURIComponent(tabInfo.tab + '!A:G');
     const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
