@@ -169,7 +169,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.30</div>
+<div id="version">v 0.32</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -263,8 +263,8 @@ const CONFIG = {
   //   'goodreads' → triggers book number wheel (1 to goodreadsCount below)
   series: [
     { id:'swcanon',   name:'Star Wars Canon',  color:'#4db8ff', excl:false, bgImage:'assets/bookshelf/swcanon.jpg' },
-    { id:'swlegends', name:'SW Legends',        color:'#e07820', excl:false, bgImage:'assets/bookshelf/swlegends.jpg' },
-    { id:'asoiaf',    name:'ASOIAF',            color:'#8c1a1a', excl:false, bgImage:'assets/bookshelf/asoiaf.jpg' },
+    { id:'swlegends', name:'Star Wars Legends',        color:'#e07820', excl:false, bgImage:'assets/bookshelf/swlegends.jpg' },
+    { id:'asoiaf',    name:'A Song of Ice and Fire',            color:'#8c1a1a', excl:false, bgImage:'assets/bookshelf/asoiaf.jpg' },
     { id:'tolkien',   name:'Tolkien',           color:'#c8a84b', excl:false, bgImage:'assets/bookshelf/lotr.jpg' },
     { id:'horus',     name:'Horus Heresy',      color:'#c0392b', excl:false, bgImage:'assets/bookshelf/horus.jpg' },
     { id:'fr',        name:'Forgotten Realms',  color:'#2ecc71', excl:false, bgImage:'assets/bookshelf/forgottenrealms.jpg' },
@@ -380,6 +380,7 @@ let speed=5;
 let activeSegs=[];
 let shelfPick=null;
 let liveHL=null;
+let hoveredSid=null;
 let bookColors=[];
 
 // ── SPEED ──
@@ -431,8 +432,21 @@ function draw(){
   segs.forEach(seg=>{
     const s=seg.sa-angle,e=s+seg.sw;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();
-    ctx.fillStyle=seg.color;ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1.5;ctx.stroke();
+    // Highlight slice if hovered globally
+    if(!spinning && hoveredSid && phase==='main'){
+      if(seg.id===hoveredSid){
+        ctx.fillStyle=seg.color;ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2.5;ctx.stroke();
+        ctx.save();ctx.globalAlpha=.25;ctx.fillStyle='#fff';ctx.fill();ctx.restore();
+      } else {
+        ctx.fillStyle=seg.color;ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.save();ctx.globalAlpha=.5;ctx.fillStyle='#000';ctx.fill();ctx.restore();
+      }
+    } else {
+      ctx.fillStyle=seg.color;ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1.5;ctx.stroke();
+    }
     if(seg.frac>.022){
       const mid=s+seg.sw/2,tr=r*.63;
       ctx.save();
@@ -1398,6 +1412,8 @@ async function fetchSeriesStats(){
 
 // ── CROSS-PANEL HIGHLIGHT ──
 function highlightSeriesGlobal(sid){
+  hoveredSid = sid;
+  if(!spinning) draw();
   // Highlight books on shelf
   document.querySelectorAll('.book').forEach(b=>{
     if(b.classList.contains('s-elim')) return;
@@ -1429,6 +1445,8 @@ function highlightSeriesGlobal(sid){
 function clearHighlightGlobal(){
   // Only clear if not spinning
   if(spinning) return;
+  hoveredSid = null;
+  draw();
   clearBookGlow();
   const spVertBar = document.getElementById('spVertBar');
   if(spVertBar){
@@ -1440,6 +1458,31 @@ function clearHighlightGlobal(){
     spSeries.querySelectorAll('.sp-series-card').forEach(sc=>{ sc.style.opacity=''; });
   }
 }
+
+// ── WHEEL HOVER ──
+(function(){
+  const wc = document.getElementById('wheelCanvas');
+  if(!wc) return;
+  wc.addEventListener('mousemove', e=>{
+    if(spinning || phase!=='main') return;
+    const rect = wc.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width/2;
+    const y = e.clientY - rect.top - rect.height/2;
+    const r = rect.width/2;
+    if(Math.sqrt(x*x+y*y) > r){ clearHighlightGlobal(); return; }
+    let a = Math.atan2(y, x);
+    if(a < 0) a += Math.PI*2;
+    const PI2 = Math.PI*2;
+    for(const seg of activeSegs){
+      const s=((seg.sa-angle)%PI2+PI2)%PI2;
+      const e2=s+seg.sw;
+      if(e2<=PI2){ if(a>=s&&a<e2){ if(hoveredSid!==seg.id) highlightSeriesGlobal(seg.id); return; }}
+      else{ if(a>=s||a<e2-PI2){ if(hoveredSid!==seg.id) highlightSeriesGlobal(seg.id); return; }}
+    }
+    clearHighlightGlobal();
+  });
+  wc.addEventListener('mouseleave', ()=>{ if(!spinning) clearHighlightGlobal(); });
+})();
 
 // ── INIT ──
 buildBookcase();
