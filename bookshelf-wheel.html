@@ -91,11 +91,11 @@ input:checked+.sldr:before{transform:translateX(10px)}
 /* Right stats panel */
 .sp-series-row-wrap{display:flex;flex-direction:row;gap:10px;flex:1;min-height:0;overflow:hidden}
 .sp-vert-bar{width:22px;flex-shrink:0;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;cursor:default;position:relative}
-.sp-vert-segment{flex-shrink:0;position:relative;transition:filter .2s,opacity .2s;cursor:pointer}
-.sp-vert-segment .read-portion{position:absolute;bottom:0;left:0;right:0;transition:height .8s ease}
-.sp-vert-segment .unread-portion{position:absolute;top:0;left:0;right:0;height:100%}
-.sp-vert-bar.has-hover .sp-vert-segment{opacity:.35}
-.sp-vert-bar.has-hover .sp-vert-segment.hovered{opacity:1;filter:brightness(1.4) drop-shadow(0 0 6px currentColor)}
+.sp-vert-segment{flex-shrink:0;position:relative;transition:filter .25s,opacity .25s}
+.sp-vert-segment .read-portion{position:absolute;top:0;left:0;right:0;transition:height .8s ease}
+.sp-vert-segment .unread-portion{position:absolute;top:0;left:0;right:0;bottom:0}
+.sp-vert-bar.has-hover .sp-vert-segment{opacity:.25;filter:saturate(.3)}
+.sp-vert-bar.has-hover .sp-vert-segment.hovered{opacity:1;filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 4px currentColor)}
 
 .stats-panel{width:260px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:14px;gap:14px;overflow-y:auto}
 .stats-panel h2{font-family:'Crimson Pro',serif;font-size:18px;font-weight:400;color:var(--text)}
@@ -219,6 +219,10 @@ input:checked+.sldr:before{transform:translateX(10px)}
     <div class="sp-section">
       <div class="sp-title">Overall</div>
       <div id="spOverall"><div class="sp-loading">Loading…</div></div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-title">Pages read</div>
+      <div id="spPages"><div class="sp-loading">Loading…</div></div>
     </div>
     <div class="sp-series-row-wrap">
       <div id="spVertBar" class="sp-vert-bar"><div class="sp-loading" style="writing-mode:vertical-rl">Loading…</div></div>
@@ -1261,21 +1265,24 @@ async function fetchOverallStats(){
       grid.querySelectorAll('.oc-bar').forEach(b=>{ b.style.width=b.dataset.width; });
     }));
 
-    // Populate right panel overall
+    // Populate right panel overall — books
     const spOverall = document.getElementById('spOverall');
     if(spOverall){
       spOverall.innerHTML = `
         <div class="sp-overall-card" style="border-color:#7F77DD44">
-          <div class="sp-oc-label">Books read</div>
           <div class="sp-oc-nums">
             <div class="sp-oc-main" style="color:#7F77DD">${booksRead.toLocaleString()}</div>
             <div class="sp-oc-total">/ ${booksTotal.toLocaleString()}</div>
             <div class="sp-oc-pct" style="color:#7F77DD">${booksPct.toFixed(1)}%</div>
           </div>
           <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:#7F77DD" data-width="${booksPct}%"></div></div>
-        </div>
-        <div class="sp-overall-card" style="border-color:#1D9E7544;margin-top:5px">
-          <div class="sp-oc-label">Pages read</div>
+        </div>`;
+    }
+    // Pages
+    const spPages = document.getElementById('spPages');
+    if(spPages){
+      spPages.innerHTML = `
+        <div class="sp-overall-card" style="border-color:#1D9E7544">
           <div class="sp-oc-nums">
             <div class="sp-oc-main" style="color:#1D9E75">${pagesRead.toLocaleString()}</div>
             <div class="sp-oc-total">/ ${pagesTotal.toLocaleString()}</div>
@@ -1283,10 +1290,10 @@ async function fetchOverallStats(){
           </div>
           <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:#1D9E75" data-width="${pagesPct}%"></div></div>
         </div>`;
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        spOverall.querySelectorAll('.sp-bar').forEach(b=>{ b.style.width=b.dataset.width; });
-      }));
     }
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      document.querySelectorAll('#spOverall .sp-bar,#spPages .sp-bar').forEach(b=>{ b.style.width=b.dataset.width; });
+    }));
   } catch(e){ console.log('[Overall] exception:',e.message, e); }
 }
 
@@ -1342,62 +1349,44 @@ async function fetchSeriesStats(){
           <div class="sp-series-pct" style="color:${s.color}">${pct.toFixed(1)}%</div>
         </div>
         <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:${s.color}" data-width="${pct}%"></div></div>`;
+      // Hover: highlight vertical bar segment
+      sc.addEventListener('mouseenter',()=>{
+        if(!spVertBar) return;
+        spVertBar.classList.add('has-hover');
+        const seg = spVertBar.querySelector('[data-sid="'+id+'"]');
+        if(seg) seg.classList.add('hovered');
+        spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{ if(c2!==sc) c2.style.opacity='.35'; });
+      });
+      sc.addEventListener('mouseleave',()=>{
+        if(!spVertBar) return;
+        spVertBar.classList.remove('has-hover');
+        spVertBar.querySelectorAll('.sp-vert-segment').forEach(s2=>s2.classList.remove('hovered'));
+        spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{ c2.style.opacity=''; });
+      });
       spSeries.appendChild(sc);
     }
 
     // Vertical bar segment
     if(spVertBar){
-      // Darken the series colour for unread portion
       const hex = s.color;
       const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-      const darkCol = 'rgb('+Math.round(r*.2)+','+Math.round(g*.2)+','+Math.round(b*.2)+')';
+      const darkCol = 'rgb('+Math.round(r*.18)+','+Math.round(g*.18)+','+Math.round(b*.18)+')';
 
       const seg = document.createElement('div');
       seg.className = 'sp-vert-segment';
       seg.dataset.sid = id;
-      seg.style.height = heightPct+'%';
-      seg.style.position = 'relative';
-      seg.style.flexShrink = '0';
-      // Unread (dark) fills whole segment
+      seg.style.cssText = 'height:'+heightPct+'%;position:relative;flex-shrink:0';
+      // Unread (dark) base
       const unread = document.createElement('div');
       unread.className = 'unread-portion';
-      unread.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:'+darkCol;
-      // Read portion grows from bottom
+      unread.style.background = darkCol;
+      // Read portion from top in series colour
       const readDiv = document.createElement('div');
       readDiv.className = 'read-portion';
-      readDiv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:0%;background:'+s.color;
+      readDiv.style.cssText = 'background:'+s.color+';height:0%';
       readDiv.dataset.h = readPct+'%';
       seg.appendChild(unread);
       seg.appendChild(readDiv);
-
-      // Hover interactions — link to series card
-      seg.addEventListener('mouseenter',()=>{
-        spVertBar.classList.add('has-hover');
-        seg.classList.add('hovered');
-        // Highlight corresponding series card
-        if(spSeries){
-          spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{
-            const nameEl = c2.querySelector('.sp-series-name');
-            if(nameEl && nameEl.textContent===s.name){
-              c2.style.borderColor=s.color;
-              c2.style.background='rgba('+r+','+g+','+b+',.12)';
-            } else {
-              c2.style.opacity='.4';
-            }
-          });
-        }
-      });
-      seg.addEventListener('mouseleave',()=>{
-        spVertBar.classList.remove('has-hover');
-        seg.classList.remove('hovered');
-        if(spSeries){
-          spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{
-            c2.style.opacity='';
-            c2.style.borderColor='';
-            c2.style.background='';
-          });
-        }
-      });
       spVertBar.appendChild(seg);
     }
   });
