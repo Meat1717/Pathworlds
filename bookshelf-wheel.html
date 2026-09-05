@@ -23,6 +23,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 ::-webkit-scrollbar-thumb:hover{background:#3a405a}
 *{scrollbar-width:thin;scrollbar-color:#2e3348 transparent}
 body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.55) 100%);pointer-events:none;z-index:9999}
+#version{position:fixed;bottom:8px;left:10px;font-size:10px;color:rgba(255,255,255,.25);font-family:'Inter',sans-serif;pointer-events:none;z-index:10000;letter-spacing:.04em}
 .topbar{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .topbar h1{font-family:'Crimson Pro',serif;font-size:22px;font-weight:400}
 .topbar .sub{font-size:12px;color:var(--text-dim);margin-left:auto}
@@ -92,7 +93,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
 .sp-series-row-wrap{display:flex;flex-direction:row;gap:10px;flex:1;min-height:0;overflow:hidden}
 .sp-vert-bar{width:22px;flex-shrink:0;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;cursor:default;position:relative}
 /* Unified rest overlay - covers whole bar with single colour */
-.sp-vert-bar-rest{position:absolute;left:0;right:0;bottom:0;background:#7F77DD;transition:opacity .3s;border-radius:0 0 6px 6px;pointer-events:none;z-index:2}
+.sp-vert-bar-rest{position:absolute;left:0;right:0;top:0;background:#7F77DD;transition:opacity .3s,height 1s ease;border-radius:6px 6px 0 0;pointer-events:none;z-index:2}
 .sp-vert-bar-unread{position:absolute;left:0;right:0;top:0;bottom:0;background:#2a2a3a;border-radius:6px;pointer-events:none;z-index:1}
 .sp-vert-segment{flex-shrink:0;position:relative;transition:filter .25s,opacity .25s;z-index:3}
 .sp-vert-segment .read-portion{position:absolute;top:0;left:0;right:0;transition:height .8s ease}
@@ -165,6 +166,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
+<div id="version">v 0.24</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
