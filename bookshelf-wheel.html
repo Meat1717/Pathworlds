@@ -91,10 +91,14 @@ input:checked+.sldr:before{transform:translateX(10px)}
 /* Right stats panel */
 .sp-series-row-wrap{display:flex;flex-direction:row;gap:10px;flex:1;min-height:0;overflow:hidden}
 .sp-vert-bar{width:22px;flex-shrink:0;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;cursor:default;position:relative}
-.sp-vert-segment{flex-shrink:0;position:relative;transition:filter .25s,opacity .25s}
+/* Unified rest overlay - covers whole bar with single colour */
+.sp-vert-bar-rest{position:absolute;left:0;right:0;bottom:0;background:#7F77DD;transition:opacity .3s;border-radius:0 0 6px 6px;pointer-events:none;z-index:2}
+.sp-vert-bar-unread{position:absolute;left:0;right:0;top:0;bottom:0;background:#2a2a3a;border-radius:6px;pointer-events:none;z-index:1}
+.sp-vert-segment{flex-shrink:0;position:relative;transition:filter .25s,opacity .25s;z-index:3}
 .sp-vert-segment .read-portion{position:absolute;top:0;left:0;right:0;transition:height .8s ease}
 .sp-vert-segment .unread-portion{position:absolute;top:0;left:0;right:0;bottom:0}
-.sp-vert-bar.has-hover .sp-vert-segment{opacity:.25;filter:saturate(.3)}
+.sp-vert-bar.has-hover .sp-vert-bar-rest{opacity:0}
+.sp-vert-bar.has-hover .sp-vert-segment{opacity:.15;filter:saturate(.2)}
 .sp-vert-bar.has-hover .sp-vert-segment.hovered{opacity:1;filter:brightness(1.5) saturate(1.5) drop-shadow(0 0 4px currentColor)}
 
 .stats-panel{width:260px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:14px;gap:14px;overflow-y:auto}
@@ -1301,7 +1305,13 @@ async function fetchSeriesStats(){
   const spSeries = document.getElementById('spSeries');
   const spVertBar = document.getElementById('spVertBar');
   if(spSeries) spSeries.innerHTML='';
-  if(spVertBar) spVertBar.innerHTML='';
+  if(spVertBar){
+    spVertBar.innerHTML='';
+    // Add unified unread background
+    const unreadBg = document.createElement('div');
+    unreadBg.className = 'sp-vert-bar-unread';
+    spVertBar.appendChild(unreadBg);
+  }
 
   results.forEach(({id, total, read}) => {
     const s = SERIES.find(x=>x.id===id);
@@ -1364,10 +1374,25 @@ async function fetchSeriesStats(){
     }
   });
 
+  // Add unified rest overlay (shows total completion as one bar)
+  if(spVertBar){
+    const grandRead = results.reduce((s,r)=>s+r.read,0);
+    const overallPct = grandTotal>0?(grandRead/grandTotal*100):0;
+    const restEl = document.createElement('div');
+    restEl.className = 'sp-vert-bar-rest';
+    restEl.style.height = overallPct+'%';
+    restEl.dataset.h = overallPct+'%';
+    restEl.style.height = '0%'; // animate in
+    spVertBar.appendChild(restEl);
+  }
+
   // Animate bars and vertical read portions
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.querySelectorAll('.sp-bar').forEach(b=>{ b.style.width=b.dataset.width; });
     document.querySelectorAll('.read-portion').forEach(b=>{ b.style.height=b.dataset.h; });
+    // Animate unified rest bar
+    const restEl = spVertBar&&spVertBar.querySelector('.sp-vert-bar-rest');
+    if(restEl) restEl.style.height = restEl.dataset.h;
   }));
 }
 
