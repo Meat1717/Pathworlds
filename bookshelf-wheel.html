@@ -93,8 +93,9 @@ input:checked+.sldr:before{transform:translateX(10px)}
 .sp-series-row-wrap{display:flex;flex-direction:row;gap:10px;flex:1;min-height:0;overflow:hidden}
 .sp-vert-bar{width:22px;flex-shrink:0;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;align-self:stretch;cursor:default;position:relative}
 /* Unified rest overlay - covers whole bar with single colour */
-.sp-vert-bar-rest{position:absolute;left:0;right:0;bottom:0;background:#7F77DD;transition:opacity .3s,height 1s ease;border-radius:0 0 6px 6px;pointer-events:none;z-index:2;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.sp-vert-bar-rest-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;font-weight:600;color:rgba(255,255,255,.9);font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.04em;text-align:center}
+.sp-vert-bar-rest{position:absolute;left:0;right:0;bottom:0;background:#7F77DD;transition:opacity .3s,height 1s ease;border-radius:0 0 6px 6px;pointer-events:none;z-index:2}
+.sp-vert-bar-rest-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(180deg);writing-mode:vertical-rl;font-size:9px;font-weight:600;color:rgba(255,255,255,.9);font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.04em;text-align:center;z-index:3;pointer-events:none}
+.sp-vert-bar.has-hover .sp-vert-bar-rest-label{opacity:0;transition:opacity .2s}
 .sp-vert-bar-unread{position:absolute;left:0;right:0;top:0;bottom:0;background:#2a2a3a;border-radius:6px;pointer-events:none;z-index:1}
 .sp-vert-segment{flex-shrink:0;position:relative;transition:filter .25s,opacity .25s;z-index:3}
 .sp-vert-segment .read-portion{position:absolute;bottom:0;left:0;right:0;transition:height .8s ease}
@@ -168,7 +169,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.28</div>
+<div id="version">v 0.30</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -1337,19 +1338,9 @@ async function fetchSeriesStats(){
         </div>
         <div class="sp-bar-wrap"><div class="sp-bar" style="width:0%;background:${s.color}" data-width="${pct}%"></div></div>`;
       // Hover: highlight vertical bar segment
-      sc.addEventListener('mouseenter',()=>{
-        if(!spVertBar) return;
-        spVertBar.classList.add('has-hover');
-        const seg = spVertBar.querySelector('[data-sid="'+id+'"]');
-        if(seg) seg.classList.add('hovered');
-        spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{ if(c2!==sc) c2.style.opacity='.35'; });
-      });
-      sc.addEventListener('mouseleave',()=>{
-        if(!spVertBar) return;
-        spVertBar.classList.remove('has-hover');
-        spVertBar.querySelectorAll('.sp-vert-segment').forEach(s2=>s2.classList.remove('hovered'));
-        spSeries.querySelectorAll('.sp-series-card').forEach(c2=>{ c2.style.opacity=''; });
-      });
+      sc.dataset.sid = id;
+      sc.addEventListener('mouseenter',()=>{ highlightSeriesGlobal(id); });
+      sc.addEventListener('mouseleave',()=>{ clearHighlightGlobal(); });
       spSeries.appendChild(sc);
     }
 
@@ -1386,12 +1377,13 @@ async function fetchSeriesStats(){
     restEl.className = 'sp-vert-bar-rest';
     restEl.dataset.h = overallPct+'%';
     restEl.style.height = '0%';
+    spVertBar.appendChild(restEl);
+    // Label sits in centre of whole bar, not inside rest overlay
     const restLabel = document.createElement('div');
     restLabel.className = 'sp-vert-bar-rest-label';
     restLabel.id = 'spVertRestLabel';
     restLabel.textContent = grandRead+' / '+grandTotal+' · '+overallPct.toFixed(1)+'%';
-    restEl.appendChild(restLabel);
-    spVertBar.appendChild(restEl);
+    spVertBar.appendChild(restLabel);
   }
 
   // Animate bars and vertical read portions
@@ -1402,6 +1394,51 @@ async function fetchSeriesStats(){
     const restEl = spVertBar&&spVertBar.querySelector('.sp-vert-bar-rest');
     if(restEl) restEl.style.height = restEl.dataset.h;
   }));
+}
+
+// ── CROSS-PANEL HIGHLIGHT ──
+function highlightSeriesGlobal(sid){
+  // Highlight books on shelf
+  document.querySelectorAll('.book').forEach(b=>{
+    if(b.classList.contains('s-elim')) return;
+    if(b.dataset.sid===sid){
+      b.classList.add('s-glow');
+      b.classList.remove('dimmed');
+    } else if(b.dataset.sid!=='none'){
+      b.classList.remove('s-glow');
+      b.classList.add('dimmed');
+    }
+  });
+  // Highlight vertical bar segment
+  const spVertBar = document.getElementById('spVertBar');
+  if(spVertBar){
+    spVertBar.classList.add('has-hover');
+    spVertBar.querySelectorAll('.sp-vert-segment').forEach(seg=>{
+      seg.classList.toggle('hovered', seg.dataset.sid===sid);
+    });
+  }
+  // Highlight series cards
+  const spSeries = document.getElementById('spSeries');
+  if(spSeries){
+    spSeries.querySelectorAll('.sp-series-card').forEach(sc=>{
+      sc.style.opacity = sc.dataset.sid===sid ? '' : '.35';
+    });
+  }
+}
+
+function clearHighlightGlobal(){
+  // Only clear if not spinning
+  if(spinning) return;
+  clearBookGlow();
+  const spVertBar = document.getElementById('spVertBar');
+  if(spVertBar){
+    spVertBar.classList.remove('has-hover');
+    spVertBar.querySelectorAll('.sp-vert-segment').forEach(s=>s.classList.remove('hovered'));
+  }
+  const spSeries = document.getElementById('spSeries');
+  if(spSeries){
+    spSeries.querySelectorAll('.sp-series-card').forEach(sc=>{ sc.style.opacity=''; });
+  }
 }
 
 // ── INIT ──
