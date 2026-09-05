@@ -170,7 +170,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.41</div>
+<div id="version">v 0.42</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -372,7 +372,7 @@ let spinning=false;
 let raf=null;
 let angle=0;
 let vel=0;
-let speed=5;
+let speed=3;
 let activeSegs=[];
 let shelfPick=null;
 let liveHL=null;
@@ -380,13 +380,15 @@ let hoveredSid=null;
 let bookColors=[];
 
 // ── SPEED ──
-function setSpeed(v){
-  speed=+v;
-  const ids=['spdBtnBase','spdBtnSlow','spdBtnMed','spdBtnFast'];
-  ids.forEach((id,i)=>{ const btn=document.getElementById(id); if(btn) btn.classList.toggle('active',i+1===+v); });
-}
-function initVel(){return 0.08+(speed-1)*(0.47/9);}
-function decelRate(){return 0.988+(speed-1)*(0.008/9);}
+const SPEED_PRESETS = {
+  1: { minVel:0.28, maxVel:0.38, decel:0.978 },
+  2: { minVel:0.38, maxVel:0.52, decel:0.983 },
+  3: { minVel:0.52, maxVel:0.72, decel:0.988 },
+  4: { minVel:0.72, maxVel:1.00, decel:0.992 },
+};
+function setSpeed(v){ speed=+v; }
+function initVel(){const p=SPEED_PRESETS[speed]||SPEED_PRESETS[3];return p.minVel+Math.random()*(p.maxVel-p.minVel);}
+function decelRate(){return (SPEED_PRESETS[speed]||SPEED_PRESETS[3]).decel;}
 
 // ── HELPERS ──
 function getSeries(id){return SERIES.find(s=>s.id===id);}
@@ -527,24 +529,19 @@ function spin(){
     });
   }
   // ── Predetermine winner — build segs first ──
-  draw(); // ensure activeSegs is populated
+  // Call draw with spinning=false to populate activeSegs
   const PI2 = Math.PI*2;
   const p = SPEED_PRESETS[speed]||SPEED_PRESETS[3];
   const initV = initVel();
   const dc = p.decel - 0.003 + Math.random()*0.006;
 
-  // Pick random target segment
+  // Pick random target segment from current active segs
   const spinSegs = activeSegs.slice();
-  const targetSeg = spinSegs[Math.floor(Math.random()*spinSegs.length)];
+  const targetSeg = spinSegs.length ? spinSegs[Math.floor(Math.random()*spinSegs.length)] : null;
 
   if(targetSeg){
-    // Estimate total rotation: vel / (1 - dc)
     const estTotal = initV / (1 - dc);
-    // Target: pointer (at wheel angle 0) lands on middle of targetSeg
     const targetMidAngle = targetSeg.sa + targetSeg.sw/2;
-    // Current angle mod PI2
-    const curMod = ((angle % PI2) + PI2) % PI2;
-    // Where will we end up without nudge?
     const estFinalMod = ((angle + estTotal) % PI2 + PI2) % PI2;
     const needed = ((targetMidAngle) % PI2 + PI2) % PI2;
     let nudge = needed - estFinalMod;
