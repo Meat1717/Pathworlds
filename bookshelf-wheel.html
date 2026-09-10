@@ -171,7 +171,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.52</div>
+<div id="version">v 0.53</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -1290,8 +1290,8 @@ async function fetchOverallStats(){
   try {
     const base = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/';
     const key = '?key='+CONFIG.sheetsApiKey;
-    const url1 = base+encodeURIComponent('Star Wars Canon!O5:P5')+key;
-    const url2 = base+encodeURIComponent('Star Wars Canon!O11:P11')+key;
+    const url1 = base+encodeURIComponent('Star Wars Canon!P5:Q5')+key;
+    const url2 = base+encodeURIComponent('Star Wars Canon!P11:Q11')+key;
     console.log('[Overall] fetching:', url1);
     const [r1, r2] = await Promise.all([
       fetch(url1).then(async r=>{ if(!r.ok){const t=await r.text();console.log('[Overall] r1 error:',t);return{};} return r.json(); }),
