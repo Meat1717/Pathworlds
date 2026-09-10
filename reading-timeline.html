@@ -145,7 +145,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.5</div>
+<div id="version">v 2.6</div>
 
 <script>
 const CONFIG = {
@@ -312,18 +312,20 @@ function onAxisChange(){
 // Convert a date string to a fractional year for positioning
 function dateStrToFrac(str){
   if(!str) return null;
+  // Strict M/D/YYYY format
   const parts = str.split(/[\/\-\.]/);
-  let year=null, month=0, day=0;
+  if(parts.length < 3) return null;
+  const month = parseInt(parts[0]);
+  const day   = parseInt(parts[1]);
+  // Year is the 4-digit part
+  let year = null;
   for(const p of parts){
-    const trimmed=p.trim();
-    const n=parseInt(trimmed);
-    if(trimmed.length===4&&!isNaN(n)&&n>0&&n<2100){year=n;}
+    const n = parseInt(p.trim());
+    if(p.trim().length===4 && n>0 && n<2100){ year=n; break; }
   }
-  if(!year) return null;
-  const nonYear=parts.map(p=>parseInt(p.trim())).filter(n=>!isNaN(n)&&String(n).length<4);
-  if(nonYear.length>=2){ month=Math.min(nonYear[0],nonYear[1]); day=Math.max(nonYear[0],nonYear[1]); if(month>12)[month,day]=[day,month]; }
-  else if(nonYear.length===1){ month=nonYear[0]<=12?nonYear[0]:0; }
-  return year+(month>0?(month-1)/12:0)+(day>0?day/365:0);
+  if(!year || isNaN(month) || isNaN(day)) return null;
+  if(month<1||month>12||day<1||day>31) return null;
+  return year + (month-1)/12 + day/365;
 }
 function initRangeSliders(){
   if(!allBooks.length) return;
@@ -402,18 +404,12 @@ async function loadAll(){
         // Build fractional year for precise month/day positioning on X axis
         let month = 0, day = 0;
         // Try to find month and day from parts (format M/D/YYYY)
-        const numParts = parts.map(p=>parseInt(p)).filter(n=>!isNaN(n));
-        if(numParts.length >= 3){
-          // Find which part is the year (4-digit), the rest are month/day
-          const nonYear = numParts.filter(n=>n!==year&&String(n).length<4);
-          if(nonYear.length >= 2){
-            // Assume smaller of the two non-year parts is month
-            month = Math.min(nonYear[0], nonYear[1]);
-            day = Math.max(nonYear[0], nonYear[1]);
-            if(month > 12){ [month, day] = [day, month]; }
-          } else if(nonYear.length === 1){
-            month = nonYear[0] <= 12 ? nonYear[0] : 0;
-          }
+        // Strict M/D/YYYY — parts[0]=month, parts[1]=day
+        if(parts.length >= 3){
+          month = parseInt(parts[0]);
+          day   = parseInt(parts[1]);
+          if(isNaN(month)||month<1||month>12) month=0;
+          if(isNaN(day)||day<1||day>31) day=0;
         }
         const fracYear = year + (month > 0 ? (month-1)/12 : 0) + (day > 0 ? day/365 : 0);
         const finished = (row[s.finishedCol]||'').trim();
