@@ -74,7 +74,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.91</div>
+<div id="version">v 0.92</div>
 
 <script>
 const CONFIG = {
@@ -167,8 +167,9 @@ async function loadAll(){
         const parts = yearRaw.split(/[\\/\-\.]/);
         let year = null;
         for(const p of parts){
-          const n = parseInt(p);
-          if(n > 1900 && n < 2100){ year=n; break; }
+          const trimmed = p.trim();
+          const n = parseInt(trimmed);
+          if(trimmed.length === 4 && !isNaN(n) && n > 0 && n < 2100){ year=n; break; }
         }
         if(s.id==='misc') console.log('[Misc parse]', yearRaw, '-> year:', year);
         if(!year){ if(s.id==='misc') console.log('[Misc no year]', yearRaw, parts); return; }
