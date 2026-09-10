@@ -144,7 +144,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.1</div>
+<div id="version">v 2.3</div>
 
 <script>
 const CONFIG = {
@@ -435,7 +435,7 @@ function resizeCanvas(){
   if(!cv) return;
   const parent = cv.parentElement;
   // Subtract controls height so canvas never overflows
-  const usedHeight = 180; // topbar + axis selectors + range controls + hint
+  const usedHeight = 280; // topbar + axis selectors + range controls + hint
   const h = Math.max(300, window.innerHeight - usedHeight);
   cv.style.height = h + 'px';
   cv.width = cv.offsetWidth;
@@ -473,8 +473,8 @@ function drawTimeline(){
 
   const minYear = (xAxisMode==='finished' ? dMinOverride : xMinOverride) || (xVals.length ? Math.min(...xVals)-0.08 : 2020);
   const maxYear = (xAxisMode==='finished' ? dMaxOverride : xMaxOverride) || (xVals.length ? Math.max(...xVals)+0.08 : 2025);
-  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? (yAxisMode==='finished' ? Math.min(...yVals)-0.1 : 0) : 0;
-  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished' ? Math.max(...yVals)+0.1 : Math.max(...yVals)*1.12) : 1;
+  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? (yAxisMode==='finished' ? Math.min(...yVals)-0.2 : 0) : 0;
+  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished' ? Math.max(...yVals)+0.2 : Math.max(...yVals)*1.12) : 1;
 
   const visibleBooks = validBooks.filter(b=>getXVal(b)>=minYear&&getXVal(b)<=maxYear);
 
