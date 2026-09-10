@@ -125,7 +125,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 1.3</div>
+<div id="version">v 1.6</div>
 
 <script>
 const CONFIG = {
@@ -198,9 +198,6 @@ function initPageRange(){
   document.getElementById('pMaxSlider').value = mx;
   document.getElementById('pMinSlider').value = 0;
 }
-
-let dMinOverride = null;
-let dMaxOverride = null;
 
 function updateDateRange(){
   const yr1 = parseInt(document.getElementById('dMinYear').value||0);
