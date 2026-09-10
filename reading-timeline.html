@@ -144,7 +144,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 1.9</div>
+<div id="version">v 2.0</div>
 
 <script>
 const CONFIG = {
@@ -459,10 +459,11 @@ function drawTimeline(){
 
   // Get X values based on axis mode
   function getXVal(b){ return xAxisMode==='finished' ? (dateStrToFrac(b.finished)||b.fracYear) : b.fracYear; }
-  function getYVal(b){ return yAxisMode==='pages' ? b.pages : yAxisMode==='rating' ? (b.rating||0) : (dateStrToFrac(b.finished)||b.year); }
+  function getYVal(b){ return yAxisMode==='pages' ? b.pages : yAxisMode==='rating' ? (b.rating||0) : dateStrToFrac(b.finished); }
 
   const validBooks = allBooks.filter(b=>{
     if(xAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
+    if(yAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
     if(yAxisMode==='rating' && !b.rating) return false;
     return getXVal(b) && getYVal(b);
   });
@@ -471,8 +472,8 @@ function drawTimeline(){
 
   const minYear = (xAxisMode==='finished' ? dMinOverride : xMinOverride) || (xVals.length ? Math.min(...xVals)-0.08 : 2020);
   const maxYear = (xAxisMode==='finished' ? dMaxOverride : xMaxOverride) || (xVals.length ? Math.max(...xVals)+0.08 : 2025);
-  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? Math.min(...yVals)-0.08 : 0;
-  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished' ? Math.max(...yVals)+0.08 : Math.max(...yVals)*1.12) : 1;
+  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? (yAxisMode==='finished' ? Math.min(...yVals)-0.1 : 0) : 0;
+  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished' ? Math.max(...yVals)+0.1 : Math.max(...yVals)*1.12) : 1;
 
   const visibleBooks = validBooks.filter(b=>getXVal(b)>=minYear&&getXVal(b)<=maxYear);
 
