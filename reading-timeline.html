@@ -96,7 +96,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 1.0</div>
+<div id="version">v 1.1</div>
 
 <script>
 const CONFIG = {
@@ -128,8 +128,7 @@ function onAxisChange(){
   xAxisMode = document.getElementById('xAxisSel').value;
   yAxisMode = document.getElementById('yAxisSel').value;
   // Hide/show x range sliders (only relevant for year axis)
-  const xRangeEl = document.querySelector('.x-range');
-  if(xRangeEl) xRangeEl.style.display = xAxisMode==='year' ? 'flex' : 'none';
+  document.querySelector('.x-range').style.display = xAxisMode==='year' ? 'flex' : 'none';
   xMinOverride=null; xMaxOverride=null;
   initRangeSliders();
   drawTimeline();
@@ -306,14 +305,15 @@ function drawTimeline(){
   function yPos(p){ return PAD.top+plotH-((p-minYVal)/(maxYVal-minYVal))*plotH; }
 
   // Horizontal grid lines
-  const pageStep = yAxisMode==="rating" ? 1 : Math.ceil(maxYVal/5/50)*50;
-  for(let p=0;p<=maxYVal;p+=pageStep){
+  const pageStep = yAxisMode==='rating' ? 1 : yAxisMode==='finished' ? Math.ceil((maxYVal-minYVal)/5) : Math.ceil(maxYVal/5/50)*50;
+  const yStart = yAxisMode==='finished' ? Math.floor(minYVal) : 0;
+  for(let p=yStart;p<=maxYVal;p+=pageStep){
     const y=yPos(p);
     ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Inter,sans-serif';
     ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillText(yAxisMode==="rating"?p.toFixed(1):p.toLocaleString(),PAD.left-8,y);
+    ctx.fillText(yAxisMode==='rating'?p.toFixed(1):yAxisMode==='finished'?Math.round(p).toString():p.toLocaleString(),PAD.left-8,y);
   }
 
   // Vertical grid lines — year ticks
@@ -334,7 +334,7 @@ function drawTimeline(){
   ctx.textAlign='center';ctx.textBaseline='bottom';
   ctx.fillText(xLabel,W/2,H-2);
   ctx.save();ctx.translate(14,PAD.top+plotH/2);ctx.rotate(-Math.PI/2);
-  ctx.textBaseline='middle';ctx.fillText('Page Count',0,0);ctx.restore();
+  ctx.textBaseline='middle';ctx.fillText(yLabel,0,0);ctx.restore();
 
   // Draw points
   cv._books = visibleBooks.map(b=>({...b, px:xPosFrac(b), py:yPos(getYVal(b))}));
