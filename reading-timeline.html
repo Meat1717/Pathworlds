@@ -125,7 +125,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 1.6</div>
+<div id="version">v 1.7</div>
 
 <script>
 const CONFIG = {
@@ -368,8 +368,7 @@ async function loadAll(){
 
   allBooks = results.flat();
   loading.style.display = 'none';
-  const cv2=document.getElementById('timelineCanvas');
-  if(cv2){cv2.style.height=(cv2.parentElement.clientHeight-120)+'px';}
+  resizeCanvas();
   initRangeSliders();
   initPageRange();
   drawTimeline();
@@ -378,8 +377,13 @@ async function loadAll(){
 function resizeCanvas(){
   const cv = document.getElementById('timelineCanvas');
   if(!cv) return;
+  const parent = cv.parentElement;
+  // Subtract controls height so canvas never overflows
+  const usedHeight = 180; // topbar + axis selectors + range controls + hint
+  const h = Math.max(300, window.innerHeight - usedHeight);
+  cv.style.height = h + 'px';
   cv.width = cv.offsetWidth;
-  cv.height = cv.offsetHeight;
+  cv.height = h;
 }
 
 function drawTimeline(){
@@ -402,7 +406,11 @@ function drawTimeline(){
   function getXVal(b){ return xAxisMode==='finished' ? (dateStrToFrac(b.finished)||b.fracYear) : b.fracYear; }
   function getYVal(b){ return yAxisMode==='pages' ? b.pages : yAxisMode==='rating' ? (b.rating||0) : (dateStrToFrac(b.finished)||b.year); }
 
-  const validBooks = allBooks.filter(b=>getXVal(b)&&getYVal(b));
+  const validBooks = allBooks.filter(b=>{
+    if(xAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
+    if(yAxisMode==='rating' && !b.rating) return false;
+    return getXVal(b) && getYVal(b);
+  });
   const xVals = validBooks.map(b=>getXVal(b));
   const yVals = validBooks.map(b=>getYVal(b));
 
