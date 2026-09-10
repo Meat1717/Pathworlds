@@ -144,7 +144,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.01</div>
+<div id="version">v 2.1</div>
 
 <script>
 const CONFIG = {
@@ -169,11 +169,14 @@ let hoveredBook = null;
 
 // ── X AXIS RANGE ──
 let xMinOverride = null;
+let xMaxOverride = null;
 let xAxisMode = 'year';    // 'year' | 'finished'
 let yAxisMode = 'pages';   // 'pages' | 'rating' | 'finished'
 
 let dMinOverride = null;
+let dMaxOverride = null;
 let pMinOverride = null;
+let pMaxOverride = null;
 let ydMinOverride = null;
 let ydMaxOverride = null;
 
@@ -320,8 +323,6 @@ function dateStrToFrac(str){
   else if(nonYear.length===1){ month=nonYear[0]<=12?nonYear[0]:0; }
   return year+(month>0?(month-1)/12:0)+(day>0?day/365:0);
 }
-let xMaxOverride = null;
-
 function initRangeSliders(){
   if(!allBooks.length) return;
   if(xAxisMode!=='year'){return;}
