@@ -74,7 +74,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.9</div>
+<div id="version">v 0.91</div>
 
 <script>
 const CONFIG = {
@@ -148,6 +148,7 @@ async function loadAll(){
   const loading = document.getElementById('tlLoading');
   const results = await Promise.all(CONFIG.series.map(async s => {
     try {
+      console.log('[Timeline] Loading:', s.tab);
       const range = encodeURIComponent(s.tab+'!A:G');
       const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
       const res = await fetch(url);
@@ -155,12 +156,13 @@ async function loadAll(){
       const data = await res.json();
       const rows = (data.values||[]).slice(s.startRow || 1);
       const books = [];
-      rows.forEach(row => {
+      rows.forEach((row,ri) => {
+        if(s.id==='misc') console.log('[Misc row '+ri+']', row);
         const title  = (row[s.titleCol]||'').trim();
         const yearRaw= (row[s.yearCol]||'').trim();
         const pages  = parseInt(row[s.pagesCol]||0);
         const read   = (row[s.readCol]||'').trim().toLowerCase();
-        if(!title||read!=='yes'||!yearRaw||!pages) return;
+        if(!title||read!=='yes'||!yearRaw||!pages){ if(s.id==='misc'&&title) console.log('[Misc skip]',title,'read:',read,'year:',yearRaw,'pages:',pages); return; }
         // Parse year from date string (M/D/YYYY or similar)
         const parts = yearRaw.split(/[\\/\-\.]/);
         let year = null;
@@ -168,7 +170,8 @@ async function loadAll(){
           const n = parseInt(p);
           if(n > 1900 && n < 2100){ year=n; break; }
         }
-        if(!year) return;
+        if(s.id==='misc') console.log('[Misc parse]', yearRaw, '-> year:', year);
+        if(!year){ if(s.id==='misc') console.log('[Misc no year]', yearRaw, parts); return; }
         // Build fractional year for precise month/day positioning on X axis
         let month = 0, day = 0;
         // Try to find month and day from parts (format M/D/YYYY)
