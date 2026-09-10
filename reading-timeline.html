@@ -74,7 +74,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.8</div>
+<div id="version">v 0.9</div>
 
 <script>
 const CONFIG = {
@@ -174,8 +174,8 @@ async function loadAll(){
         // Try to find month and day from parts (format M/D/YYYY)
         const numParts = parts.map(p=>parseInt(p)).filter(n=>!isNaN(n));
         if(numParts.length >= 3){
-          // Find which part is the year, the rest are month/day
-          const nonYear = numParts.filter(n=>n!==year);
+          // Find which part is the year (4-digit), the rest are month/day
+          const nonYear = numParts.filter(n=>n!==year&&String(n).length<4);
           if(nonYear.length >= 2){
             // Assume smaller of the two non-year parts is month
             month = Math.min(nonYear[0], nonYear[1]);
