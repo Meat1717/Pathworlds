@@ -164,16 +164,20 @@ input:checked+.sldr:before{transform:translateX(10px)}
 <div class="topbar">
   <h1>The Reading Wheel</h1>
   <span class="sub">Spin · Eliminate · Read &nbsp;·&nbsp; <span style="opacity:.5">Space = spin &nbsp; R = reset &nbsp; F = fullscreen</span></span>
+  <div style="display:flex;gap:6px;margin-left:8px">
+    <button class="tab-btn active" id="tabWheel" onclick="switchTab('wheel')">🎡 Wheel</button>
+    <button class="tab-btn" id="tabTimeline" onclick="switchTab('timeline')">📅 Timeline</button>
+  </div>
   <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
     <span id="clock" style="font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums;letter-spacing:.05em"></span>
     <button id="fsBtn" onclick="toggleFullscreen()" title="Fullscreen (F)" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:5px 10px;font-size:13px;cursor:pointer;border-radius:6px;font-family:inherit">&#x26F6;</button>
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.43</div>
+<div id="version">v 0.44</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
-<div class="main">
+<div id="wheelPage"><div class="main">
   <div class="left">
     <div class="phase-lbl" id="phaseLbl">Series elimination</div>
     <div class="wheel-wrap">
@@ -238,6 +242,16 @@ input:checked+.sldr:before{transform:translateX(10px)}
     </div>
   </div>
 </div>
+</div>
+<div id="timelinePage">
+  <div id="timelineWrap">
+    <h2>Reading Timeline</h2>
+    <div id="tlLoading" style="font-size:12px;color:var(--text-dim);font-family:'Inter',sans-serif">Loading timeline data…</div>
+    <canvas id="timelineCanvas"></canvas>
+    <div style="font-size:10px;color:var(--text-dim);font-family:'Inter',sans-serif;text-align:center;opacity:.6">X axis — Year published &nbsp;·&nbsp; Y axis — Page count &nbsp;·&nbsp; Hover a point for details</div>
+  </div>
+</div>
+<div id="tlTooltip"></div>
 
 <script>
 
@@ -1526,6 +1540,176 @@ function clearHighlightGlobal(){
   });
   wc.addEventListener('mouseleave', ()=>{ if(!spinning) clearHighlightGlobal(); });
 })();
+
+// ── TAB SWITCHER ──
+function switchTab(tab){
+  const wheelPage = document.getElementById('wheelPage');
+  const timelinePage = document.getElementById('timelinePage');
+  const tabWheel = document.getElementById('tabWheel');
+  const tabTimeline = document.getElementById('tabTimeline');
+  if(tab==='wheel'){
+    wheelPage.classList.remove('hidden');
+    timelinePage.classList.remove('active');
+    tabWheel.classList.add('active');
+    tabTimeline.classList.remove('active');
+  } else {
+    wheelPage.classList.add('hidden');
+    timelinePage.classList.add('active');
+    tabWheel.classList.remove('active');
+    tabTimeline.classList.add('active');
+    if(!tlLoaded) loadTimeline();
+  }
+}
+
+// ── TIMELINE ──
+let tlLoaded = false;
+let tlBooks = [];
+
+async function loadTimeline(){
+  const loading = document.getElementById('tlLoading');
+  try {
+    // Fetch Star Wars Legends — cols A(title) C(release date) D(pages) F(read)
+    const range = encodeURIComponent('Star Wars Legends!A:F');
+    const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
+    const res = await fetch(url);
+    if(!res.ok){ loading.textContent='Failed to load timeline data.'; return; }
+    const data = await res.json();
+    const rows = (data.values||[]).slice(1);
+
+    tlBooks = [];
+    rows.forEach(row=>{
+      const title = (row[0]||'').trim();
+      const dateStr = (row[2]||'').trim();   // col C — release date
+      const pages = parseInt(row[3]||0);      // col D — page count
+      const read = (row[5]||'').trim().toLowerCase(); // col F — read status
+      if(!title || read!=='yes' || !dateStr || !pages) return;
+      // Parse date — format: month/day/year or similar
+      const parts = dateStr.split(/[\/\-]/);
+      if(parts.length < 3) return;
+      // Try to determine if it's M/D/Y or Y/M/D
+      let year = parseInt(parts[2]);
+      if(isNaN(year)) return;
+      if(year < 100) year += 2000; // handle 2-digit years
+      tlBooks.push({ title, year, pages, date: dateStr });
+    });
+
+    if(loading) loading.style.display='none';
+    tlLoaded = true;
+    drawTimeline();
+  } catch(e){
+    if(loading) loading.textContent='Error loading timeline: '+e.message;
+  }
+}
+
+function drawTimeline(){
+  const cv = document.getElementById('timelineCanvas');
+  if(!cv || !tlBooks.length) return;
+  const ctx = cv.getContext('2d');
+
+  // Size canvas to its display size
+  cv.width = cv.offsetWidth;
+  cv.height = cv.offsetHeight;
+  const W = cv.width, H = cv.height;
+  const PAD = { top:30, right:30, bottom:50, left:60 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Data ranges
+  const years = tlBooks.map(b=>b.year);
+  const pages = tlBooks.map(b=>b.pages);
+  const minYear = Math.min(...years) - 1;
+  const maxYear = Math.max(...years) + 1;
+  const minPages = 0;
+  const maxPages = Math.max(...pages) * 1.1;
+
+  function xPos(year){ return PAD.left + (year-minYear)/(maxYear-minYear)*plotW; }
+  function yPos(p){ return PAD.top + plotH - (p-minPages)/(maxPages-minPages)*plotH; }
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth = 1;
+  // Horizontal grid
+  const pageStep = Math.ceil(maxPages/5/100)*100;
+  for(let p=0; p<=maxPages; p+=pageStep){
+    const y = yPos(p);
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(W-PAD.right,y); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.font='10px Inter,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(p.toLocaleString(), PAD.left-8, y+4);
+  }
+  // Vertical grid — year ticks
+  const yearRange = maxYear - minYear;
+  const yearStep = yearRange > 40 ? 10 : yearRange > 20 ? 5 : 2;
+  const startYear = Math.ceil(minYear/yearStep)*yearStep;
+  for(let y=startYear; y<=maxYear; y+=yearStep){
+    const x = xPos(y);
+    ctx.strokeStyle='rgba(255,255,255,.05)';
+    ctx.beginPath(); ctx.moveTo(x,PAD.top); ctx.lineTo(x,H-PAD.bottom); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.font='10px Inter,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(y, x, H-PAD.bottom+16);
+  }
+
+  // Axis labels
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.font='11px Inter,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('Year Published', W/2, H-4);
+  ctx.save();
+  ctx.translate(14, H/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Page Count', 0, 0);
+  ctx.restore();
+
+  // Draw points
+  const seriesColor = '#e07820'; // Legends orange
+  tlBooks.forEach(book=>{
+    const x = xPos(book.year);
+    const y = yPos(book.pages);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = seriesColor;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Store positions for hover
+  cv._tlBooks = tlBooks.map(b=>({ ...b, x:xPos(b.year), y:yPos(b.pages) }));
+}
+
+// Tooltip hover
+document.addEventListener('mousemove', e=>{
+  const cv = document.getElementById('timelineCanvas');
+  if(!cv || !cv._tlBooks) return;
+  const rect = cv.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const tip = document.getElementById('tlTooltip');
+  let found = null;
+  for(const b of cv._tlBooks){
+    const dx=b.x-mx, dy=b.y-my;
+    if(Math.sqrt(dx*dx+dy*dy)<10){ found=b; break; }
+  }
+  if(found){
+    tip.innerHTML = '<strong style="color:#e07820">'+found.title+'</strong><br>'+
+      '📅 '+found.year+'<br>'+
+      '📄 '+found.pages.toLocaleString()+' pages';
+    tip.style.display='block';
+    tip.style.left=(e.clientX+14)+'px';
+    tip.style.top=(e.clientY-10)+'px';
+  } else {
+    tip.style.display='none';
+  }
+});
+
+// Redraw on resize
+window.addEventListener('resize', ()=>{ if(tlLoaded) drawTimeline(); });
 
 // ── INIT ──
 buildBookcase();
