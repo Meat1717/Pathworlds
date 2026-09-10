@@ -58,7 +58,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.4</div>
+<div id="version">v 0.5</div>
 
 <script>
 const CONFIG = {
@@ -72,6 +72,8 @@ const CONFIG = {
     { id:'tolkien',   name:'Tolkien',                tab:'Tolkien',           titleCol:0, yearCol:1, pagesCol:2, readCol:4, color:'#c8a84b' },
     { id:'horus',     name:'Horus Heresy',           tab:'Horus Heresy',      titleCol:0, yearCol:3, pagesCol:4, readCol:6, color:'#c0392b' },
     { id:'fr',        name:'Forgotten Realms',       tab:'Forgotten Realms',  titleCol:0, yearCol:3, pagesCol:4, readCol:6, color:'#2ecc71' },
+    { id:'darkover',  name:'Darkover',               tab:'Darkover',          titleCol:0, yearCol:2, pagesCol:4, readCol:6, color:'#b8860b' },
+    { id:'asimov',    name:'Asimov',                 tab:'Asimov',            titleCol:0, yearCol:2, pagesCol:3, readCol:5, color:'#00bcd4' },
   ]
 };
 
@@ -211,7 +213,7 @@ document.addEventListener('mousemove',e=>{
   if(found){
     tip.innerHTML=`<strong style="color:${found.color}">${found.title}</strong><br>`+
       `<span style="opacity:.7">${found.series}</span><br>`+
-      `📅 ${found.year}<br>📄 ${found.pages.toLocaleString()} pages`;
+      `📅 ${found.dateRaw}<br>📄 ${found.pages.toLocaleString()} pages`;
     tip.style.display='block';
     tip.style.left=(e.clientX+16)+'px';
     tip.style.top=(e.clientY-10)+'px';
