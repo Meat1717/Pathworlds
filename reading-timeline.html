@@ -110,12 +110,22 @@ async function loadAll(){
   drawTimeline();
 }
 
+function resizeCanvas(){
+  const cv = document.getElementById('timelineCanvas');
+  if(!cv) return;
+  cv.width = cv.offsetWidth;
+  cv.height = cv.offsetHeight;
+}
+
 function drawTimeline(){
   const cv = document.getElementById('timelineCanvas');
   if(!cv||!allBooks.length) return;
   const ctx = cv.getContext('2d');
-  cv.width = cv.offsetWidth;
-  cv.height = cv.offsetHeight;
+  // Only resize if dimensions have changed
+  if(cv.width !== cv.offsetWidth || cv.height !== cv.offsetHeight){
+    cv.width = cv.offsetWidth;
+    cv.height = cv.offsetHeight;
+  }
   const W=cv.width, H=cv.height;
   const PAD={top:30,right:30,bottom:50,left:65};
   const plotW=W-PAD.left-PAD.right;
@@ -204,7 +214,7 @@ document.addEventListener('mousemove',e=>{
   }
 });
 
-window.addEventListener('resize',()=>{ if(allBooks.length) drawTimeline(); });
+window.addEventListener('resize',()=>{ resizeCanvas(); if(allBooks.length) drawTimeline(); });
 
 loadAll();
 </script>
