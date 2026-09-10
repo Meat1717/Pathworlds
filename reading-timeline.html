@@ -121,11 +121,30 @@
     <input type="number" id="pMax" value="" placeholder="auto" style="width:65px" onchange="updatePageRange()">
     <button class="range-reset" onclick="resetPageRange()">Reset</button>
   </div>
+  <div class="x-range" id="yDateRange" style="display:none">
+    <label>Y From</label>
+    <input type="number" id="ydMinYear" placeholder="Year" style="width:60px" onchange="updateYDateRange()">
+    <select id="ydMinMonth" onchange="updateYDateRange()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 6px;font-size:11px;font-family:'Inter',sans-serif">
+      <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+      <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+      <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+      <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+    </select>
+    <label>To</label>
+    <input type="number" id="ydMaxYear" placeholder="Year" style="width:60px" onchange="updateYDateRange()">
+    <select id="ydMaxMonth" onchange="updateYDateRange()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 6px;font-size:11px;font-family:'Inter',sans-serif">
+      <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+      <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+      <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+      <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+    </select>
+    <button class="range-reset" onclick="resetYDateRange()">Reset</button>
+  </div>
   <div class="axis-hint">X axis — Year Published &nbsp;·&nbsp; Y axis — Page Count &nbsp;·&nbsp; Hover a point for details</div>
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 1.7</div>
+<div id="version">v 1.8</div>
 
 <script>
 const CONFIG = {
@@ -154,6 +173,43 @@ let xAxisMode = 'year';    // 'year' | 'finished'
 let yAxisMode = 'pages';   // 'pages' | 'rating' | 'finished'
 
 let dMinOverride = null;
+let pMinOverride = null;
+let ydMinOverride = null;
+let ydMaxOverride = null;
+
+function updateYDateRange(){
+  const yr1 = parseInt(document.getElementById('ydMinYear').value||0);
+  const mo1 = parseInt(document.getElementById('ydMinMonth').value||1);
+  const yr2 = parseInt(document.getElementById('ydMaxYear').value||0);
+  const mo2 = parseInt(document.getElementById('ydMaxMonth').value||12);
+  if(yr1) ydMinOverride = yr1 + (mo1-1)/12;
+  if(yr2) ydMaxOverride = yr2 + (mo2-1)/12 + 1/12;
+  drawTimeline();
+}
+
+function resetYDateRange(){
+  ydMinOverride=null; ydMaxOverride=null;
+  document.getElementById('ydMinYear').value='';
+  document.getElementById('ydMaxYear').value='';
+  document.getElementById('ydMinMonth').value=1;
+  document.getElementById('ydMaxMonth').value=12;
+  initYDateRange();
+  drawTimeline();
+}
+
+function initYDateRange(){
+  const fracs = allBooks.map(b=>dateStrToFrac(b.finished)).filter(Boolean);
+  if(!fracs.length) return;
+  const mn = Math.min(...fracs);
+  const mx = Math.max(...fracs);
+  const mnYear=Math.floor(mn), mnMonth=Math.max(1,Math.round((mn-mnYear)*12));
+  const mxYear=Math.floor(mx), mxMonth=Math.min(12,Math.round((mx-mxYear)*12)+1);
+  document.getElementById('ydMinYear').value=mnYear;
+  document.getElementById('ydMinMonth').value=mnMonth;
+  document.getElementById('ydMaxYear').value=mxYear;
+  document.getElementById('ydMaxMonth').value=mxMonth;
+}
+
 let pMinOverride = null;
 let pMaxOverride = null;
 
@@ -243,6 +299,8 @@ function onAxisChange(){
   if(xAxisMode==='finished') initDateRange();
   document.getElementById('pageRange').style.display = yAxisMode==='pages' ? 'flex' : 'none';
   if(yAxisMode==='pages') initPageRange();
+  document.getElementById('yDateRange').style.display = yAxisMode==='finished' ? 'flex' : 'none';
+  if(yAxisMode==='finished') initYDateRange();
   xMinOverride=null; xMaxOverride=null;
   initRangeSliders();
   initPageRange();
@@ -416,8 +474,8 @@ function drawTimeline(){
 
   const minYear = (xAxisMode==='finished' ? dMinOverride : xMinOverride) || (xVals.length ? Math.min(...xVals)-0.08 : 2020);
   const maxYear = (xAxisMode==='finished' ? dMaxOverride : xMaxOverride) || (xVals.length ? Math.max(...xVals)+0.08 : 2025);
-  const minYVal = (yAxisMode==='pages' && pMinOverride!=null) ? pMinOverride : 0;
-  const maxYVal = (yAxisMode==='pages' && pMaxOverride!=null) ? pMaxOverride : (yVals.length ? (yAxisMode==='rating' ? 10 : Math.max(...yVals)*1.12) : 1);
+  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? Math.min(...yVals)-0.08 : 0;
+  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished' ? Math.max(...yVals)+0.08 : Math.max(...yVals)*1.12) : 1;
 
   const visibleBooks = validBooks.filter(b=>getXVal(b)>=minYear&&getXVal(b)<=maxYear);
 
@@ -430,7 +488,7 @@ function drawTimeline(){
   function yPos(p){ return PAD.top+plotH-((p-minYVal)/(maxYVal-minYVal))*plotH; }
 
   // Horizontal grid lines
-  const pageStep = yAxisMode==='rating' ? 1 : yAxisMode==='finished' ? Math.ceil((maxYVal-minYVal)/5) : Math.ceil(maxYVal/5/50)*50;
+  const pageStep = yAxisMode==='rating' ? 1 : yAxisMode==='finished' ? Math.max(1/12, (maxYVal-minYVal)/6) : Math.ceil(maxYVal/5/50)*50;
   const yStart = yAxisMode==='finished' ? Math.floor(minYVal) : 0;
   for(let p=yStart;p<=maxYVal;p+=pageStep){
     const y=yPos(p);
@@ -438,7 +496,13 @@ function drawTimeline(){
     ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Inter,sans-serif';
     ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillText(yAxisMode==='rating'?p.toFixed(1):yAxisMode==='finished'?Math.round(p).toString():p.toLocaleString(),PAD.left-8,y);
+    if(yAxisMode==='finished'){
+      const yr=Math.floor(p), mo=Math.round((p-Math.floor(p))*12);
+      const moName=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo]||'';
+      ctx.fillText(moName+' '+yr, PAD.left-8, y);
+    } else {
+      ctx.fillText(yAxisMode==='rating'?p.toFixed(1):p.toLocaleString(), PAD.left-8, y);
+    }
   }
 
   // Vertical grid lines — year ticks
