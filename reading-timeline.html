@@ -27,10 +27,10 @@
   .back-btn:hover{background:#2c3040;color:var(--text);border-color:#4a5068}
 
   /* Main layout */
-  .main{flex:1;display:flex;flex-direction:column;padding:24px;gap:16px;overflow:hidden}
+  .main{flex:1;display:flex;flex-direction:column;padding:24px;gap:16px;overflow:hidden;min-height:0}
 
   /* Canvas area */
-  #timelineCanvas{flex:1;width:100%;cursor:crosshair;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--border)}
+  #timelineCanvas{width:100%;cursor:crosshair;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--border);display:block}
   .axis-hint{font-size:10px;color:var(--text-dim);text-align:center;opacity:.6;letter-spacing:.04em}
 
   /* Tooltip */
@@ -58,7 +58,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.1</div>
+<div id="version">v 0.2</div>
 
 <script>
 const CONFIG = {
@@ -107,6 +107,8 @@ async function loadAll(){
 
   allBooks = results.flat();
   loading.style.display = 'none';
+  const cv2=document.getElementById('timelineCanvas');
+  if(cv2){cv2.style.height=(cv2.parentElement.clientHeight-80)+'px';}
   drawTimeline();
 }
 
