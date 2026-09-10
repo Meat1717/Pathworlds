@@ -64,9 +64,9 @@
   <div class="x-range">
     <label>From</label>
     <input type="number" id="xMin" value="" placeholder="auto" onchange="updateRange()">
-    <input type="range" id="xMinSlider" min="1900" max="2030" step="1" oninput="syncFromSlider('min',this.value)">
+    <input type="range" id="xMinSlider" min="1800" max="2030" step="1" oninput="syncFromSlider('min',this.value)">
     <label>To</label>
-    <input type="range" id="xMaxSlider" min="1900" max="2030" step="1" oninput="syncFromSlider('max',this.value)">
+    <input type="range" id="xMaxSlider" min="1800" max="2030" step="1" oninput="syncFromSlider('max',this.value)">
     <input type="number" id="xMax" value="" placeholder="auto" onchange="updateRange()">
     <button class="range-reset" onclick="resetRange()">Reset</button>
   </div>
@@ -74,7 +74,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 0.7</div>
+<div id="version">v 0.8</div>
 
 <script>
 const CONFIG = {
@@ -104,12 +104,12 @@ let xMaxOverride = null;
 function initRangeSliders(){
   if(!allBooks.length) return;
   const years = allBooks.map(b=>b.year);
-  const mn = Math.min(...years)-2;
-  const mx = Math.max(...years)+2;
+  const mn = Math.floor(Math.min(...years))-2;
+  const mx = Math.ceil(Math.max(...years))+2;
   const minSlider = document.getElementById('xMinSlider');
   const maxSlider = document.getElementById('xMaxSlider');
-  if(minSlider){ minSlider.min=mn; minSlider.max=mx; minSlider.value=mn; }
-  if(maxSlider){ maxSlider.min=mn; maxSlider.max=mx; maxSlider.value=mx; }
+  if(minSlider){ minSlider.min=Math.min(mn,1800); minSlider.max=mx; minSlider.value=mn; }
+  if(maxSlider){ maxSlider.min=Math.min(mn,1800); maxSlider.max=mx; maxSlider.value=mx; }
 }
 
 function syncFromSlider(which, val){
@@ -169,7 +169,24 @@ async function loadAll(){
           if(n > 1900 && n < 2100){ year=n; break; }
         }
         if(!year) return;
-        books.push({ title, year, pages, series:s.name, color:s.color, dateRaw:yearRaw });
+        // Build fractional year for precise month/day positioning on X axis
+        let month = 0, day = 0;
+        // Try to find month and day from parts (format M/D/YYYY)
+        const numParts = parts.map(p=>parseInt(p)).filter(n=>!isNaN(n));
+        if(numParts.length >= 3){
+          // Find which part is the year, the rest are month/day
+          const nonYear = numParts.filter(n=>n!==year);
+          if(nonYear.length >= 2){
+            // Assume smaller of the two non-year parts is month
+            month = Math.min(nonYear[0], nonYear[1]);
+            day = Math.max(nonYear[0], nonYear[1]);
+            if(month > 12){ [month, day] = [day, month]; }
+          } else if(nonYear.length === 1){
+            month = nonYear[0] <= 12 ? nonYear[0] : 0;
+          }
+        }
+        const fracYear = year + (month > 0 ? (month-1)/12 : 0) + (day > 0 ? day/365 : 0);
+        books.push({ title, year, fracYear, pages, series:s.name, color:s.color, dateRaw:yearRaw });
       });
       return books;
     } catch(e){ return []; }
@@ -215,6 +232,7 @@ function drawTimeline(){
   const visibleBooks = allBooks.filter(b=>b.year>=minYear&&b.year<=maxYear);
 
   function xPos(y){ return PAD.left+(y-minYear)/(maxYear-minYear)*plotW; }
+  function xPosFrac(b){ return xPos(b.fracYear||b.year); }
   function yPos(p){ return PAD.top+plotH-(p/maxPages)*plotH; }
 
   // Horizontal grid lines
@@ -249,7 +267,7 @@ function drawTimeline(){
   ctx.textBaseline='middle';ctx.fillText('Page Count',0,0);ctx.restore();
 
   // Draw points
-  cv._books = visibleBooks.map(b=>({...b, px:xPos(b.year), py:yPos(b.pages)}));
+  cv._books = visibleBooks.map(b=>({...b, px:xPosFrac(b), py:yPos(b.pages)}));
   // Only draw books in range
   cv._books.forEach(b=>{
     const isHov = hoveredBook===b;
