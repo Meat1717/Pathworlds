@@ -146,7 +146,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.9</div>
+<div id="version">v 3.0</div>
 
 <script>
 const CONFIG = {
@@ -423,7 +423,15 @@ async function loadAll(){
     } catch(e){ return []; }
   }));
 
-  allBooks = results.flat();
+  // Assign sequential order numbers sorted by finished date
+  const flat = results.flat();
+  const withFin = flat.filter(b=>dateStrToFrac(b.finished));
+  withFin.sort((a,b)=>(dateStrToFrac(a.finished)||0)-(dateStrToFrac(b.finished)||0));
+  withFin.forEach((b,i)=>{ b.order = i+1; });
+  const withoutFin = flat.filter(b=>!dateStrToFrac(b.finished));
+  allBooks = [...withFin, ...withoutFin];
+  console.log('[Order] assigned to', withFin.length, 'books, first:', withFin[0]?.title, '#'+withFin[0]?.order, 'last:', withFin[withFin.length-1]?.title, '#'+withFin[withFin.length-1]?.order);
+
   loading.style.display = 'none';
   resizeCanvas();
   initRangeSliders();
