@@ -71,6 +71,7 @@
       <label>X Axis</label>
       <select id="xAxisSel" onchange="onAxisChange()">
         <option value="year">Year Published</option>
+        <option value="order">Reading Order</option>
         <option value="finished">Date Finished</option>
       </select>
     </div>
@@ -81,6 +82,7 @@
         <option value="rating">My Rating</option>
         <option value="finished">Date Finished</option>
         <option value="year">Year Published</option>
+        <option value="order">Reading Order</option>
       </select>
     </div>
   </div>
@@ -145,7 +147,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.6</div>
+<div id="version">v 2.7</div>
 
 <script>
 const CONFIG = {
@@ -299,10 +301,12 @@ function onAxisChange(){
   document.getElementById('dateRange').style.display = xAxisMode==='finished' ? 'flex' : 'none';
   if(xAxisMode==='finished') initDateRange();
   document.getElementById('pageRange').style.display = yAxisMode==='pages' ? 'flex' : 'none';
+  document.getElementById('yDateRange').style.display = yAxisMode==='finished' ? 'flex' : 'none';
   if(yAxisMode==='pages') initPageRange();
   document.getElementById('yDateRange').style.display = yAxisMode==='finished' ? 'flex' : 'none';
   if(yAxisMode==='finished') initYDateRange();
   document.getElementById('pageRange').style.display = yAxisMode==='pages' ? 'flex' : 'none';
+  document.getElementById('yDateRange').style.display = yAxisMode==='finished' ? 'flex' : 'none';
   xMinOverride=null; xMaxOverride=null;
   initRangeSliders();
   initPageRange();
@@ -458,12 +462,13 @@ function drawTimeline(){
 
   // Get X values based on axis mode
   function getXVal(b){ return xAxisMode==='finished' ? (dateStrToFrac(b.finished)||b.fracYear) : b.fracYear; }
-  function getYVal(b){ return yAxisMode==='pages' ? b.pages : yAxisMode==='rating' ? (b.rating||0) : yAxisMode==='year' ? b.fracYear : dateStrToFrac(b.finished); }
+  function getYVal(b){ return yAxisMode==='pages' ? b.pages : yAxisMode==='rating' ? (b.rating||0) : yAxisMode==='year' ? b.fracYear : yAxisMode==='order' ? b.order : dateStrToFrac(b.finished); }
 
   const validBooks = allBooks.filter(b=>{
     if(xAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
     if(yAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
     if(yAxisMode==='year' && !b.fracYear) return false;
+    if(yAxisMode==='order' && !b.order) return false;
     if(yAxisMode==='rating' && !b.rating) return false;
     return getXVal(b) && getYVal(b);
   });
@@ -472,21 +477,21 @@ function drawTimeline(){
 
   const minYear = (xAxisMode==='finished' ? dMinOverride : xMinOverride) || (xVals.length ? Math.min(...xVals)-0.08 : 2020);
   const maxYear = (xAxisMode==='finished' ? dMaxOverride : xMaxOverride) || (xVals.length ? Math.max(...xVals)+0.08 : 2025);
-  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yVals.length ? (yAxisMode==='finished'||yAxisMode==='year' ? Math.min(...yVals)-0.5 : 0) : 0;
-  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='finished'||yAxisMode==='year' ? Math.max(...yVals)+0.5 : Math.max(...yVals)*1.12) : 1;
+  const minYVal = yAxisMode==='pages' && pMinOverride!=null ? pMinOverride : yAxisMode==='finished' && ydMinOverride ? ydMinOverride : yAxisMode==='order' ? 0 : yVals.length ? (yAxisMode==='finished'||yAxisMode==='year' ? Math.min(...yVals)-0.5 : 0) : 0;
+  const maxYVal = yAxisMode==='pages' && pMaxOverride!=null ? pMaxOverride : yAxisMode==='finished' && ydMaxOverride ? ydMaxOverride : yVals.length ? (yAxisMode==='rating' ? 10 : yAxisMode==='order' ? Math.max(...yVals)+5 : yAxisMode==='finished'||yAxisMode==='year' ? Math.max(...yVals)+0.5 : Math.max(...yVals)*1.12) : 1;
 
   const visibleBooks = validBooks.filter(b=>getXVal(b)>=minYear&&getXVal(b)<=maxYear);
 
   // Dynamic axis labels
   const xLabel = xAxisMode==='finished' ? 'Date Finished' : 'Year Published';
-  const yLabel = yAxisMode==='pages' ? 'Page Count' : yAxisMode==='rating' ? 'My Rating' : yAxisMode==='year' ? 'Year Published' : 'Date Finished';
+  const yLabel = yAxisMode==='pages' ? 'Page Count' : yAxisMode==='rating' ? 'My Rating' : yAxisMode==='year' ? 'Year Published' : yAxisMode==='order' ? 'Book #' : 'Date Finished';
 
   function xPos(y){ return PAD.left+(y-minYear)/(maxYear-minYear)*plotW; }
   function xPosFrac(b){ return xPos(getXVal(b)); }
   function yPos(p){ return PAD.top+plotH-((p-minYVal)/(maxYVal-minYVal))*plotH; }
 
   // Horizontal grid lines
-  const pageStep = yAxisMode==='rating' ? 1 : yAxisMode==='finished' ? Math.max(1/12,(maxYVal-minYVal)/6) : yAxisMode==='year' ? Math.max(1,(maxYVal-minYVal)/6) : Math.ceil(maxYVal/5/50)*50;
+  const pageStep = yAxisMode==='rating' ? 1 : yAxisMode==='finished' ? Math.max(1/12,(maxYVal-minYVal)/6) : yAxisMode==='year' ? Math.max(1,(maxYVal-minYVal)/6) : yAxisMode==='order' ? 25 : Math.ceil(maxYVal/5/50)*50;
   const yStart = yAxisMode==='finished' ? Math.floor(minYVal) : 0;
   for(let p=yStart;p<=maxYVal;p+=pageStep){
     const y=yPos(p);
@@ -494,7 +499,9 @@ function drawTimeline(){
     ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Inter,sans-serif';
     ctx.textAlign='right';ctx.textBaseline='middle';
-    if(yAxisMode==='finished'||yAxisMode==='year'){
+    if(yAxisMode==='order'){
+      ctx.fillText('#'+Math.round(p), PAD.left-8, y);
+    } else if(yAxisMode==='finished'||yAxisMode==='year'){
       const yr=Math.floor(p);
       if(yAxisMode==='year'){ ctx.fillText(yr, PAD.left-8, y); }
       else { const mo=Math.round((p-Math.floor(p))*12); const moName=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo]||''; ctx.fillText(moName+' '+yr, PAD.left-8, y); }
@@ -536,6 +543,41 @@ function drawTimeline(){
   console.log('[Draw] minYVal:', minYVal, 'maxYVal:', maxYVal);
   if(visibleBooks.length) console.log('[Draw] sample yVal:', getYVal(visibleBooks[0]), 'yPos:', yPos(getYVal(visibleBooks[0])));
   cv._books = visibleBooks.map(b=>({...b, px:xPosFrac(b), py:yPos(getYVal(b))}));
+  // Milestone markers for order mode
+  if(yAxisMode==='order'){
+    const milestones = [];
+    for(let m=25; m<=maxYVal; m+=25) milestones.push(m);
+    milestones.forEach(m=>{
+      const y = yPos(m);
+      if(y<PAD.top||y>PAD.top+plotH) return;
+      // Dashed line
+      ctx.save();
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle='rgba(255,255,255,.2)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
+      ctx.setLineDash([]);
+      // Star marker on left
+      ctx.fillStyle='rgba(255,220,80,.8)';
+      ctx.font='bold 11px Inter,sans-serif';
+      ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText('★ #'+m, PAD.left-2, y);
+      ctx.restore();
+    });
+    // Connect dots with a line showing pace
+    const ordered = cv._books.slice().sort((a,b)=>a.px-b.px);
+    if(ordered.length>1){
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,.12)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(ordered[0].px,ordered[0].py);
+      ordered.slice(1).forEach(b=>ctx.lineTo(b.px,b.py));
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   // Only draw books in range
   cv._books.forEach(b=>{
     const isHov = hoveredBook===b;
