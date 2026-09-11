@@ -71,7 +71,6 @@
       <label>X Axis</label>
       <select id="xAxisSel" onchange="onAxisChange()">
         <option value="year">Year Published</option>
-        <option value="order">Reading Order</option>
         <option value="finished">Date Finished</option>
       </select>
     </div>
@@ -147,7 +146,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 2.7</div>
+<div id="version">v 2.9</div>
 
 <script>
 const CONFIG = {
@@ -469,6 +468,7 @@ function drawTimeline(){
     if(yAxisMode==='finished' && !dateStrToFrac(b.finished)) return false;
     if(yAxisMode==='year' && !b.fracYear) return false;
     if(yAxisMode==='order' && !b.order) return false;
+    if(yAxisMode==='order' && !b.fracYear && xAxisMode==='year') return false;
     if(yAxisMode==='rating' && !b.rating) return false;
     return getXVal(b) && getYVal(b);
   });
@@ -538,7 +538,8 @@ function drawTimeline(){
   ctx.textBaseline='middle';ctx.fillText(yLabel,0,0);ctx.restore();
 
   // Draw points
-  console.log('[Draw] mode:', xAxisMode, yAxisMode);
+  const withYear = allBooks.filter(b=>b.fracYear&&b.order);
+  console.log('[Draw] mode:', xAxisMode, yAxisMode, 'validBooks:', validBooks.length, 'withYearAndOrder:', withYear.length);
   console.log('[Draw] validBooks:', validBooks.length, 'visibleBooks:', visibleBooks.length);
   console.log('[Draw] minYVal:', minYVal, 'maxYVal:', maxYVal);
   if(visibleBooks.length) console.log('[Draw] sample yVal:', getYVal(visibleBooks[0]), 'yPos:', yPos(getYVal(visibleBooks[0])));
