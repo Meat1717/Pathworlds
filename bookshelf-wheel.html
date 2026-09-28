@@ -171,7 +171,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.53</div>
+<div id="version">v 0.54</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -288,9 +288,9 @@ const CONFIG = {
   // Colors for the shelf-picker wheel slices (one per entry):
   shelfPickColors: ['#7a5030', '#7a5030', '#7a5030'],
   shelfPicks: [
-    { shelfIdx:5, count:6, label:'Shelf 6' },
-    { shelfIdx:6, count:28, label:'Shelf 7' },
-    { shelfIdx:7, count:29, label:'Shelf 8' },
+    { shelfIdx:6, count:9, label:'Shelf 7' },
+    { shelfIdx:7, count:31, label:'Shelf 8' },
+    { shelfIdx:8, count:28, label:'Shelf 9' },
   ],
 
   // ── GOOGLE SHEETS INTEGRATION ──
@@ -327,29 +327,29 @@ const CONFIG = {
   //   [ { id:'asoiaf', count:6 }, { id:'tolkien', count:5 }, { id:'none', count:4 } ]
   shelves: [
     // Shelf 1
-    [ { id:'swcanon', count:22 } ],
+    [ { id:'swcanon', count:24 } ],
     // Shelf 2
-    [ { id:'swcanon', count:20 } ],
+    [ { id:'swcanon', count:27 } ],
     // Shelf 3
-    [ { id:'swcanon', count:4 }, { id:'swlegends', count:18 } ],
+    [ { id:'swcanon', count:5 }, { id:'swlegends', count:33 } ],
     // Shelf 4
-    [ { id:'swlegends', count:22 } ],
+    [ { id:'swlegends', count:32 } ],
     // Shelf 5
-    [ { id:'swlegends', count:6 }, { id:'asoiaf', count:6 }, { id:'tolkien', count:5 }, { id:'horus', count:4 } ],
-    // Shelf 6 — SW Legends | ASOIAF | unread | Forgotten Realms | unread | Darkover | Asimov | shelf-pick books
-    [ { id:'horus', count:1 }, { id:'none', count:4 }, { id:'fr', count:6 }, { id:'none', count:7 }, { id:'darkover', count:3 }, { id:'asimov', count:9 }, { id:'shelf', count:6 } ],
-    // Shelf 7 — all shelf-pick books
+    [ { id:'swlegends', count:21 }, { id:'asoiaf', count:4 } ],
+    // Shelf 6
+    [ { id:'asoiaf', count:2 }, { id:'tolkien', count:7 }, { id:'horus', count:5 }, { id:'none', count:4 }, { id:'fr', count:6 } ],
+    // Shelf 7
+    [ { id:'none', count:7 }, { id:'darkover', count:11 }, { id:'asimov', count:9 }, { id:'shelf', count:9 } ],
+    // Shelf 8 — shelf-pick books
+    [ { id:'shelf', count:31 } ],
+    // Shelf 9 — shelf-pick books
     [ { id:'shelf', count:28 } ],
-    // Shelf 8 — all shelf-pick books
-    [ { id:'shelf', count:29 } ],
-    // Shelf 9 — unselectable
-    [ { id:'none', count:10 } ],
     // Shelf 10 — unselectable
-    [ { id:'none', count:6 } ],
+    [ { id:'none', count:30 } ],
     // Shelf 11 — unselectable
-    [ { id:'none', count:8 } ],
-    // Shelf 12 — unselectable + one Goodreads Pick indicator book
-    [ { id:'none', count:8 }, { id:'goodreads', count:1 } ],
+    [ { id:'none', count:30 } ],
+    // Shelf 12 — unselectable + Goodreads indicator books
+    [ { id:'none', count:20 }, { id:'goodreads', count:1 } ],
   ],
 
 };
