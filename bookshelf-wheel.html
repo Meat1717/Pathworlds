@@ -171,7 +171,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.54</div>
+<div id="version">v 0.55</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -270,6 +270,7 @@ const CONFIG = {
     { id:'asimov',    name:'Asimov',            color:'#00bcd4', excl:false, bgImage:'assets/bookshelf/asimov.jpg' },
     { id:'shelf',     name:'Shelf Pick',        color:'#9a6840', excl:false, bgImage:'assets/bookshelf/shelf.jpg' },
     { id:'goodreads', name:'Goodreads Pick',    color:'#e84040', excl:false, bgImage:'assets/bookshelf/goodreads.jpg' },
+  { id:'narnia',    name:'Narnia',              color:'#f0c040', excl:true },
   { id:'misc',      name:'Misc Books',          color:'#8a8fa8', excl:true },
   ],
 
@@ -309,6 +310,7 @@ const CONFIG = {
     'fr':        { tab: 'Forgotten Realms',  titleCol: 0, readCol: 6 },
     'darkover':  { tab: 'Darkover',          titleCol: 0, readCol: 6 },
     'asimov':    { tab: 'Asimov',            titleCol: 0, readCol: 5 },
+    'narnia':    { tab: 'Narnia',               titleCol: 0, readCol: 5 },
     'misc':      { tab: 'Misc Books',           titleCol: 0, readCol: 6 },
   },
 
@@ -339,7 +341,7 @@ const CONFIG = {
     // Shelf 6
     [ { id:'asoiaf', count:2 }, { id:'tolkien', count:7 }, { id:'horus', count:5 }, { id:'none', count:4 }, { id:'fr', count:6 } ],
     // Shelf 7
-    [ { id:'none', count:7 }, { id:'darkover', count:11 }, { id:'asimov', count:9 }, { id:'shelf', count:9 } ],
+    [ { id:'narnia', count:7 }, { id:'darkover', count:11 }, { id:'asimov', count:9 }, { id:'shelf', count:9 } ],
     // Shelf 8 — shelf-pick books
     [ { id:'shelf', count:31 } ],
     // Shelf 9 — shelf-pick books
@@ -1342,7 +1344,7 @@ async function fetchOverallStats(){
 async function fetchSeriesStats(){
   const grid = document.getElementById('statsGrid');
   const tabs = CONFIG.sheetsTabs;
-  const seriesOrder = ['swcanon','swlegends','asoiaf','tolkien','horus','fr','darkover','asimov','misc'];
+  const seriesOrder = ['swcanon','swlegends','asoiaf','tolkien','horus','fr','darkover','asimov','narnia','misc'];
 
   // Fetch all tabs in parallel
   const results = await Promise.all(seriesOrder.map(async id => {
