@@ -146,7 +146,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 3.2</div>
+<div id="version">v 3.3</div>
 
 <script>
 const CONFIG = {
@@ -604,11 +604,12 @@ function drawTimeline(){
   cv._books.forEach(b=>{
     const isHov = hoveredBook===b;
     const r2 = isHov?8:5;
-    ctx.beginPath();ctx.arc(b.px,b.py,r2,0,Math.PI*2);
+    const r3 = b.reread ? (isHov?6:3.5) : r2;
+    ctx.beginPath();ctx.arc(b.px,b.py,r3,0,Math.PI*2);
     if(b.reread){
-      // Hollow dot for rereads
+      // Hollow dot for rereads — smaller radius to match filled dot visual size
       ctx.strokeStyle=b.color;
-      ctx.lineWidth=isHov?2.5:2;
+      ctx.lineWidth=isHov?2:1.5;
       ctx.stroke();
     } else {
       ctx.fillStyle=b.color;ctx.fill();
