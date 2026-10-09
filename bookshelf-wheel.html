@@ -171,7 +171,7 @@ input:checked+.sldr:before{transform:translateX(10px)}
   </div>
 </div>
 <div class="book-tip" id="bookTip"></div>
-<div id="version">v 0.56</div>
+<div id="version">v 0.57</div>
 <div id="winnerPopup"><div id="winnerPopupInner"><div class="pop-crown">👑</div><div class="pop-label">Read next</div><div class="pop-name" id="popName">...</div></div></div>
 
 <div class="main">
@@ -270,7 +270,7 @@ const CONFIG = {
     { id:'asimov',    name:'Asimov',            color:'#00bcd4', excl:false, bgImage:'assets/bookshelf/asimov.jpg' },
     { id:'shelf',     name:'Shelf Pick',        color:'#9a6840', excl:false, bgImage:'assets/bookshelf/shelf.jpg' },
     { id:'goodreads', name:'Goodreads Pick',    color:'#e84040', excl:false, bgImage:'assets/bookshelf/goodreads.jpg' },
-  { id:'narnia',    name:'Narnia',              color:'#006614', excl:true },
+  { id:'narnia',    name:'Narnia',              color:'#f0c040', excl:true },
   { id:'misc',      name:'Misc Books',          color:'#8a8fa8', excl:true },
   ],
 
@@ -1223,7 +1223,7 @@ async function fetchNextBook(seriesId){
   if(!tabInfo){console.log('[Sheets] no tab info');return null;}
   if(!CONFIG.sheetsApiKey||CONFIG.sheetsApiKey===''){console.log('[Sheets] no key');return null;}
   try {
-    const range = encodeURIComponent(tabInfo.tab+'!A:G');
+    const range = encodeURIComponent(tabInfo.tab+'!A:Z');
     const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
     console.log('[Sheets] fetching:', url);
     const res = await fetch(url);
@@ -1351,7 +1351,7 @@ async function fetchSeriesStats(){
     const tabInfo = tabs[id];
     if(!tabInfo) return {id, total:0, read:0};
     try {
-      const range = encodeURIComponent(tabInfo.tab+'!A:G');
+      const range = encodeURIComponent(tabInfo.tab+'!A:Z');
       const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
       const res = await fetch(url);
       if(!res.ok) return {id, total:0, read:0};
@@ -1359,8 +1359,9 @@ async function fetchSeriesStats(){
       const rows = (data.values||[]).slice(1); // skip header
       // Count rows with a title in col A
       const withTitle = rows.filter(r => (r[tabInfo.titleCol]||'').trim() !== '');
-      const readCount = withTitle.filter(r => (r[tabInfo.readCol]||'').toString().trim().toLowerCase() === 'yes').length;
-      return {id, total: withTitle.length, read: readCount};
+      const notReread = withTitle.filter(r => (r[25]||'').toString().trim().toLowerCase() !== 'reread');
+      const readCount = notReread.filter(r => (r[tabInfo.readCol]||'').toString().trim().toLowerCase() === 'yes').length;
+      return {id, total: notReread.length, read: readCount};
     } catch(e){ return {id, total:0, read:0}; }
   }));
 

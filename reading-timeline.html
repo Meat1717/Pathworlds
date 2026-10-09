@@ -146,7 +146,7 @@
 </div>
 
 <div id="tlTooltip"></div>
-<div id="version">v 3.1</div>
+<div id="version">v 3.2</div>
 
 <script>
 const CONFIG = {
@@ -162,7 +162,7 @@ const CONFIG = {
     { id:'fr',        name:'Forgotten Realms',       tab:'Forgotten Realms',  titleCol:0, yearCol:3, pagesCol:4, readCol:6, finishedCol:9,  ratingCol:7, color:'#2ecc71' },
     { id:'darkover',  name:'Darkover',               tab:'Darkover',          titleCol:0, yearCol:2, pagesCol:4, readCol:6, finishedCol:9,  ratingCol:7, color:'#b8860b' },
     { id:'asimov',    name:'Asimov',                 tab:'Asimov',            titleCol:0, yearCol:2, pagesCol:3, readCol:5, finishedCol:8,  ratingCol:6, color:'#00bcd4' },
-    { id:'narnia',    name:'Narnia',                 tab:'Narnia',            titleCol:0, yearCol:2, pagesCol:3, readCol:5, finishedCol:8,  ratingCol:6, color:'#006614' },
+    { id:'narnia',    name:'Narnia',                 tab:'Narnia',            titleCol:0, yearCol:2, pagesCol:3, readCol:5, finishedCol:8,  ratingCol:6, color:'#f0c040' },
     { id:'misc',      name:'Misc Books',             tab:'Misc Books',        titleCol:0, yearCol:3, pagesCol:4, readCol:6, finishedCol:9,  ratingCol:7, color:'#8a8fa8' },
   ]
 };
@@ -381,7 +381,7 @@ async function loadAll(){
   const results = await Promise.all(CONFIG.series.map(async s => {
     try {
       console.log('[Timeline] Loading:', s.tab);
-      const range = encodeURIComponent(s.tab+'!A:K');
+      const range = encodeURIComponent(s.tab+'!A:Z');
       const url = 'https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.sheetId+'/values/'+range+'?key='+CONFIG.sheetsApiKey;
       const res = await fetch(url);
       if(!res.ok) return [];
@@ -418,7 +418,8 @@ async function loadAll(){
         const fracYear = year + (month > 0 ? (month-1)/12 : 0) + (day > 0 ? day/365 : 0);
         const finished = (row[s.finishedCol]||'').trim();
         const rating = parseFloat(row[s.ratingCol]||0)||null;
-        books.push({ title, year, fracYear, pages, series:s.name, color:s.color, dateRaw:yearRaw, finished, rating });
+        const isReread = (row[25]||'').toString().trim().toLowerCase() === 'reread';
+        books.push({ title, year, fracYear, pages, series:s.name, color:s.color, dateRaw:yearRaw, finished, rating, reread:isReread });
       });
       return books;
     } catch(e){ return []; }
@@ -428,10 +429,21 @@ async function loadAll(){
   const flat = results.flat();
   const withFin = flat.filter(b=>dateStrToFrac(b.finished));
   withFin.sort((a,b)=>(dateStrToFrac(a.finished)||0)-(dateStrToFrac(b.finished)||0));
-  withFin.forEach((b,i)=>{ b.order = i+1; });
+  // Assign order: rereads get fractional number between prev and next non-reread
+  let counter = 0;
+  withFin.forEach((b,i)=>{
+    if(!b.reread){
+      counter++;
+      b.order = counter;
+    } else {
+      // Find prev non-reread order
+      const prev = counter; // last assigned integer
+      b.order = prev + 0.5;
+    }
+  });
   const withoutFin = flat.filter(b=>!dateStrToFrac(b.finished));
   allBooks = [...withFin, ...withoutFin];
-  console.log('[Order] assigned to', withFin.length, 'books, first:', withFin[0]?.title, '#'+withFin[0]?.order, 'last:', withFin[withFin.length-1]?.title, '#'+withFin[withFin.length-1]?.order);
+  console.log('[Order] assigned to', withFin.length, 'books, rereads:', withFin.filter(b=>b.reread).length);
 
   loading.style.display = 'none';
   resizeCanvas();
@@ -591,10 +603,18 @@ function drawTimeline(){
   // Only draw books in range
   cv._books.forEach(b=>{
     const isHov = hoveredBook===b;
-    ctx.beginPath();ctx.arc(b.px,b.py,isHov?8:5,0,Math.PI*2);
-    ctx.fillStyle=b.color;ctx.fill();
-    ctx.strokeStyle=isHov?'rgba(255,255,255,.8)':'rgba(0,0,0,.4)';
-    ctx.lineWidth=isHov?2:1;ctx.stroke();
+    const r2 = isHov?8:5;
+    ctx.beginPath();ctx.arc(b.px,b.py,r2,0,Math.PI*2);
+    if(b.reread){
+      // Hollow dot for rereads
+      ctx.strokeStyle=b.color;
+      ctx.lineWidth=isHov?2.5:2;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle=b.color;ctx.fill();
+      ctx.strokeStyle=isHov?'rgba(255,255,255,.8)':'rgba(0,0,0,.4)';
+      ctx.lineWidth=isHov?2:1;ctx.stroke();
+    }
     if(isHov){
       ctx.beginPath();ctx.arc(b.px,b.py,12,0,Math.PI*2);
       ctx.strokeStyle=b.color+'66';ctx.lineWidth=2;ctx.stroke();
@@ -618,7 +638,7 @@ document.addEventListener('mousemove',e=>{
     drawTimeline();
   }
   if(found){
-    let tipHtml = `<strong style="color:${found.color}">${found.title}</strong><br>`+
+    let tipHtml = `<strong style="color:${found.color}">${found.title}</strong>${found.reread?' <span style="opacity:.6;font-size:10px">(reread)</span>':''}<br>`+
       `<span style="opacity:.7">${found.series}</span><br>`;
     tipHtml += `📅 Published: ${found.dateRaw}<br>`;
     if(found.finished) tipHtml += `✅ Finished: ${found.finished}<br>`;
